@@ -1,0 +1,80 @@
+<div id="prevoyance-panel">
+  <div class="grid">
+    <section class="card" style="grid-column: span 12">
+      <div class="row">
+        <input class="file" type="file" accept=".csv, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <div class="actions">
+          <button class="btn btn-ghost import">Importer</button>
+          <button class="btn btn-ghost export">Exporter (JSON)</button>
+          <button class="btn btn-ghost exportCSV">Exporter (CSV)</button>
+          <button class="btn btn-danger clear">Réinitialiser</button>
+        </div>
+      </div>
+      <div class="note">Colonnes attendues : <b>prenomPP</b>, <b>nomPP</b>, <b>offre</b>, <b>montantPeriodique</b>, <b>periodicite</b>, <b>dateSignature</b></div>
+      <div class="hr"></div>
+      <div class="row">
+        <div style="flex:1"><label class="small">Objectif annuel Prévoyance (€)</label><input class="target" type="number" min="0" step="1000" placeholder="ex. 27000" /></div>
+        <div class="actions" style="align-self:end">
+          <button class="btn btn-primary save">Enregistrer</button>
+          <button class="btn btn-ghost toCalc">Envoyer CA → Calculateur</button>
+          <button class="btn btn-ghost print">Imprimer PDF</button>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="debug">En attente d’import…</div>
+    </section>
+
+    <section class="card" style="grid-column: span 12">
+      <div class="row" style="gap:16px; align-items:flex-start;">
+        <div class="kpi">
+          <div class="label">Total Annuel (Toutes années)</div>
+          <div class="value annualTotal">0 €</div>
+          <div class="delta rows">Lignes importées : 0</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Objectif Annuel</div>
+          <div class="value targetVal">—</div>
+          <div class="delta pct">Atteint : —</div>
+          <div class="progress"><div class="bar progressBar"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="label">CA Moyen / Vente</div>
+          <div class="value avg">0 €</div>
+          <div class="delta products">Produits distincts : 0</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Ventes (Année sélectionnée)</div>
+          <div class="value deals">0</div>
+          <div class="delta yearInfo">Année : —</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="grid-column: span 12; md:grid-column: span 6;"><h3 class="section-title">CA Annuel par Mois</h3><div class="chart monthly"></div></section>
+    <section class="card" style="grid-column: span 12; md:grid-column: span 6;"><h3 class="section-title">Répartition par Produit</h3><div class="chart pie"></div></section>
+    
+    <section class="card" style="grid-column: span 12">
+      <h3 class="section-title">Ajout Manuel</h3>
+      <div class="row" style="flex-wrap:nowrap; gap:8px">
+        <div style="flex:1"><input class="m_prenom" placeholder="Prénom"></div>
+        <div style="flex:1"><input class="m_nom" placeholder="Nom"></div>
+        <div style="flex:1.5"><input class="m_produit" placeholder="Produit"></div>
+        <div style="width:160px"><input class="m_montant" type="number" min="0" step="1" placeholder="Montant"></div>
+        <div style="width:140px"><select class="m_per"><option value="mensuel" selected>Mensuel</option><option value="trimestriel">Trimestriel</option><option value="semestriel">Semestriel</option><option value="annuel">Annuel</option></select></div>
+        <div style="width:150px"><input class="m_date" type="date"></div>
+        <button class="btn btn-primary m_add">Ajouter</button>
+      </div>
+    </section>
+
+    <section class="card table-wrap" style="grid-column: span 12">
+      <div class="row" style="margin-bottom:12px">
+        <input class="search" type="search" placeholder="Rechercher (nom, produit…)" style="min-width:260px; width:auto;">
+        <select class="filterYear" style="width:auto;"></select>
+      </div>
+      <table>
+        <thead><tr><th>Prénom</th><th>Nom</th><th>Produit</th><th class="right">CA Annuel</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody class="tbody"></tbody>
+      </table>
+    </section>
+  </div>
+</div>
