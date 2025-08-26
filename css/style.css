@@ -394,3 +394,30 @@ input:disabled, select:disabled {
     text-align: right; /* Assure un bon alignement du chiffre */
     padding-right: 14px;
 }
+/* Styles pour le Plan d'Action */
+.week-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+.week-row:hover {
+    background-color: var(--surface-hover);
+}
+.wk-label {
+    width: 320px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+}
+.wk-label small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+.wk-val {
+    width: 160px !important;
+}
