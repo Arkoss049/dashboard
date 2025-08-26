@@ -361,3 +361,13 @@ svg{
 }
 
 /* Fin du correctif */
+
+/* ===== Correctif pour les champs désactivés ===== */
+
+input:disabled, select:disabled {
+    background: var(--surface); /* Applique un fond plus distinct */
+    opacity: 0.6;               /* Le rend légèrement transparent pour montrer qu'il est inactif */
+    color: var(--muted);        /* Assure que le texte reste lisible */
+    cursor: not-allowed;        /* Change le curseur pour indiquer qu'on ne peut pas cliquer */
+    border-style: dashed;       /* Une bordure en pointillés renforce l'idée de champ "non modifiable" */
+}
