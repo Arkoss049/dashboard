@@ -1,4 +1,4 @@
-// Contenu Final et Robuste pour js/modules/plan.js
+// Contenu Final et Réactif pour js/modules/plan.js
 
 function initPlanPanel() {
     const root = document.getElementById('plan-panel');
@@ -7,7 +7,6 @@ function initPlanPanel() {
     const $ = sel => root.querySelector(sel);
     const els = { view: $('.view'), year: $('.year'), month: $('.month'), monthContainers: root.querySelectorAll('.month-container'), goal: $('.goal'), mgoal: $('.mgoal'), saveGoals: $('.saveGoals'), mode: $('.mode'), weeks: $('.weeks'), exportBtn: $('.export'), resetBtn: $('.reset'), msum: $('.msum'), mgoal_view: $('.mgoal_view'), mpct: $('.mpct'), mbar: $('.mbar'), ytdsum: $('.ytdsum'), goal_view: $('.goal_view'), ypct: $('.ypct'), ybar: $('.ybar'), autoMGoalToggle: $('.auto-mgoal-toggle') };
 
-    // Correctif : Intl.NumberFormat ajusté
     const fmt0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
     // --- Helpers et Gestion des Données ---
@@ -94,7 +93,6 @@ function initPlanPanel() {
             const v = round0(vals[idx]||0);
             const isGoalReached = v >= weeklyGoal && weeklyGoal > 0;
             
-            // Correctif : Couleurs CSS avec fallback
             const goalCheckHTML = `<span class="goal-check" style="font-size:1.2em; color:${isGoalReached ? 'var(--accent-green, #22c55e)' : 'var(--muted, #94a3b8)'};">${isGoalReached ? '✅' : '⬜️'}</span>`;
             const input = mode==='auto' ? `<input class="wk-val" type="number" value="${v}" style="width:160px" disabled />` : `<input class="wk-val" type="number" value="${v}" style="width:160px" />`;
             
@@ -120,12 +118,13 @@ function initPlanPanel() {
     }
 
     function recalc(){
-        // Correctif : Robustesse sur la case "Auto"
         const autoOn = !!els.autoMGoalToggle && els.autoMGoalToggle.checked;
         const view = els.view.value, mode = els.mode.value, ym = els.month.value;
         const [ySel, mSel] = ym.split('-').map(Number); const yearSel = Number(els.year.value);
         const prevData = loadPrevData();
-        const agoal = loadVal('goal', 'annual');
+        
+        // Correctif : Utiliser la valeur saisie si elle existe
+        const agoal = round0(els.goal?.value || loadVal('goal', 'annual'));
         
         if (autoOn) {
             const ytdBeforeCurrentMonth = Array.from({length: mSel - 1}, (_, i) => sumAnnualInMonth(prevData, ySel, i)).reduce((a, b) => a + b, 0);
@@ -138,7 +137,6 @@ function initPlanPanel() {
             els.mgoal.style.borderStyle = 'dashed';
             els.mgoal.style.cursor = 'not-allowed';
             els.mgoal.style.background = 'var(--surface)';
-
         } else if (els.mgoal) {
             els.mgoal.disabled = false;
             els.mgoal.style.opacity = '1';
@@ -210,10 +208,11 @@ function initPlanPanel() {
             recalc();
         });
     }
+    // Correctif : Recalculer dès qu’on saisit l’objectif annuel
+    if (els.goal) els.goal.addEventListener('input', recalc);
     
     // Initialisation
     fillMonthSelect();
-    // Correctif : Chargement de la vue en string
     const savedView = localStorage.getItem(k('state','view'));
     if (savedView) els.view.value = savedView;
     
