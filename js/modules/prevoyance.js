@@ -21,17 +21,13 @@ function initPrevoyancePanel() {
     els.file.addEventListener('change', async () => {
         const f = els.file.files && els.file.files[0];
         if (!f) return;
-
         try {
             const text = await readFileToTextOrCSV(f);
             const parsed = parseCSV(text);
             let normalized = parsed.rows.map(r => normalizeRow(r)).map(r => ({...r, source:'import'}));
-            const before = normalized.length;
-            const deduped = dedupeRows(normalized);
-            const removed = before - deduped.length;
-            data = deduped;
+            data = dedupeRows(normalized);
             saveData();
-            debug(`Import OK — ${data.length} lignes.` + (removed > 0 ? ` (${removed} doublon(s) ignoré(s))` : ''));
+            debug(`Import OK — ${data.length} lignes.` + (normalized.length > data.length ? ` (${normalized.length - data.length} doublon(s) ignoré(s))` : ''));
             renderAll();
         } catch(e) {
             debug('Erreur: ' + e);
@@ -73,29 +69,35 @@ function initPrevoyancePanel() {
     
     // --- FONCTIONS GRAPHIQUES CORRIGÉES ---
     function barChartSVG(values){
+        // On récupère les vraies valeurs des couleurs depuis le CSS
+        const computedStyles = getComputedStyle(root);
+        const mutedColor = computedStyles.getPropertyValue('--muted').trim() || '#94a3b8';
+        const borderColor = computedStyles.getPropertyValue('--border').trim() || '#334155';
+        const elevColor = computedStyles.getPropertyValue('--elev').trim() || '#1e293b';
+
         const labels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
         const w=680, h=220, pad=30, max=Math.max(10, ...values);
         const bw = (w - pad*2) / values.length;
+        
         const bars = values.map((v,i)=>{
             const x = pad + i*bw + 6;
             const bh = (v/max) * (h - pad*2);
             const y = h - pad - bh;
-            const fill = v > 0 ? 'url(#g)' : 'var(--elev)';
+            const fill = v > 0 ? 'url(#g)' : elevColor;
             return `<rect x="${x}" y="${y}" width="${bw-12}" height="${Math.max(1,bh)}" rx="6" ry="6" fill="${fill}"><title>${labels[i]}: ${fmt0.format(v)}</title></rect>`;
         }).join('');
+
         const xlabels = labels.map((lab,i)=>{
             const x = pad + i*bw + bw/2;
-            return `<text x="${x}" y="${h-8}" font-size="12" text-anchor="middle" fill="var(--muted)">${lab}</text>`;
+            return `<text x="${x}" y="${h-8}" font-size="12" text-anchor="middle" fill="${mutedColor}" style="font-family: Inter, system-ui, sans-serif; font-weight: 500;">${lab}</text>`;
         }).join('');
+
         const grid = [0.25,0.5,0.75,1].map(p=>{
             const y = pad + (1-p)*(h - pad*2);
-            return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" />`;
+            return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="${borderColor}" stroke-width="1"/>`;
         }).join('');
+
         return `<svg viewBox="0 0 ${w} ${h}" role="img">
-            <style>
-                text { font-family: Inter, system-ui, sans-serif; font-weight: 500; }
-                line { stroke: var(--border); stroke-width: 1; }
-            </style>
             <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent-green)"/><stop offset="100%" stop-color="var(--accent-blue)"/></linearGradient></defs>
             ${grid}${bars}${xlabels}
         </svg>`;
