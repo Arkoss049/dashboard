@@ -1,4 +1,4 @@
-// Contenu Corrigé pour js/modules/plan.js
+// Contenu Corrigé et Final pour js/modules/plan.js
 
 function initPlanPanel() {
     const root = document.getElementById('plan-panel');
@@ -47,7 +47,7 @@ function initPlanPanel() {
         }
         return weeks.map(w => round0(map.get(w.key)||0));
     }
-    // LIGNE CORRIGÉE CI-DESSOUS : r.annual devient d.annual
+    // LIGNE CORRIGÉE CI-DESSOUS
     function sumAnnualInMonth(data, year, month){ const ym = `${year}-${String(month+1).padStart(2,'0')}`; return round0(data.reduce((s,d)=> s + ((d.date||'').startsWith(ym) ? (Number(d.annual)||0) : 0), 0)); }
     const k = (type, key) => `plan.${type}.${key}`;
     function loadVal(type, key, def = 0){ return round0(localStorage.getItem(k(type,key))||def); }
@@ -160,14 +160,13 @@ function initPlanPanel() {
         const isMonthView = els.view.value === 'mois';
         els.monthContainers.forEach(el => el.style.display = isMonthView ? 'flex' : 'none');
         saveVal('state', 'view', els.view.value, 0);
-        renderWeeks();
         recalc();
     }
     
     els.view.addEventListener('change', onViewChange);
     els.year.addEventListener('change', () => { saveVal('state', 'year', els.year.value, 0); fillMonthSelect(); recalc(); });
     els.month.addEventListener('change', () => { localStorage.setItem(k('state','month'), els.month.value); if (!els.autoMGoalToggle.checked) { els.mgoal.value = loadVal('goal', els.month.value) || ''; } recalc(); });
-    els.mode.addEventListener('change', () => { renderWeeks(); recalc(); });
+    els.mode.addEventListener('change', () => { recalc(); });
     els.saveGoals.addEventListener('click', ()=>{ 
         saveVal('goal', 'annual', els.goal.value);
         if (!els.autoMGoalToggle.checked) {
