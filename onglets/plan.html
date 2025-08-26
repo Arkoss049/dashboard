@@ -1,55 +1,62 @@
 <div id="plan-panel">
-    <div class="grid">
-      <section class="card" style="grid-column: span 12">
-        <h3 class="section-title">Suivi hebdomadaire → Objectif mensuel → Objectif annuel</h3>
-        <div class="note">Cet outil vous aide à planifier et suivre votre CA Prévoyance semaine par semaine.</div>
-        <div class="hr"></div>
+ <div class="grid">
+ <section class="card" style="grid-column: span 12">
+ <h3 class="section-title">Suivi hebdomadaire → Objectif mensuel → Objectif annuel</h3>
+ <div class="note">Cet outil vous aide à planifier et suivre votre CA Prévoyance semaine par semaine.</div>
+ <div class="hr"></div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
-            <div><label class="small">Vue</label><select class="view"><option value="mois">Par Mois</option><option value="annee">Année Complète</option></select></div>
-            <div><label class="small">Année</label><select class="year"></select></div>
-            <div class="month-container"><label class="small">Mois</label><select class="month"></select></div>
-            <div><label class="small">Source des données</label><select class="mode"><option value="auto" selected>Automatique (depuis l'onglet Prévoyance)</option><option value="manual">Manuelle</option></select></div>
-        </div>
-        
-        <div class="hr"></div>
-        <h3 class="section-title">Objectifs</h3>
-        <div class="row" style="align-items: end;">
-            <div style="flex: 1;"><label class="small">Objectif annuel (€)</label><input class="goal" type="number" min="0" step="1000" placeholder="ex. 70000" /></div>
-            <div style="flex: 1;" class="month-container"><label class="small">Objectif du mois (€)</label><input class="mgoal" type="number" min="0" step="100" placeholder="ex. 6000" /></div>
-            <div class="actions"><button class="btn btn-primary saveGoals">Enregistrer les objectifs</button></div>
-        </div>
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end;">
+ <div><label class="small">Vue</label><select class="view"><option value="mois">Par Mois</option><option value="annee">Année Complète</option></select></div>
+ <div><label class="small">Année</label><select class="year"></select></div>
+ <div class="month-container"><label class="small">Mois</label><select class="month"></select></div>
+ <div><label class="small">Source des données</label><select class="mode"><option value="auto" selected>Automatique (depuis l'onglet Prévoyance)</option><option value="manual">Manuelle</option></select></div>
+ </div>
+ 
+ <div class="hr"></div>
+ <h3 class="section-title">Objectifs</h3>
+ <div class="row" style="align-items: end;">
+ <div style="flex: 1;"><label class="small">Objectif annuel (€)</label><input class="goal" type="number" min="0" step="1000" placeholder="ex. 70000" /></div>
+ <div style="flex: 1;" class="month-container">
+ <label class="small">Objectif du mois (€)</label>
+ <div style="display: flex; align-items: center; gap: 10px;">
+ <input class="mgoal" type="number" min="0" step="100" placeholder="ex. 6000" style="flex: 1;" />
+ <input type="checkbox" id="auto-mgoal-toggle" class="auto-mgoal-toggle" checked>
+ <label for="auto-mgoal-toggle" class="small" style="cursor: pointer; user-select: none;">Auto</label>
+ </div>
+ </div>
+ <div class="actions"><button class="btn btn-primary saveGoals">Enregistrer les objectifs</button></div>
+ </div>
 
-      </section>
+ </section>
 
-      <section class="card" style="grid-column: span 12">
-        <div class="row" style="justify-content: space-between;">
-          <h3 class="section-title" style="margin:0;">Détail des semaines</h3>
-          <div class="actions">
-            <button class="btn btn-ghost export">Exporter (CSV)</button>
-            <button class="btn btn-danger reset">Réinitialiser les entrées manuelles</button>
-          </div>
-        </div>
-        <div class="hr"></div>
-        <div class="weeks"></div>
-      </section>
+ <section class="card" style="grid-column: span 12">
+ <div class="row" style="justify-content: space-between;">
+ <h3 class="section-title" style="margin:0;">Détail des semaines</h3>
+ <div class="actions">
+ <button class="btn btn-ghost export">Exporter (CSV)</button>
+ <button class="btn btn-danger reset">Réinitialiser les entrées manuelles</button>
+ </div>
+ </div>
+ <div class="hr"></div>
+ <div class="weeks"></div>
+ </section>
 
-      <section class="card" style="grid-column: span 12;">
-        <h3 class="section-title">Synthèse</h3>
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="kpi card month-container">
-                <div class="label">Avancement Mensuel</div>
-                <div class="value msum">0 €</div>
-                <div class="delta">Objectif : <span class="mgoal_view">—</span> • Progression : <span class="mpct">0%</span></div>
-                <div class="progress"><div class="bar mbar" style="width:0%"></div></div>
-            </div>
-            <div class="kpi card">
-                <div class="label">Avancement Annuel (jusqu'à la période sélectionnée)</div>
-                <div class="value ytdsum">0 €</div>
-                <div class="delta">Objectif : <span class="goal_view">—</span> • Progression : <span class="ypct">0%</span></div>
-                <div class="progress"><div class="bar ybar" style="width:0%"></div></div>
-            </div>
-        </div>
-      </section>
-    </div>
+ <section class="card" style="grid-column: span 12;">
+ <h3 class="section-title">Synthèse</h3>
+ <div style="display: flex; flex-direction: column; gap: 16px;">
+ <div class="kpi card month-container">
+ <div class="label">Avancement Mensuel</div>
+ <div class="value msum">0 €</div>
+ <div class="delta">Objectif : <span class="mgoal_view">—</span> • Progression : <span class="mpct">0%</span></div>
+ <div class="progress"><div class="bar mbar" style="width:0%"></div></div>
+ </div>
+ <div class="kpi card">
+ <div class="label">Avancement Annuel (jusqu'à la période sélectionnée)</div>
+ <div class="value ytdsum">0 €</div>
+ <div class="delta">Objectif : <span class="goal_view">—</span> • Progression : <span class="ypct">0%</span></div>
+ <div class="progress"><div class="bar ybar" style="width:0%"></div></div>
+ </div>
+ </div>
+ </section>
+ </div>
 </div>
