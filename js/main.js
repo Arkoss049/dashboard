@@ -26,7 +26,6 @@ if (themeToggle) {
 const tabs = document.querySelectorAll('.tab');
 const appContent = document.getElementById('app-content');
 const loadedModules = new Set();
-const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 async function loadTabContent(tabId) {
     appContent.innerHTML = '<div class="grid"><div class="card" style="grid-column: span 12;">Chargement...</div></div>';
@@ -37,15 +36,14 @@ async function loadTabContent(tabId) {
         if (!response.ok) throw new Error(`Le fichier de l'onglet "${tabId}" est introuvable.`);
         
         const html = await response.text();
-        appContent.innerHTML = html; // Le HTML est maintenant en place
+        appContent.innerHTML = html;
 
-        // Étape 2 : Charger le JavaScript spécifique
+        // Étape 2 : Charger et exécuter le JavaScript spécifique à l'onglet
         const modulePath = `js/modules/${tabId}.js`;
         
-        // On ne recharge pas un module déjà chargé pour éviter les bugs
+        const initFunctionName = `init${capitalize(tabId)}Panel`;
+
         if (loadedModules.has(tabId)) {
-            // Si le module est déjà là, on ré-exécute simplement sa fonction d'initialisation
-            const initFunctionName = `init${capitalize(tabId)}Panel`;
             if (typeof window[initFunctionName] === 'function') {
                 window[initFunctionName]();
             }
@@ -57,12 +55,10 @@ async function loadTabContent(tabId) {
             const script = document.createElement('script');
             script.src = modulePath;
             
-            // Étape 3 (LA CORRECTION) : On attend que le script soit chargé avant d'exécuter sa fonction
             script.onload = () => {
-                const initFunctionName = `init${capitalize(tabId)}Panel`; // ex: initPrevoyancePanel
                 if (typeof window[initFunctionName] === 'function') {
-                    window[initFunctionName](); // On appelle la fonction d'initialisation
-                    loadedModules.add(tabId); // On marque le module comme chargé
+                    window[initFunctionName]();
+                    loadedModules.add(tabId);
                 }
             };
             
