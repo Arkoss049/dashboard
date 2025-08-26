@@ -1,0 +1,70 @@
+<div id="calculateur-panel">
+    <div class="grid">
+      <section class="card" style="grid-column: span 12;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 16px;">
+          
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="card">
+              <h3 class="section-title">Paramètres</h3>
+              <div class="row">
+                  <label class="small" style="flex:1;">Profil</label>
+                  <select class="profile" data-save="1" style="flex:2;">
+                      <option value="confirme">Conseiller confirmé</option>
+                      <option value="qualifie">Conseiller qualifié</option>
+                  </select>
+              </div>
+              <div class="actions" style="margin-top:16px;">
+                  <button class="btn btn-danger clear">Réinitialiser les paramètres</button>
+                  <button class="btn btn-ghost pullPrev">← Importer CA Prévoyance</button>
+                </div>
+            </div>
+            <div class="card">
+              <h3 class="section-title">Entrées Annuelles</h3>
+              <div class="row"><label class="small" style="flex:1;">CA Prévoyance (€)</label><input class="ca_prev" data-save="1" type="number" min="0" step="1" placeholder="ex. 30000" style="flex:2;" /></div>
+              <div class="row"><label class="small" style="flex:1;">Contrats ER (nbre)</label><input class="nb_er" data-save="1" type="number" min="0" step="1" placeholder="ex. 11" style="flex:2;" /></div>
+              <div class="row"><label class="small" style="flex:1;">CA ER (€)</label><input class="ca_er" data-save="1" type="number" min="0" step="1" placeholder="ex. 55000" style="flex:2;" /></div>
+            </div>
+             <div class="card">
+                <h3 class="section-title">Qualitatif & Collectif</h3>
+                <div class="row"><label class="small" style="flex:1;">Majoration Néobsia</label><select class="q_neo" data-save="1" style="flex:2;"><option value="0">—</option><option value="5">Palier 1 (+5%)</option><option value="10">Palier 2 (+10%)</option><option value="20">Palier 3 (+20%)</option></select></div>
+                <div class="row"><label class="small" style="flex:1;">Majoration Multi</label><select class="q_multi" data-save="1" style="flex:2;"><option value="0">—</option><option value="5">Palier 1 (+5%)</option><option value="10">Palier 2 (+10%)</option><option value="20">Palier 3 (+20%)</option></select></div>
+                <div class="row"><label class="small" style="flex:1;">Collectif Santé</label><select class="coll_palier" data-save="1" style="flex:2;"><option value="0">—</option><option value="1">P1 (280 €)</option><option value="2">P2 (555 €)</option><option value="3">P3 (885 €)</option></select></div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:16px;">
+              <section class="card">
+                <div class="actions"><button class="btn btn-primary calc" style="width:100%;">Calculer la Prime</button></div>
+                <div class="hr"></div>
+                <h3 class="section-title">Résultats de la Simulation</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
+                  <div class="kpi card"><div class="label">% atteinte Prévoyance</div><div class="value ro_prev">0%</div><div class="delta badge ro_prev_badge">—</div></div>
+                  <div class="kpi card"><div class="label">% atteinte ER Contrats</div><div class="value ro_er_c">0%</div><div class="delta badge ro_er_c_badge">—</div></div>
+                  <div class="kpi card"><div class="label">% atteinte ER CA€</div><div class="value ro_er_e">0%</div><div class="delta badge ro_er_e_badge">—</div></div>
+                  <div class="kpi card"><div class="label">Prime Économique</div><div class="value prime_eco">0 €</div></div>
+                  <div class="kpi card"><div class="label">Surperformance</div><div class="value prime_surperf">0 €</div></div>
+                  <div class="kpi card"><div class="label">Bonifs Qualité</div><div class="value prime_qual">0 €</div></div>
+                  <div class="kpi card"><div class="label">Collectif Santé</div><div class="value prime_coll">0 €</div></div>
+                  <div class="kpi card" style="background: var(--elev);"><div class="label">Prime Totale</div><div class="value total">0 €</div></div>
+                </div>
+              </section>
+              <section class="card">
+                  <h3 class="section-title">Détail du calcul</h3>
+                  <textarea class="details" rows="8" readonly>Cliquez sur "Calculer la Prime" pour voir le détail.</textarea>
+              </section>
+               <div class="card">
+                <h3 class="section-title">Paramètres avancés (Barèmes & Surperformance)</h3>
+                <div class="note">Ces valeurs sont chargées automatiquement selon le profil. Modifiez-les uniquement pour des simulations spécifiques.</div>
+                <div class="hr"></div>
+                <div class="row"><label class="small" style="flex:1;">Barème Prévoyance</label><input class="b_prev" data-save="1" type="text" style="flex:2;"></div>
+                <div class="row"><label class="small" style="flex:1;">Barème ER Contrats</label><input class="b_er_c" data-save="1" type="text" style="flex:2;"></div>
+                <div class="row"><label class="small" style="flex:1;">Barème ER CA€</label><input class="b_er_e" data-save="1" type="text" style="flex:2;"></div>
+                <div class="hr"></div>
+                <div class="row"><label class="small" style="flex:1;">Bonus Surperf Prév / 5%</label><input class="surprev" data-save="1" type="number" value="100" style="flex:2;"></div>
+                <div class="row"><label class="small" style="flex:1;">Bonus Surperf ER / 5%</label><input class="surer" data-save="1" type="number" value="20" style="flex:2;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+</div>
