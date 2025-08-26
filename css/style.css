@@ -344,3 +344,19 @@ svg{
 .right{
     text-align:right;
 }
+
+/* ===== Correctif pour les Graphiques SVG ===== */
+
+.chart svg text {
+    font-size: 12px;
+    fill: var(--muted);
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.chart svg line {
+    stroke: var(--border);
+    stroke-width: 1;
+}
+
+/* Fin du correctif */
