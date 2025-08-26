@@ -71,15 +71,7 @@ function initPrevoyancePanel() {
         const buckets = new Array(12).fill(0);
         yearRows.forEach(d => { if(!d.date) return; const m = Number(d.date.slice(5,7)) - 1; buckets[m] += Number(d.annual)||0; });
         
-        // On récupère les couleurs ici, une seule fois
-        const computedStyles = getComputedStyle(root);
-        const themeColors = {
-            muted: computedStyles.getPropertyValue('--muted').trim() || '#94a3b8',
-            border: computedStyles.getPropertyValue('--border').trim() || '#334155',
-            elev: computedStyles.getPropertyValue('--elev').trim() || '#1e293b'
-        };
-
-        els.chartMonthly.innerHTML = barChartSVG(buckets, themeColors);
+        els.chartMonthly.innerHTML = barChartHTML(buckets);
         
         const map = {}; 
         data.forEach(d => { const key=(d.produit||'Inconnu'); map[key]=(map[key]||0)+(Number(d.annual)||0); });
@@ -89,33 +81,35 @@ function initPrevoyancePanel() {
 
     function renderTable(){ const y = Number(els.filterYear.value) || yearNow(); const q = (els.search.value||'').toLowerCase(); const rows = data.filter(d => { const txt = (d.prenom+' '+d.nom+' '+d.produit).toLowerCase(); if(q && !txt.includes(q)) return false; const yearOK = !d.date || d.date.startsWith(String(y)); if(!yearOK) return false; return true; }); rows.sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (Number(b.annual)||0)-(Number(a.annual)||0)); els.tbody.innerHTML = rows.map(r => `<tr data-id="${r.id||''}"><td>${esc(r.prenom||'')}</td><td>${esc(r.nom||'')}</td><td>${esc(r.produit||'')}</td><td class="right">${fmt0.format(Number(r.annual)||0)}</td><td>${r.date || '—'}</td><td>${r.source==='manual' ? '<button class="btn btn-ghost edit" data-id="'+(r.id||'')+'">✏️</button> <button class="btn btn-danger del" data-id="'+(r.id||'')+'">🗑</button>' : '—'}</td></tr>`).join(''); }
     
-    function barChartSVG(values, colors){
+    // --- FONCTIONS GRAPHIQUES CORRIGÉES (HYBRIDE HTML/SVG) ---
+    function barChartHTML(values){
         const labels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-        const w=680, h=220, pad=30, max=Math.max(10, ...values);
-        const bw = (w - pad*2) / values.length;
+        const max = Math.max(10, ...values);
+
+        const gridlinesHTML = [0.25, 0.5, 0.75, 1].map(p => 
+            `<div style="position: absolute; top: ${(1-p)*100}%; left: 0; right: 0; height: 1px; background: var(--border); opacity: 0.5;"></div>`
+        ).join('');
+
+        const barsHTML = values.map((v,i)=>{
+            const height = (v/max) * 100;
+            return `<div style="width: calc(100% / 12); display: flex; align-items: flex-end; justify-content: center;">
+                        <div style="width: 60%; height: ${height}%; background: linear-gradient(to top, var(--accent-blue), var(--accent-green)); border-radius: 6px 6px 0 0;" title="${labels[i]}: ${fmt0.format(v)}"></div>
+                    </div>`;
+        }).join('');
         
-        const bars = values.map((v,i)=>{
-            const x = pad + i*bw + 6;
-            const bh = (v/max) * (h - pad*2);
-            const y = h - pad - bh;
-            const fill = v > 0 ? 'url(#g)' : colors.elev;
-            return `<rect x="${x}" y="${y}" width="${bw-12}" height="${Math.max(1,bh)}" rx="6" ry="6" fill="${fill}"><title>${labels[i]}: ${fmt0.format(v)}</title></rect>`;
-        }).join('');
+        const labelsHTML = labels.map(lab => 
+            `<div style="width: calc(100% / 12); text-align: center; font-size: 12px; color: var(--muted);">${lab}</div>`
+        ).join('');
 
-        const xlabels = labels.map((lab,i)=>{
-            const x = pad + i*bw + bw/2;
-            return `<text x="${x}" y="${h-8}" font-size="12" text-anchor="middle" fill="${colors.muted}" style="font-family: Inter, system-ui, sans-serif; font-weight: 500;">${lab}</text>`;
-        }).join('');
-
-        const grid = [0.25,0.5,0.75,1].map(p=>{
-            const y = pad + (1-p)*(h - pad*2);
-            return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="${colors.border}" stroke-width="1"/>`;
-        }).join('');
-
-        return `<svg viewBox="0 0 ${w} ${h}" role="img">
-            <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent-green)"/><stop offset="100%" stop-color="var(--accent-blue)"/></linearGradient></defs>
-            ${grid}${bars}${xlabels}
-        </svg>`;
+        return `
+            <div style="height: 100%; display: flex; flex-direction: column;">
+                <div style="flex-grow: 1; position: relative;">
+                    <div style="position: absolute; inset: 0 0 0 0;">${gridlinesHTML}</div>
+                    <div style="display: flex; height: 100%; position: relative; z-index: 1;">${barsHTML}</div>
+                </div>
+                <div style="display: flex; height: 20px; padding-top: 4px;">${labelsHTML}</div>
+            </div>
+        `;
     }
     
     function pieChartSVG(entries){
