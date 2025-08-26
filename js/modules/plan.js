@@ -1,4 +1,4 @@
-// Contenu Révisé et Final pour js/modules/plan.js
+// Contenu Corrigé avec votre patch pour js/modules/plan.js
 
 function initPlanPanel() {
     const root = document.getElementById('plan-panel');
@@ -47,8 +47,6 @@ function initPlanPanel() {
         }
         return weeks.map(w => round0(map.get(w.key)||0));
     }
-    
-    // CORRECTION DÉFINITIVE de la fonction
     function sumAnnualInMonth(data, year, month){
         const ym = `${year}-${String(month + 1).padStart(2, '0')}`;
         return round0(data.reduce((sum, currentItem) => {
@@ -58,7 +56,6 @@ function initPlanPanel() {
             return sum;
         }, 0));
     }
-
     const k = (type, key) => `plan.${type}.${key}`;
     function loadVal(type, key, def = 0){ return round0(localStorage.getItem(k(type,key))||def); }
     function saveVal(type, key, val){ localStorage.setItem(k(type, key), String(round0(val))); }
@@ -93,20 +90,27 @@ function initPlanPanel() {
         els.weeks.innerHTML = wdefs.map((w,idx)=>{
             const v = round0(vals[idx]||0);
             const isGoalReached = v >= weeklyGoal && weeklyGoal > 0;
-            const goalCheckHTML = `<span class="goal-check" style="font-size: 1.2em; color: ${isGoalReached ? 'var(--accent-green)' : 'var(--border)'}; transition: color 0.3s ease;">${isGoalReached ? '✓' : '—'}</span>`;
-            const input = mode==='auto' ? `<input data-week="${idx}" type="number" value="${v}" style="width:160px" disabled />` : `<input data-week="${idx}" type="number" value="${v}" style="width:160px" />`;
             
-            return `<div class="row" style="gap:12px; align-items:center; margin-bottom: 8px;">
-                        <div class="small" style="width:320px; font-family:monospace;">S${String(w.isoWeek).padStart(2,'0')} : ${w.start} → ${w.end}</div>
-                        ${input}<span class="small">€</span>
+            // INTÉGRATION DE VOTRE PATCH CORRIGÉ
+            const goalCheckHTML = `<span class="goal-check" style="font-size:1.2em; color:${isGoalReached ? 'var(--accent-green)' : 'var(--muted)'};">${isGoalReached ? '✅' : '⬜️'}</span>`;
+
+            const input = mode==='auto' ? `<input class="wk-val" type="number" value="${v}" style="width:160px" disabled />` : `<input class="wk-val" type="number" value="${v}" style="width:160px" />`;
+            
+            return `<div class="week-row" data-idx="${idx}">
+                        <div class="wk-label">
+                            <strong>S${String(w.isoWeek).padStart(2,'0')}</strong>
+                            <small>${w.start} → ${w.end}</small>
+                        </div>
+                        ${input}
+                        <span class="small">€</span>
                         ${goalCheckHTML}
                     </div>`;
         }).join('');
 
         if(mode!=='auto'){
-            els.weeks.querySelectorAll('input[type="number"]').forEach(inp=>{
+            els.weeks.querySelectorAll('input.wk-val').forEach(inp=>{
                 inp.addEventListener('input', ()=>{
-                    const current = Array.from(els.weeks.querySelectorAll('input')).map(x=> round0(x.value||0));
+                    const current = Array.from(els.weeks.querySelectorAll('input.wk-val')).map(x=> round0(x.value||0));
                     if(view==='mois'){ saveArr('month', ym, current); } else { saveArr('year', yearSel, current); }
                     recalc();
                 });
@@ -127,7 +131,6 @@ function initPlanPanel() {
             const newMGoal = monthsRemaining > 0 ? round0(remainingGoal / monthsRemaining) : 0;
             els.mgoal.value = newMGoal > 0 ? newMGoal : 0;
             els.mgoal.disabled = true;
-            // CORRECTION VISUELLE : Appliquer un style directement
             els.mgoal.style.opacity = '0.7';
             els.mgoal.style.borderStyle = 'dashed';
             els.mgoal.style.cursor = 'not-allowed';
@@ -135,13 +138,12 @@ function initPlanPanel() {
 
         } else {
             els.mgoal.disabled = false;
-            // CORRECTION VISUELLE : Retirer le style quand c'est actif
             els.mgoal.style.opacity = '1';
             els.mgoal.style.borderStyle = 'solid';
             els.mgoal.style.cursor = 'text';
             els.mgoal.style.background = 'var(--elev)';
         }
-
+        
         const wdefs = view==='mois' ? isoWeeksForMonth(ySel, mSel-1) : isoWeeksForYear(yearSel);
         const vals = (mode==='auto' ? autoTotalsFor(wdefs) : (view==='mois' ? loadArr('month', ym) : loadArr('year', yearSel))).map(round0);
         
