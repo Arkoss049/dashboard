@@ -1,4 +1,4 @@
-// Contenu Corrigé avec votre patch pour js/modules/plan.js
+// Contenu final pour js/modules/plan.js
 
 function initPlanPanel() {
     const root = document.getElementById('plan-panel');
@@ -6,6 +6,9 @@ function initPlanPanel() {
 
     const $ = sel => root.querySelector(sel);
     const els = { view: $('.view'), year: $('.year'), month: $('.month'), monthContainers: root.querySelectorAll('.month-container'), goal: $('.goal'), mgoal: $('.mgoal'), saveGoals: $('.saveGoals'), mode: $('.mode'), weeks: $('.weeks'), exportBtn: $('.export'), resetBtn: $('.reset'), msum: $('.msum'), mgoal_view: $('.mgoal_view'), mpct: $('.mpct'), mbar: $('.mbar'), ytdsum: $('.ytdsum'), goal_view: $('.goal_view'), ypct: $('.ypct'), ybar: $('.ybar'), autoMGoalToggle: $('.auto-mgoal-toggle') };
+
+    // VOTRE CORRECTIF : Définition de fmt0
+    const fmt0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
     // --- Helpers et Gestion des Données ---
     function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -91,9 +94,7 @@ function initPlanPanel() {
             const v = round0(vals[idx]||0);
             const isGoalReached = v >= weeklyGoal && weeklyGoal > 0;
             
-            // INTÉGRATION DE VOTRE PATCH CORRIGÉ
             const goalCheckHTML = `<span class="goal-check" style="font-size:1.2em; color:${isGoalReached ? 'var(--accent-green)' : 'var(--muted)'};">${isGoalReached ? '✅' : '⬜️'}</span>`;
-
             const input = mode==='auto' ? `<input class="wk-val" type="number" value="${v}" style="width:160px" disabled />` : `<input class="wk-val" type="number" value="${v}" style="width:160px" />`;
             
             return `<div class="week-row" data-idx="${idx}">
@@ -109,104 +110,4 @@ function initPlanPanel() {
 
         if(mode!=='auto'){
             els.weeks.querySelectorAll('input.wk-val').forEach(inp=>{
-                inp.addEventListener('input', ()=>{
-                    const current = Array.from(els.weeks.querySelectorAll('input.wk-val')).map(x=> round0(x.value||0));
-                    if(view==='mois'){ saveArr('month', ym, current); } else { saveArr('year', yearSel, current); }
-                    recalc();
-                });
-            });
-        }
-    }
-
-    function recalc(){
-        const view = els.view.value, mode = els.mode.value, ym = els.month.value;
-        const [ySel, mSel] = ym.split('-').map(Number); const yearSel = Number(els.year.value);
-        const prevData = loadPrevData();
-        const agoal = loadVal('goal', 'annual');
-        
-        if (els.autoMGoalToggle.checked) {
-            const ytdBeforeCurrentMonth = Array.from({length: mSel - 1}, (_, i) => sumAnnualInMonth(prevData, ySel, i)).reduce((a, b) => a + b, 0);
-            const remainingGoal = agoal - ytdBeforeCurrentMonth;
-            const monthsRemaining = 12 - (mSel - 1);
-            const newMGoal = monthsRemaining > 0 ? round0(remainingGoal / monthsRemaining) : 0;
-            els.mgoal.value = newMGoal > 0 ? newMGoal : 0;
-            els.mgoal.disabled = true;
-            els.mgoal.style.opacity = '0.7';
-            els.mgoal.style.borderStyle = 'dashed';
-            els.mgoal.style.cursor = 'not-allowed';
-            els.mgoal.style.background = 'var(--surface)';
-
-        } else {
-            els.mgoal.disabled = false;
-            els.mgoal.style.opacity = '1';
-            els.mgoal.style.borderStyle = 'solid';
-            els.mgoal.style.cursor = 'text';
-            els.mgoal.style.background = 'var(--elev)';
-        }
-        
-        const wdefs = view==='mois' ? isoWeeksForMonth(ySel, mSel-1) : isoWeeksForYear(yearSel);
-        const vals = (mode==='auto' ? autoTotalsFor(wdefs) : (view==='mois' ? loadArr('month', ym) : loadArr('year', yearSel))).map(round0);
-        
-        const msum = vals.reduce((s,x)=> s+x, 0);
-        const mgoal = round0(els.mgoal.value);
-        
-        els.mgoal_view.textContent = fmt0.format(mgoal);
-        const mpct = mgoal > 0 ? (msum/mgoal*100) : 0;
-        els.msum.textContent = fmt0.format(msum);
-        els.mpct.textContent = `${mpct.toFixed(1)}%`;
-        els.mbar.style.width = `${Math.min(100, mpct)}%`;
-        els.mbar.style.background = mpct >= 100 ? 'var(--ok)' : 'var(--warn)';
-
-        let ytd = 0;
-        if(mode==='auto'){
-            for(let mm=0; mm < (view==='mois' ? mSel : 12); mm++) { ytd += sumAnnualInMonth(prevData, yearSel, mm); }
-        } else {
-            if (view === 'mois') {
-                 for(let mm=1; mm<=mSel; mm++){ const ymx = `${yearSel}-${String(mm).padStart(2,'0')}`; ytd += loadArr('month', ymx).reduce((s,x)=>s+x,0); }
-            } else {
-                ytd = loadArr('year', yearSel).reduce((s,x)=>s+x,0);
-            }
-        }
-        
-        els.goal_view.textContent = fmt0.format(agoal);
-        const ypct = agoal > 0 ? (ytd/agoal*100) : 0;
-        els.ytdsum.textContent = fmt0.format(ytd);
-        els.ypct.textContent = `${ypct.toFixed(1)}%`;
-        els.ybar.style.width = `${Math.min(100, ypct)}%`;
-        els.ybar.style.background = ypct >= 100 ? 'var(--ok)' : 'var(--warn)';
-        
-        renderWeeks();
-    }
-
-    // --- Événements ---
-    function onViewChange(){
-        const isMonthView = els.view.value === 'mois';
-        els.monthContainers.forEach(el => el.style.display = isMonthView ? 'flex' : 'none');
-        saveVal('state', 'view', els.view.value, 0);
-        recalc();
-    }
-    
-    els.view.addEventListener('change', onViewChange);
-    els.year.addEventListener('change', () => { saveVal('state', 'year', els.year.value, 0); fillMonthSelect(); recalc(); });
-    els.month.addEventListener('change', () => { localStorage.setItem(k('state','month'), els.month.value); if (!els.autoMGoalToggle.checked) { els.mgoal.value = loadVal('goal', els.month.value) || ''; } recalc(); });
-    els.mode.addEventListener('change', () => { recalc(); });
-    els.saveGoals.addEventListener('click', ()=>{ 
-        saveVal('goal', 'annual', els.goal.value);
-        if (!els.autoMGoalToggle.checked) {
-            saveVal('goal', els.month.value, els.mgoal.value);
-        }
-        recalc(); 
-        alert('Objectifs enregistrés !'); 
-    });
-    els.autoMGoalToggle.addEventListener('change', () => {
-        if (!els.autoMGoalToggle.checked) {
-            els.mgoal.value = loadVal('goal', els.month.value) || '';
-        }
-        recalc();
-    });
-    
-    // Initialisation
-    fillMonthSelect();
-    els.goal.value = loadVal('goal', 'annual') || '';
-    onViewChange();
-}
+                inp.addEventListener('input
