@@ -1,4 +1,4 @@
-// Contenu pour js/modules/calculateur.js
+// Contenu Corrigé pour js/modules/calculateur.js
 
 function initCalculateurPanel() {
     const root = document.getElementById('calculateur-panel');
@@ -37,9 +37,12 @@ function initCalculateurPanel() {
         els.total.textContent = fmt0.format(total);
         const br = [`Profil: ${pf.label}`,`Objectifs: Prév(${fmt0.format(objPrev)}), ER Ctr(${objER}), ER CA(${fmt0.format(objEREur)})`,'---', `R/O Prév: ${roPrev.toFixed(1)}% -> Prime ${fmt0.format(pPrev)}`, `R/O ER Ctr: ${roERc.toFixed(1)}% -> Prime ${fmt0.format(pERc)}`, `R/O ER CA: ${roERe.toFixed(1)}% -> Prime ${fmt0.format(pERe)}`, `Surperf: ${fmt0.format(primeSurperf)}`, `Qualitatif: +${qNeo+qMul}% -> ${fmt0.format(primeQual)}`, `Collectif: ${fmt0.format(primeColl)}`, `TOTAL: ${fmt0.format(total)}`];
         els.details.value = br.join('\n');
+
+        // LIGNE CORRIGÉE : Sauvegarder le résultat pour l'onglet global
+        const state = { caPrev, objPrev, nbER, objER, caER, objEREur, roPrev, roERc, roERe, total };
+        localStorage.setItem(SAVE_PREFIX + 'lastCalc', JSON.stringify(state));
     }
 
-    // Attacher les événements
     restoreAll(); 
     const savedProfile = localStorage.getItem(SAVE_PREFIX+'profile') || 'confirme'; 
     els.profile.value = savedProfile; 
@@ -57,11 +60,8 @@ function initCalculateurPanel() {
             root.querySelectorAll('[data-save="1"]').forEach(el => { 
                 localStorage.removeItem(SAVE_PREFIX + el.className.split(' ')[0]); 
             });
-            // Re-apply a default profile after clearing
             applyProfile('confirme');
         }
     });
-
-    // Premier calcul au chargement
     compute(); 
 }
