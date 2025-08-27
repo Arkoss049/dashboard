@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Simulateur Décès — Mode Simple (Régime général 2025, sans AT/MP) v1.1</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root{ --bg:#0e1117; --panel:#141a24; --ink:#e8eef6; --muted:#9bb1c9; --grid:#253347; --acc:#6ae3ff; --ok:#80f2a1; --warn:#ffd166; --bad:#ff7b7b; }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:0 0 6px}
+  h2{font-size:16px;margin:12px 0 8px;color:var(--acc)}
+  .hint{color:var(--muted);font-size:13px}
+  .grid{display:grid;gap:10px}
+  .cols{grid-template-columns:repeat(12,minmax(0,1fr))}
+  .col-4{grid-column:span 4}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+  @media (max-width:960px){.col-4,.col-8{grid-column:span 12}}
+  .card{background:var(--panel);border:1px solid #1f2939;border-radius:12px;padding:12px}
+  label{display:block;font-size:12px;color:#cfe1f7;margin:4px 0}
+  input,select{width:100%;background:#0b1018;color:var(--ink);border:1px solid #243149;border-radius:9px;padding:9px 10px;font-size:14px}
+  input[type="checkbox"]{width:auto;transform:translateY(2px)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .btn{background:#182234;border:1px solid #27344b;border-radius:10px;color:#e7f1ff;font-weight:600;padding:8px 10px;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:#0f1625}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#101623;border:1px solid #243149;color:#cfe1f7;border-radius:999px;padding:5px 9px;font-size:12px;cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px}
+  .kpi{background:#0d1421;border:1px solid #27344b;border-radius:12px;padding:10px}
+  .kpi h3{margin:0;font-size:12px;color:#b9c9de}
+  .kpi .v{margin-top:6px;font-size:20px;font-weight:800white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;}
+  .pill{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:3px 8px;border:1px solid #2a3951;font-size:12px}
+  .pill.ok{background:#0f2116;color:#9bffb1;border-color:#234f34}
+  .pill.ko{background:#231014;color:#ff9a9a;border-color:#5a2323}
+  .pill.warn{background:#241f0e;color:#ffd166;border-color:#5a5423}
+  .toggle{display:flex;align-items:center;gap:8px}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .details{display:none}
+  .details.open{display:block}
+  canvas{width:100%!important;height:440px!important;background:#0b0f18;border:1px solid #1c273a;border-radius:12px}
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+  th,td{padding:9px;border-bottom:1px solid #24324a;text-align:right;font-variant-numeric:tabular-nums}
+  th{position:sticky;top:0;background:var(--panel);text-align:right;color:#b4c3d9}
+  td:first-child,th:first-child{text-align:left}
+  .muted{color:var(--muted)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .banner{border:1px solid #5a2323;background:#231014;color:#ff9a9a;padding:8px;border-radius:8px;margin:8px 0;display:none}
+  .banner.show{display:block}
+<style>
+  :root{ --bg:#0e1117; --panel:#141a24; --ink:#e8eef6; --muted:#9bb1c9; --grid:#253347; --acc:#6ae3ff; --ok:#80f2a1; --warn:#ffd166; --bad:#ff7b7b; }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:0 0 6px}
+  h2{font-size:16px;margin:12px 0 8px;color:var(--acc)}
+  .hint{color:var(--muted);font-size:13px}
+  .grid{display:grid;gap:10px}
+  .cols{grid-template-columns:repeat(12,minmax(0,1fr))}
+  .col-4{grid-column:span 4}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+  @media (max-width:960px){.col-4,.col-8{grid-column:span 12}}
+  .card{background:var(--panel);border:1px solid #1f2939;border-radius:12px;padding:12px}
+  label{display:block;font-size:12px;color:#cfe1f7;margin:4px 0}
+  input,select{width:100%;background:#0b1018;color:var(--ink);border:1px solid #243149;border-radius:9px;padding:9px 10px;font-size:14px}
+  input[type="checkbox"]{width:auto;transform:translateY(2px)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .btn{background:#182234;border:1px solid #27344b;border-radius:10px;color:#e7f1ff;font-weight:600;padding:8px 10px;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:#0f1625}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#101623;border:1px solid #243149;color:#cfe1f7;border-radius:999px;padding:5px 9px;font-size:12px;cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px}
+  .kpi{background:#0d1421;border:1px solid #27344b;border-radius:12px;padding:10px}
+  .kpi h3{margin:0;font-size:12px;color:#b9c9de}
+  .kpi .v{margin-top:6px;font-size:20px;font-weight:800white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;}
+  .pill{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:3px 8px;border:1px solid #2a3951;font-size:12px}
+  .pill.ok{background:#0f2116;color:#9bffb1;border-color:#234f34}
+  .pill.ko{background:#231014;color:#ff9a9a;border-color:#5a2323}
+  .pill.warn{background:#241f0e;color:#ffd166;border-color:#5a5423}
+  .toggle{display:flex;align-items:center;gap:8px}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .details{display:none}
+  .details.open{display:block}
+  canvas{width:100%!important;height:440px!important;background:#0b0f18;border:1px solid #1c273a;border-radius:12px}
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px}
+  th,td{padding:9px;border-bottom:1px solid #24324a;text-align:right;font-variant-numeric:tabular-nums}
+  th{position:sticky;top:0;background:var(--panel);text-align:right;color:#b4c3d9}
+  td:first-child,th:first-child{text-align:left}
+  .muted{color:var(--muted)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .banner{border:1px solid #5a2323;background:#231014;color:#ff9a9a;padding:8px;border-radius:8px;margin:8px 0;display:none}
+  .banner.show{display:block}
+
+.recap{background:#111a28;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px 16px;margin-top:8px}
+.recap h3{margin:0 0 8px 0;color:#d6e4f5;font-weight:600;font-size:16px}
+.recap .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:6px}
+.recap .item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.recap .item b{color:#a9c3e6}
+.recap .item .val{font-variant-numeric:tabular-nums;letter-spacing:.3px}
+.recap .hint{font-size:12px;opacity:.7;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="section-title">
+    <h1>Simulateur de pouvoir d’achat après décès — <span class="hint">Régime général (2025) — sans AT/MP</span></h1>
+    <div class="toolbar">
+      <button id="btnSave" class="btn">💾 Sauver</button>
+      <button id="btnReset" class="btn ghost">♻️ Réinit</button>
+      <button id="btnCSV" class="btn">⬇️ Export CSV</button>
+    </div>
+    <div class="toolbar" style="margin-top:6px">
+      <button id="btnMode" class="btn">🗓 Mode: Année</button>
+      <label class="toggle"><input id="toggleStacked" type="checkbox" checked/> Barres empilées</label>
+      <button id="btnPNG" class="btn">🖼 Export PNG</button>
+    </div>
+  </div>
+  <div class="hint">Version <b>simple</b> (exclusions respectées : <b>mariage</b> pour veuvage/réversion, <b>plafonds de ressources</b>, <b>parent isolé</b> pour ASF). AT/MP exclu. — <span class="muted">v1.1</span></div>
+  <div id="banner" class="banner">Tous les montants semblent à 0. Vérifie les champs (revenus, charges, horizon).</div>
+  <div id="ageBadge" class="hint" style="margin:6px 0"></div>
+
+  <div class="card" style="margin-top:8px">
+    <div class="section-title"><h2>Exemples rapides</h2><span class="hint">Charge 1 clic pour tester.</span></div>
+    <div class="toolbar">
+      <span class="chip" data-scenario="T1">T1 Marié + 2 enfants</span>
+      <span class="chip" data-scenario="T2">T2 Pacsé (pas de veuvage/réversion)</span>
+      <span class="chip" data-scenario="T5">T5 Contrat 60 000€ sur 5 ans</span>
+    </div>
+  </div>
+
+  <div class="grid cols" style="margin-top:8px">
+    <div class="card col-4">
+      <h2>1) Situation</h2>
+      <div class="row">
+        <div>
+          <label>Statut familial</label>
+          <select id="statut">
+            <option value="marie">Marié</option><option value="pacse">Pacsé</option>
+            <option value="concubin">Concubin</option><option value="celibataire">Célibataire</option>
+          </select>
+        </div>
+        <div>
+          <label>Parent décédé</label>
+          <select id="parentDecede"><option value="A">Parent A (assuré)</option><option value="B">Parent B (conjoint)</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>Prénom A (assuré)</label><input id="prenomA" placeholder="Ex: Alice"/></div>
+        <div><label>Prénom B (conjoint)</label><input id="prenomB" placeholder="Ex: Benoît"/></div>
+      </div>
+      <div class="row">
+        <div><label>Âge du défunt (ans)</label><input id="ageDefunt" inputmode="numeric" placeholder="ex: 42"/></div>
+        <div><span class="hint">Info contexte (n’influe pas les droits)</span></div>
+      </div>
+
+      <div class="row">
+        <div><label>Revenu mensuel A (€)</label><input id="revenuA" inputmode="decimal" placeholder="ex: 3000"/></div>
+        <div><label>Revenu mensuel B (€)</label><input id="revenuB" inputmode="decimal" placeholder="ex: 2500"/></div>
+      </div>
+      <div class="row">
+        <div><label>Âge du survivant (ans)</label><input id="ageSurvivant" inputmode="numeric" placeholder="ex: 40"/></div>
+        <div><label>Charges mensuelles (€)</label><input id="chargesAnnuelles" inputmode="decimal" placeholder="ex: 2000"/></div>
+      </div>
+      <div class="row">
+        <div><label>Retraite de base défunt (€/mois)</label><input id="retBaseDefunt" inputmode="decimal" placeholder="ex: 900"/></div>
+        <div class="toggle"><label><input type="checkbox" id="useMinReversion"/> Forcer minimum légal</label></div>
+      </div>
+      <div class="row">
+        <div class="toggle"><label><input type="checkbox" id="parentIsole"/> Parent isolé / vit seul</label></div>
+        <div class="toggle"><label><input type="checkbox" id="newUnion"/> Nouvelle union après décès</label></div>
+      </div>
+      <div class="row"><div><label>Horizon (années)</label><input id="horizon" inputmode="numeric" value="25"/></div></div>
+      <div id="eligMsgs" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card col-4">
+      <h2>2) Enfants</h2>
+      <label>Ajouter un enfant (âge au décès)</label>
+      <div style="display:flex;gap:8px">
+        <input id="ageEnfantAdd" inputmode="numeric" placeholder="ex: 6"/>
+        <button id="btnAddEnfant" class="btn">+ Ajouter</button>
+      </div>
+      <div id="enfantsList" class="hint" style="margin-top:6px">Aucun enfant pour l’instant.</div>
+      <h2 style="margin-top:12px">Rappels d’éligibilité</h2>
+      <ul class="hint">
+        <li><b>Allocation veuvage</b> : marié(e), &lt;55 ans, sans nouvelle union, sous plafond mensuel.</li>
+        <li><b>Réversion</b> : marié(e) ou ex-marié(e), dès 55 ans, sous plafonds annuels.</li>
+        <li><b>ASF</b> : parent isolé (cesse en cas de remise en couple).</li>
+      </ul>
+    </div>
+
+    <div class="card col-4">
+      <h2>3) Contrat & CPAM</h2>
+      <div class="row">
+        <div><label>Capital privé (€)</label><input id="capPrive" inputmode="decimal" placeholder="ex: 60 000"/></div>
+        <div><label>Durée lissage (ans)</label><input id="dureePrive" inputmode="numeric" placeholder="ex: 5"/></div>
+      </div>
+      <div class="row">
+        <div><label>Capital décès CPAM (€)</label><input id="capCPAM" inputmode="decimal" /></div><div class="toggle" style="align-items:end"><label><input type="checkbox" id="lisserCPAM"/> Lisser sur 12 mois (A1)</label></div>
+      </div>
+      <div id="recap3" class="recap"><h3>Compte rendu & besoin de capital décès</h3><div id="recapText" class="hint"></div><div class="grid"><div class="item"><b>Charges sur 5 ans</b><span id="charges5" class="val">—</span></div><div class="item"><b>Charges sur 10 ans</b><span id="charges10" class="val">—</span></div><div class="item"><b>Capital à prévoir (5 ans)</b><span id="need5" class="val">—</span></div><div class="item"><b>Capital à prévoir (10 ans)</b><span id="need10" class="val">—</span></div></div><div class="hint">Calcul : couverture du déficit mensuel net (revenus <i>avec</i> contrat vs charges), sans rendement. Le capital décès CPAM est déduit s’il n’est pas lissé.</div></div></div>
+        <div class="kpi"><h3>Revenus A1 sans</h3><div id="kpiSans" class="v mono">—</div></div>
+        <div class="kpi"><h3>Revenus A1 avec</h3><div id="kpiAvec" class="v mono">—</div></div>
+        <div class="kpi"><h3>Reste A1 (avec)</h3><div id="kpiReste" class="v mono">—</div></div>
+      </div>
+    </div>
+
+    <div class="card col-12">
+      <div class="section-title">
+        <h2>Revenus vs Charges — vue annuelle (€/mois moyen)</h2>
+        <label class="toggle"><input type="checkbox" id="toggleEvents" checked/> Afficher les événements</label>
+        <span class="hint">Lignes : Revenus mensuels moyens par année (avant décès / sans / avec contrat). Pointillé : Charges mensuelles. Tooltips = €/mois moyen.</span>
+      </div>
+      <canvas id="chart"></canvas>
+      <div class="hint" style="margin-top:6px">Marqueurs : fin veuvage, début réversion, fins lissages, fin droits ASF.</div>
+    </div>
+
+    <div class="card col-12">
+      <div class="section-title"><h2>Détails annuels</h2><button id="btnToggleDetails" class="btn ghost">Afficher / masquer</button></div>
+      <div id="details" class="details"><div id="tableWrap"></div></div>
+    </div>
+
+    <div class="card col-12">
+      <div class="section-title"><h2>Réglages 2025 (avancé, optionnel)</h2><button id="btnToggleAdv" class="btn ghost">Afficher / masquer</button></div>
+      <div id="adv" class="details">
+        <div class="row3">
+          <div class="card">
+            <h3>Allocation veuvage</h3>
+            <div class="row">
+              <div><label>Montant (€/mois)</label><input id="cfg_veuvage_m" inputmode="decimal"></div>
+              <div><label>Plafond ressources (€/mois)</label><input id="cfg_veuvage_plaf_m" inputmode="decimal"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Réversion (base CNAV)</h>
+            <div class="row">
+              <div><label>Minimum légal (€/mois)</label><input id="cfg_rev_min_m" inputmode="decimal"></div>
+              <div><label>Plafond solo (€/an)</label><input id="cfg_rev_plaf_solo_a" inputmode="decimal"></div>
+              <div><label>Plafond couple (€/an)</label><input id="cfg_rev_plaf_couple_a" inputmode="decimal"></div>
+            </div>
+            <label><input type="checkbox" id="cfg_rev_apply_plaf" checked/> Appliquer plafonds</label>
+          </div>
+          <div class="card">
+            <h3>ASF (parent isolé)</h3>
+            <div class="row">
+              <div><label>Montant (€/enfant/mois)</label><input id="cfg_asf_m" inputmode="decimal"></div>
+              <div><label>Âge fin droit (ans)</label><input id="cfg_asf_age" inputmode="numeric"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="card">
+            <h3>Capital CPAM</h3>
+            <div class="row">
+              <div><label>Montant par défaut (€)</label><input id="cfg_cpam_def" inputmode="decimal"></div>
+              <div><label><input type="checkbox" id="cfg_cpam_lisser_def"/> Lisser 12 mois par défaut</label></div>
+            </div>
+          </div>
+          <div class="card"><h3>Affichage</h3><div class="hint">Rien à régler ici en mode simple 🙂</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card col-12">
+      <h2>Hypothèses & limites</h2>
+      <ul>
+        <li><b>Régime général uniquement</b>, AT/MP exclu.</li>
+        <li>Barèmes 2025 paramétrables : allocation veuvage (montant + plafond), réversion (mini + plafonds solo/couple), ASF, capital CPAM.</li>
+        <li>Éligibilités intégrées : mariage requis (réversion/veuvage), plafonds de ressources, parent isolé pour ASF, nouvelle union = pas d’ASF et plafond « couple » pour la réversion.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const nf2=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2});
+const $=id=>document.getElementById(id);
+function parseEuro(v){ if(v===null||v===undefined) return 0; if(typeof v==='number'&&Number.isFinite(v)) return v; let s=(''+v).trim(); if(s==='')return 0; s=s.replace(/[€$£₤]/g,'').replace(/[\u00A0\u202F\u2009\u200A\u2007\s]/g,'').replace(/,/g,'.'); s=s.replace(/([0-9])k$/i,'$1000'); const p=s.split('.'); if(p.length>2){const d=p.pop(); s=p.join('')+'.'+d;} const x=parseFloat(s); return Number.isFinite(x)?x:0; }
+function monthsH(y){ const n=Math.round(parseFloat(y||0)*12); return Math.max(1,isFinite(n)?n:1); }
+
+const I={statut:$('statut'),parentDecede:$('parentDecede'),revenuA:$('revenuA'),revenuB:$('revenuB'),ageSurvivant:$('ageSurvivant'),chargesAnnuelles:$('chargesAnnuelles'),retBaseDefunt:$('retBaseDefunt'),useMinReversion:$('useMinReversion'),parentIsole:$('parentIsole'),newUnion:$('newUnion'),horizon:$('horizon'),ageEnfantAdd:$('ageEnfantAdd'),btnAddEnfant:$('btnAddEnfant'),enfantsList:$('enfantsList'),capPrive:$('capPrive'),dureePrive:$('dureePrive'),capCPAM:$('capCPAM'),lisserCPAM:$('lisserCPAM'),kpiRente:$('kpiRente'),kpiSans:$('kpiSans'),kpiAvec:$('kpiAvec'),kpiReste:$('kpiReste'),eligMsgs:$('eligMsgs'),tableWrap:$('tableWrap'),chart:$('chart'),btnSave:$('btnSave'),btnReset:$('btnReset'),btnCSV:$('btnCSV'),btnToggleDetails:$('btnToggleDetails'),details:$('details'),btnToggleAdv:$('btnToggleAdv'),adv:$('adv'),banner:$('banner'),prenomA:$('prenomA'),prenomB:$('prenomB'),ageDefunt:$('ageDefunt'),btnMode:$('btnMode'),toggleStacked:$('toggleStacked'),btnPNG:$('btnPNG'),recapText:$('recapText'),cap5:$('cap5'),cap10:$('cap10'), charges5:$('charges5'), charges10:$('charges10'), need5:$('need5'), need10:$('need10')};
+let enfants=[];
+
+function updateParentOptions(){
+  try{
+    const a=(I.prenomA&&I.prenomA.value.trim())||'Parent A';
+    const b=(I.prenomB&&I.prenomB.value.trim())||'Parent B';
+    const sel=I.parentDecede;
+    if(sel && sel.options && sel.options.length>=2){
+      sel.options[0].textContent = a + ' (assuré)';
+      sel.options[1].textContent = b + ' (conjoint)';
+    }
+  }catch(e){}
+}
+function setDefaults(){
+  I.statut.value='marie'; I.parentDecede.value='A';
+  I.revenuA.value='35 000'; I.revenuB.value='28 000';
+  I.ageSurvivant.value='40'; I.chargesAnnuelles.value='24 000';
+  I.retBaseDefunt.value=''; I.useMinReversion.checked=true;
+  I.parentIsole.checked=true; I.newUnion.checked=false;
+  I.horizon.value='25'; I.capPrive.value='60 000'; I.dureePrive.value='5';
+  I.capCPAM.value='3 977'; I.lisserCPAM.checked=false;
+  document.getElementById('cfg_veuvage_m').value='713,17';
+  document.getElementById('cfg_veuvage_plaf_m').value='891,46';
+  document.getElementById('cfg_rev_min_m').value='331,94';
+  document.getElementById('cfg_rev_plaf_solo_a').value='24 710,40';
+  document.getElementById('cfg_rev_plaf_couple_a').value='39 536,64';
+  document.getElementById('cfg_rev_apply_plaf').checked=true;
+  document.getElementById('cfg_asf_m').value='199,19'; document.getElementById('cfg_asf_age').value='20';
+  document.getElementById('cfg_cpam_def').value='3 977'; document.getElementById('cfg_cpam_lisser_def').checked=false;
+  enfants=[6,3]; renderEnfants();
+}
+function renderEnfants(){ if(!enfants.length){ I.enfantsList.innerHTML='<span class="hint">Aucun enfant</span>'; return;} I.enfantsList.innerHTML=enfants.map((a,i)=>`<span class="chip">#${i+1} — ${a} ans <button class="btn" data-del="${i}" style="padding:3px 8px;font-size:12px">x</button></span>`).join(' '); I.enfantsList.querySelectorAll('button[data-del]').forEach(b=>{ b.onclick=()=>{ enfants.splice(parseInt(b.dataset.del),1); saveState(); simulate(); }; }); }
+function calcVeuvage(cfg,ctx){ const {statut,newUnion,ageSurvivantM,revenusSurvivantMensuel}=ctx; if(statut!=='marie') return {per:0,dur:0,ok:false,reason:'Non marié'}; if(newUnion) return {per:0,dur:0,ok:false,reason:'Nouvelle union'}; if(ageSurvivantM>=55*12) return {per:0,dur:0,ok:false,reason:'Âge ≥55'}; if(revenusSurvivantMensuel>cfg.veuvage_plaf_m) return {per:0,dur:0,ok:false,reason:'Au-dessus du plafond'}; let dur=24; if(ageSurvivantM>=50*12 && ageSurvivantM<55*12){ dur=Math.max(dur,Math.round(55*12-ageSurvivantM)); } return {per:cfg.veuvage_m,dur,ok:true,reason:'OK'}; }
+function calcReversion(cfg,ctx){ const {statut,ageSurvivantM,revenusSurvivantAnnuel,retBaseDefunt,useMinReversion,parentIsole,newUnion}=ctx; if(statut!=='marie') return {ok:false,startM:null,per:0,info:'Non marié'}; const startM=Math.max(0,Math.round(55*12-ageSurvivantM)); let base=useMinReversion?cfg.rev_min_m:Math.max(cfg.rev_min_m,0.54*(retBaseDefunt||0)); if(cfg.rev_apply_plaf){ const isSolo=(!newUnion)&&(!!parentIsole); const plafondA=isSolo?cfg.rev_plaf_solo_a:cfg.rev_plaf_couple_a; const maxRevAn=Math.max(0,plafondA-revenusSurvivantAnnuel); base=Math.max(0,Math.min(base,maxRevAn/12)); } return {ok:true,startM,per:base,info:'Sous réserve ressources'}; }
+function calcASF(cfg,ctx,m){ if(!ctx.parentIsole||ctx.newUnion) return 0; const lim=cfg.asf_age*12; let n=0; for(const ageY of ctx.enfantsAges){ const ageM=Math.round(ageY*12)+m; if(ageM<lim) n++; } return cfg.asf_m*n; }
+function rentePedago(capital,dureeY){ const cap=parseEuro(capital), d=parseFloat(dureeY||0); if(cap<=0||d<=0) return 0; return cap/(12*d); }
+
+let chartInstance;
+const bgNegPlugin={id:'bgneg',beforeDraw(c){const {ctx,chartArea,scales}=c;if(!chartArea)return;const y0=scales.y.getPixelForValue(0);ctx.save();ctx.fillStyle='rgba(255,80,80,0.08)';ctx.fillRect(chartArea.left,y0,chartArea.right-chartArea.left,chartArea.bottom-y0);ctx.restore();}};
+const zeroLinePlugin={id:'zeroLine',afterDraw(c){const {ctx,chartArea,scales}=c;if(!chartArea)return;const y0=scales.y.getPixelForValue(0);ctx.save();ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(chartArea.left,y0);ctx.lineTo(chartArea.right,y0);ctx.stroke();ctx.restore();}};
+
+function getState(){
+  const statut=I.statut.value,parentDecede=I.parentDecede.value;
+  const revA=parseEuro(I.revenuA.value)*12,revB=parseEuro(I.revenuB.value)*12;
+  const chargesAn=parseEuro(I.chargesAnnuelles.value)*12;
+  const ageS=parseFloat(I.ageSurvivant.value||0);
+  const retBase=parseEuro(I.retBaseDefunt.value),useMin=I.useMinReversion.checked;
+  const parentIsole=I.parentIsole.checked,newUnion=I.newUnion.checked;
+  const horizonY=parseFloat(I.horizon.value||0);
+  const capPrive=parseEuro(I.capPrive.value),dureePrive=parseFloat(I.dureePrive.value||0);
+  const capCPAM=parseEuro(I.capCPAM.value||document.getElementById('cfg_cpam_def').value),lisserCPAM=I.lisserCPAM.checked;
+  const cfg={
+    veuvage_m:parseEuro(document.getElementById('cfg_veuvage_m').value),
+    veuvage_plaf_m:parseEuro(document.getElementById('cfg_veuvage_plaf_m').value),
+    rev_min_m:parseEuro(document.getElementById('cfg_rev_min_m').value),
+    rev_plaf_solo_a:parseEuro(document.getElementById('cfg_rev_plaf_solo_a').value),
+    rev_plaf_couple_a:parseEuro(document.getElementById('cfg_rev_plaf_couple_a').value),
+    rev_apply_plaf:document.getElementById('cfg_rev_apply_plaf').checked,
+    asf_m:parseEuro(document.getElementById('cfg_asf_m').value),
+    asf_age:parseFloat(document.getElementById('cfg_asf_age').value||20),
+    cpam_def:parseEuro(document.getElementById('cfg_cpam_def').value),
+    cpam_lisser_def:document.getElementById('cfg_cpam_lisser_def').checked
+  };
+  const revSurvAn=(parentDecede==='A'?revB:revA);
+  const ctx={
+    statut,parentDecede,parentIsole,newUnion,
+    ageSurvivantM:ageS*12,
+    revenusSurvivantMensuel:revSurvAn/12,
+    revenusSurvivantAnnuel:revSurvAn,
+    retBaseDefunt:retBase,useMinReversion:useMin,
+    enfantsAges:[...enfants]
+  };
+  return {cfg,ctx,revA,revB,chargesAn,capPrive,dureePrive,capCPAM,lisserCPAM,horizonY};
+}
+
+function simulate(){
+  const S=getState(); I.banner.classList.toggle('show', (!S.revA && !S.revB && !S.chargesAn && !S.capPrive && !S.capCPAM));
+  const months=monthsH(S.horizonY), chargesM=S.chargesAn/12;
+
+  const veuv=calcVeuvage(S.cfg,{...S.ctx}); const rev=calcReversion(S.cfg,{...S.ctx});
+  const rentePrive=rentePedago(S.capPrive,S.dureePrive); const finPrivM=rentePrive>0?Math.round(S.dureePrive*12):null;
+  const cpamLisseM=S.lisserCPAM?(S.capCPAM/12):0; const finCPAMM=S.lisserCPAM?12:null;
+
+  const revSurvM=S.ctx.revenusSurvivantAnnuel/12;
+const arrRevSans=new Array(months).fill(0), arrRevAvec=new Array(months).fill(0);
+  const comp={rev:[],veuv:[],asf:[],contrat:[],cpam:[]};
+  const events=[];
+  if(veuv.ok) events.push({m:veuv.dur,label:'Fin veuvage'}); if(rev.ok) events.push({m:rev.startM,label:'Début réversion'});
+  if(finPrivM) events.push({m:finPrivM,label:'Fin lissage contrat'}); if(finCPAMM) events.push({m:finCPAMM,label:'Fin lissage CPAM'});
+  const childLim=S.cfg.asf_age*12; S.ctx.enfantsAges.forEach((a,i)=>{const m=childLim-Math.round(a*12); if(m>0&&m<=months) events.push({m,label:`Fin ASF enfant #${i+1}`});});
+  window.__events=events;
+
+  for(let m=0;m<months;m++){
+    const v=(veuv.ok&&m<veuv.dur)?veuv.per:0;
+    const r=(rev.ok&&m>=rev.startM)?rev.per:0;
+    const a=calcASF(S.cfg,{...S.ctx},m);
+    const totalSans=revSurvM+v+r+a;
+    const contratM=(m<(finPrivM||0))?rentePrive:0;
+    const cpamM=(m<12&&S.lisserCPAM)?cpamLisseM:0;
+    arrRevSans[m]=totalSans;
+    arrRevAvec[m]=totalSans+contratM+cpamM;
+    comp.rev[m]=r; comp.veuv[m]=v; comp.asf[m]=a; comp.contrat[m]=contratM; comp.cpam[m]=cpamM;
+  }
+
+  // KPIs (année 1)
+  const m1=Math.min(12,months); const avg=arr=>arr.slice(0,m1).reduce((a,b)=>a+b,0)/m1;
+        
+  // Annuel (€/mois moyen)
+  const years=Math.ceil(months/12);
+  const labels=[...Array(years)].map((_,i)=>`A${i+1}`);
+  const avgY=(arr,y)=>{const s=y*12,e=Math.min(months,(y+1)*12);const sub=arr.slice(s,e);return sub.length?sub.reduce((a,b)=>a+b,0)/sub.length:0;};
+  const revSansY=[...Array(years)].map((_,y)=>avgY(arrRevSans,y));
+  const revAvecY=[...Array(years)].map((_,y)=>avgY(arrRevAvec,y));
+  const baselineMonth=(S.revA+S.revB)/12;
+  const baselineY=new Array(years).fill(baselineMonth);
+
+  // Âge (badge)
+  try{
+    const age=(I.ageDefunt?parseFloat(I.ageDefunt.value||0):0)||0;
+    const a=(I.prenomA&&I.prenomA.value.trim())||'Parent A';
+    const b=(I.prenomB&&I.prenomB.value.trim())||'Parent B';
+    const who=(S.ctx.parentDecede==='A'?a:b);
+    const badge=document.getElementById('ageBadge'); if(badge){ badge.textContent = age ? `Âge au décès (${who}) : ${age} ans` : ''; }
+  }catch(e){}
+
+  // Sélection du mode de chart
+  const nameA=(I.prenomA&&I.prenomA.value.trim())||'Parent A';
+  const nameB=(I.prenomB&&I.prenomB.value.trim())||'Parent B';
+  const baselineLabel=`Avant décès — ${nameA} + ${nameB}`;
+  if(stackedMode){
+    const labelsM=[...Array(months)].map((_,i)=>`M${i+1}`);
+    const compM={ salary:new Array(months).fill(S.ctx.revenusSurvivantAnnuel/12), veuv:comp.veuv, rev:comp.rev, asf:comp.asf, cpam:comp.cpam, contrat:comp.contrat };
+    if(chartMode==='month'){
+      drawChartStacked({labels:labelsM, comp:compM, chargesM});
+    } else {
+      const Y=Math.ceil(months/12);
+      const labelsY=[...Array(Y)].map((_,i)=>`A${i+1}`);
+      const agg=(arr)=>{ const out=[]; for(let y=0;y<Y;y++){ const s=y*12,e=Math.min(months,(y+1)*12); const sub=arr.slice(s,e); out.push(sub.length? sub.reduce((a,b)=>a+b,0)/sub.length : 0);} return out; };
+      const compY={ salary:agg(compM.salary), veuv:agg(compM.veuv), rev:agg(compM.rev), asf:agg(compM.asf), cpam:agg(compM.cpam), contrat:agg(compM.contrat) };
+      drawChartStacked({labels:labelsY, comp:compY, chargesM});
+    }
+  } else if(chartMode==='month'){
+    const labelsM=[...Array(months)].map((_,i)=>`M${i+1}`);
+    drawChartMonth({labels:labelsM, arrRevSans:arrRevSans, arrRevAvec:arrRevAvec, baselineM:(S.revA+S.revB)/12, chargesM, baselineLabel});
+  } else {
+    drawChart({years,labels,revSansY,revAvecY,baselineY,chargesMY:chargesM,baselineLabel});
+  }
+
+  
+  // === Recap & capital décès requis ===
+  try{
+    const months5 = Math.min(60, months);
+    const months10 = Math.min(120, months);
+    const charges5 = chargesM * months5;
+    const charges10 = chargesM * months10;
+
+    const sumDef = (N)=>{ let s=0; for(let i=0;i<N;i++){ const def = (chargesM - (arrRevAvec[i]||0)); if(def>0) s+=def; } return s; };
+    let need5 = Math.max(0, sumDef(months5));
+    let need10 = Math.max(0, sumDef(months10));
+
+    // Déduire capital décès CPAM si non lissé
+    const capCPAM = parseEuro(I.capCPAM.value)||0;
+    const cpamSmoothed = !!(I.lisserCPAM && I.lisserCPAM.checked);
+    const adjust = cpamSmoothed ? 0 : capCPAM;
+    need5 = Math.max(0, need5 - adjust);
+    need10 = Math.max(0, need10 - adjust);
+
+    // Texte A1 (synthèse)
+    const A1 = Math.min(12, months);
+    const avgA1 = A1? (arrRevAvec.slice(0,A1).reduce((a,b)=>a+b,0)/A1) : 0;
+    if(I.recapText){ I.recapText.innerHTML = `A1 : revenus <i>avec contrat</i> ≈ <b>${nf2.format(avgA1)} €/mois</b>, charges ≈ <b>${nf2.format(chargesM)} €/mois</b>. Écart ≈ <b>${nf2.format(avgA1-chargesM)} €/mois</b>.`; }
+
+    if(I.charges5) I.charges5.textContent = nf2.format(charges5) + ' €';
+    if(I.charges10) I.charges10.textContent = nf2.format(charges10) + ' €';
+    if(I.need5) I.need5.textContent = nf2.format(need5) + ' €';
+    if(I.need10) I.need10.textContent = nf2.format(need10) + ' €';
+  }catch(e){ /* silent */ }
+
+  renderTable({months,comp,arrSans:arrRevSans.map(v=>v-chargesM),arrAvec:arrRevAvec.map(v=>v-chargesM),chargesM});
+}
+
+
+// === Ajouts v1.6 : Mois ⇄ Année, empilé, export PNG, prénoms, âge badge ===
+let chartMode='year'; // 'year' | 'month'
+let stackedMode=true;
+
+if(I.btnMode){ I.btnMode.addEventListener('click', ()=>{ chartMode = (chartMode==='year'?'month':'year'); I.btnMode.textContent = '🗓 Mode: ' + (chartMode==='year'?'Année':'Mois'); simulate(); }); }
+if(I.toggleStacked){ I.toggleStacked.addEventListener('change', ()=>{ stackedMode = !!I.toggleStacked.checked; simulate(); }); }
+if(I.btnPNG){ I.btnPNG.addEventListener('click', ()=>{ try{ if(chartInstance){ const url = chartInstance.toBase64Image('image/png',1); const a=document.createElement('a'); a.href=url; a.download='simulation_deces.png'; a.click(); } }catch(e){} }); }
+if(I.prenomA){ I.prenomA.addEventListener('input', ()=>{ updateParentOptions(); simulate(); }); }
+if(I.prenomB){ I.prenomB.addEventListener('input', ()=>{ updateParentOptions(); simulate(); }); }
+
+function drawChartMonth({labels,arrRevSans,arrRevAvec,baselineM,chargesM,baselineLabel}){
+  if(chartInstance) chartInstance.destroy();
+  const ctx=I.chart.getContext('2d');
+  const seriesMax = Math.max(...arrRevSans, ...arrRevAvec, baselineM, chargesM);
+chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{ labels, datasets:[
+      {label:(baselineLabel||'Avant décès'), data:new Array(labels.length).fill(baselineM), borderWidth:1.4, pointRadius:0, tension:.2, order:1},
+      {label:'Revenus — sans contrat', data:arrRevSans, borderWidth:1.4, pointRadius:0, tension:.25, order:2},
+      {label:'Revenus — avec contrat', data:arrRevAvec, borderWidth:1.6, pointRadius:0, tension:.25, order:3, fill:{target:'charges', above:'rgba(92,230,128,0.18)', below:'rgba(255,123,123,0.16)'}},
+      {id:'charges', label:`Charges mensuelles (${nf2.format(chargesM)})`, data:new Array(labels.length).fill(chargesM), borderWidth:1.2, borderDash:[6,6], pointRadius:0, tension:0, order:0}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      scales:{ x:{ ticks:{color:'#aabed6'}, grid:{color:'rgba(37,51,71,0.25)'} }, y:{ min:0, max:yMax, beginAtZero:true, ticks:{color:'#aabed6', callback:v=>nf2.format(v)}, grid:{color:'rgba(37,51,71,0.4)'} } },
+      plugins:{ tooltip:{ filter:(ctx)=>{ return !(ctx && ctx.dataset && String(ctx.dataset.label||'').toLowerCase().includes('avant décès')); } } },
+      animation:{duration:350, easing:'easeOutQuad'}
+    }
+  });
+}
+
+function drawChartStacked({labels,comp,chargesM}){
+  if(chartInstance) chartInstance.destroy();
+  const ctx = I.chart.getContext('2d');
+
+  // Max for stacked revenues per period
+  const totals = labels.map((_,i)=> 
+    (comp.salary[i]||0)+(comp.veuv[i]||0)+(comp.rev[i]||0)+(comp.asf[i]||0)+(comp.cpam[i]||0)+(comp.contrat[i]||0)
+  );
+  const seriesMax = Math.max(0, ...totals);
+  const cappedCharges = isFinite(chargesM)?chargesM:0;
+  const yMax = Math.max(500, Math.ceil((Math.max(seriesMax, cappedCharges)*1.20)/100)*100);
+
+  chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ 
+      labels, 
+      datasets:[
+        {label:'Salaire survivant', data:comp.salary, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:'Allocation veuvage', data:comp.veuv, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:'Pension de réversion', data:comp.rev, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:'ASF / autres', data:comp.asf, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:'Lissage CPAM', data:comp.cpam, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:'Lissage prévoyance', data:comp.contrat, borderWidth:1, borderRadius:6, stack:'revenus'},
+        {label:`Charges mensuelles (${nf2.format(chargesM)})`, data:new Array(labels.length).fill(chargesM), type:'line', tension:0, borderDash:[6,6], pointRadius:0}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      scales:{ 
+        x:{ stacked:true, ticks:{color:'#aabed6'}, grid:{color:'rgba(37,51,71,0.25)'} }, 
+        y:{ stacked:true, min:0, max:yMax, beginAtZero:true, ticks:{color:'#aabed6', callback:v=>nf2.format(v)}, grid:{color:'rgba(37,51,71,0.4)'} } 
+      },
+      plugins:{ 
+        tooltip:{ 
+          filter:(ctx)=>{ return !(ctx && ctx.dataset && String(ctx.dataset.label||'').toLowerCase().includes('avant décès')); },
+          callbacks:{
+            footer:(items)=>{
+              const tot = (items||[])
+                .filter(it=> String(it.dataset.label||'').toLowerCase().indexOf('charges')===-1)
+                .reduce((s,it)=> s + (it.parsed && isFinite(it.parsed.y) ? it.parsed.y : 0), 0);
+              return 'Revenu total: ' + nf2.format(tot) + ' €';
+            }
+          }
+        } 
+      },
+      animation:{duration:350, easing:'easeOutQuad'}
+    }
+  });
+}
+function renderTable({months,comp,arrSans,arrAvec,chargesM}){
+  const years=Math.ceil(months/12);
+  const avgY=(arr,y)=>{const s=y*12,e=Math.min(months,(y+1)*12);const sub=arr.slice(s,e);return sub.length?sub.reduce((a,b)=>a+b,0)/sub.length:0;};
+  let html='<div style="overflow-x:auto"><table><thead><tr><th>Année</th><th>Réversion</th><th>Veuvage</th><th>ASF</th><th>Revenu survivant</th><th>Total sans</th><th>Total avec</th><th>Reste sans</th><th>Reste avec</th></tr></thead><tbody>';
+  for(let y=0;y<years;y++){
+    const rev=avgY(comp.rev,y),veuv=avgY(comp.veuv,y),asf=avgY(comp.asf,y);
+    const totSansPlusCharges=avgY(arrSans,y)+chargesM;
+    const cpam=avgY(comp.cpam,y);
+    const revSurv=Math.max(0,totSansPlusCharges-(rev+veuv+asf)-cpam);
+    const totAvecPlusCharges=avgY(arrAvec,y)+chargesM;
+    html+=`<tr><td>Année ${y+1}</td><td>${nf2.format(rev)}</td><td>${nf2.format(veuv)}</td><td>${nf2.format(asf)}</td><td>${nf2.format(revSurv)}</td><td>${nf2.format(totSansPlusCharges)}</td><td>${nf2.format(totAvecPlusCharges)}</td><td>${nf2.format(avgY(arrSans,y))}</td><td>${nf2.format(avgY(arrAvec,y))}</td></tr>`;
+  }
+  html+='</tbody></table></div>'; I.tableWrap.innerHTML=html;
+}
+
+function renderElig(veuv,rev,ctx){
+  const chips=[];
+  chips.push( veuv.ok? `<span class="pill ok">Veuvage OK (${nf2.format(veuv.per)}/mois · ${veuv.dur} mois)</span>` : `<span class="pill ${veuv.reason.includes('plafond')?'warn':'ko'}">Veuvage non éligible — ${veuv.reason}</span>` );
+  chips.push( rev.ok? `<span class="pill ${rev.per>0?'ok':'warn'}">Réversion potentielle dès M${rev.startM} (${nf2.format(rev.per)}/mois)</span>` : `<span class="pill ko">Réversion non éligible (non marié)</span>` );
+  if(ctx.newUnion){ chips.push(`<span class="pill warn">Nouvelle union : plafond <b>couple</b> pour la réversion, ASF non due</span>`); }
+  else if(!ctx.parentIsole){ chips.push(`<span class="pill warn">Non parent isolé : ASF non due</span>`); }
+  else { chips.push(`<span class="pill ok">ASF potentielle (parent isolé)</span>`); }
+  I.eligMsgs.innerHTML=chips.join(' ');
+}
+
+function drawChart({years,labels,revSansY,revAvecY,baselineY,chargesMY,baselineLabel}){
+  if(chartInstance) chartInstance.destroy();
+  const ctx=I.chart.getContext('2d');
+
+  // Dynamic Y max (>=0), with headroom and rounding to 100
+  const seriesMax = Math.max(
+    ...revSansY.map(v=>isFinite(v)?v:0),
+    ...revAvecY.map(v=>isFinite(v)?v:0),
+    ...baselineY.map(v=>isFinite(v)?v:0),
+    isFinite(chargesMY)?chargesMY:0
+  );
+  const yMin = 0;
+  let yMax = Math.max(500, Math.ceil((seriesMax*1.15)/100)*100);
+
+  // Events (bubbles): read toggle state at draw-time
+  const evs=(window.__events||[]).map(ev=>({label:ev.label,year:Math.max(0,Math.floor(ev.m/12))}));
+  const yearMarkers={id:'yearMarkers',afterDraw(chart){
+    const on = !!document.getElementById('toggleEvents')?.checked;
+    if(!on) return;
+    const {ctx,chartArea,scales}=chart;
+    if(!chartArea) return;
+    const bumps={};
+    ctx.save();
+    ctx.font='11px system-ui,sans-serif';
+    ctx.textBaseline='bottom';
+    evs.forEach(ev=>{
+      const i=Math.min(ev.year, years-1);
+      const x=scales.x.getPixelForValue(i);
+      const n=(bumps[i]||0); bumps[i]=n+1;
+      const y=chartArea.top+8+n*22;
+      const txt=ev.label, pad=6, w=ctx.measureText(txt).width+pad*2, h=18;
+      ctx.fillStyle='#101625'; ctx.strokeStyle='#2a3448';
+      ctx.beginPath();
+      ctx.moveTo(x-w/2+9,y); ctx.arcTo(x+w/2,y,x+w/2,y+h,9);
+      ctx.arcTo(x+w/2,y+h,x-w/2,y+h,9);
+      ctx.arcTo(x-w/2,y+h,x-w/2,y,9);
+      ctx.arcTo(x-w/2,y,x+w/2,y,9);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#cfe1f6'; ctx.fillText(txt,x-w/2+pad,y+h-5);
+    });
+    ctx.restore();
+  }};
+
+  // Zero dashed line (even if min is 0)
+  const zeroLinePlugin={id:'zeroLine',afterDraw(chart){
+    const {ctx,chartArea,scales}=chart; if(!chartArea) return;
+    const y0=scales.y.getPixelForValue(0);
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(chartArea.left,y0); ctx.lineTo(chartArea.right,y0); ctx.stroke(); ctx.restore();
+  }};
+
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:(baselineLabel||'Avant décès'), data:baselineY, borderColor:'#6ae3ff', borderWidth:1.4, pointRadius:0, tension:.2, order:1},
+        {label:'Revenus — sans contrat', data:revSansY, borderColor:'#ffb86b', borderWidth:1.4, pointRadius:0, tension:.25, order:2},
+        {label:'Revenus — avec contrat', data:revAvecY, borderColor:'#8dff9a', borderWidth:1.6, pointRadius:0, tension:.25, order:3,
+         fill:{target:'charges', above:'rgba(92,230,128,0.18)', below:'rgba(255,123,123,0.16)'}},
+        {id:'charges', label:`Charges mensuelles (${nf2.format(chargesMY)})`, data:new Array(years).fill(chargesMY),
+         borderColor:'#ffd166', borderWidth:1.2, borderDash:[6,6], pointRadius:0, tension:0, order:0}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:'#d6e4f5',boxWidth:14,boxHeight:2,usePointStyle:true,pointStyle:'line'}},
+        tooltip:{filter:(c)=>{
+            return !(c && c.dataset && String(c.dataset.label||'').toLowerCase().includes('avant décès'));
+          },callbacks:{
+            title:(items)=> items.length? items[0].label : '',
+            label:(c)=>{
+              const v=c.parsed.y, i=c.dataIndex;
+              const ch=chargesMY;
+              const fmt=(x)=> (x>=0?'+':'')+nf2.format(x);
+              const lines=[`${c.dataset.label}: ${nf2.format(v)}`];
+              if(isFinite(ch)) lines.push(`Δ charges: ${fmt(v-ch)}`);
+              return lines;
+            }
+          }}
+      },
+      scales:{
+        x:{ticks:{color:'#aabed6'}, grid:{color:'rgba(37,51,71,0.45)'}},
+        y:{min:yMin, max:yMax, beginAtZero:true,
+           ticks:{color:'#aabed6', callback:v=>nf2.format(v)},
+           grid:{color:'rgba(37,51,71,0.4)'}}
+      },
+      animation:{duration:350, easing:'easeOutQuad'}
+    },
+    plugins:[yearMarkers, zeroLinePlugin]
+  });
+
+  // Repaint on toggle
+  const t=document.getElementById('toggleEvents');
+  if(t && !t.__bound){ t.addEventListener('change', ()=>{ if(chartInstance) chartInstance.update(); }); t.__bound=true; }
+}
+
+function saveState(){ const s={statut:I.statut.value,parentDecede:I.parentDecede.value,revenuA:I.revenuA.value,revenuB:I.revenuB.value,ageSurvivant:I.ageSurvivant.value,chargesAnnuelles:I.chargesAnnuelles.value,retBaseDefunt:I.retBaseDefunt.value,useMinReversion:I.useMinReversion.checked,parentIsole:I.parentIsole.checked,newUnion:I.newUnion.checked,horizon:I.horizon.value,capPrive:I.capPrive.value,dureePrive:I.dureePrive.value,capCPAM:I.capCPAM.value,lisserCPAM:I.lisserCPAM.checked,enfants:enfants,cfg:{veuvage_m:document.getElementById('cfg_veuvage_m').value,veuvage_plaf_m:document.getElementById('cfg_veuvage_plaf_m').value,rev_min_m:document.getElementById('cfg_rev_min_m').value,rev_plaf_solo_a:document.getElementById('cfg_rev_plaf_solo_a').value,rev_plaf_couple_a:document.getElementById('cfg_rev_plaf_couple_a').value,rev_apply_plaf:document.getElementById('cfg_rev_apply_plaf').checked,asf_m:document.getElementById('cfg_asf_m').value,asf_age:document.getElementById('cfg_asf_age').value,cpam_def:document.getElementById('cfg_cpam_def').value,cpam_lisser_def:document.getElementById('cfg_cpam_lisser_def').checked}}; localStorage.setItem('simu_deces_simple_2025_sans_atmp_v1_1',JSON.stringify(s)); }
+function loadState(){ const raw=localStorage.getItem('simu_deces_simple_2025_sans_atmp_v1_1'); if(!raw) return false; try{ const s=JSON.parse(raw); I.statut.value=s.statut; I.parentDecede.value=s.parentDecede; I.revenuA.value=s.revenuA; I.revenuB.value=s.revenuB; I.ageSurvivant.value=s.ageSurvivant; I.chargesAnnuelles.value=s.chargesAnnuelles; I.retBaseDefunt.value=s.retBaseDefunt; I.useMinReversion.checked=s.useMinReversion; I.parentIsole.checked=s.parentIsole; I.newUnion.checked=s.newUnion; I.horizon.value=s.horizon; I.capPrive.value=s.capPrive; I.dureePrive.value=s.dureePrive; I.capCPAM.value=s.capCPAM; I.lisserCPAM.checked=s.lisserCPAM; enfants=Array.isArray(s.enfants)?s.enfants:[]; if(s.cfg){ document.getElementById('cfg_veuvage_m').value=s.cfg.veuvage_m; document.getElementById('cfg_veuvage_plaf_m').value=s.cfg.veuvage_plaf_m; document.getElementById('cfg_rev_min_m').value=s.cfg.rev_min_m; document.getElementById('cfg_rev_plaf_solo_a').value=s.cfg.rev_plaf_solo_a; document.getElementById('cfg_rev_plaf_couple_a').value=s.cfg.rev_plaf_couple_a; document.getElementById('cfg_rev_apply_plaf').checked=s.cfg.rev_apply_plaf; document.getElementById('cfg_asf_m').value=s.cfg.asf_m; document.getElementById('cfg_asf_age').value=s.cfg.asf_age; document.getElementById('cfg_cpam_def').value=s.cfg.cpam_def; document.getElementById('cfg_cpam_lisser_def').checked=s.cfg.cpam_lisser_def; } renderEnfants(); return true; }catch(e){ console.warn(e); return false; } }
+
+I.btnAddEnfant.onclick=()=>{ const age=parseFloat(I.ageEnfantAdd.value||''); if(!isFinite(age)||age<0||age>19.99){alert('Âge invalide (0–19,99)');return;} enfants.push(age); I.ageEnfantAdd.value=''; renderEnfants(); saveState(); simulate(); };
+['statut','parentDecede','revenuA','revenuB','ageSurvivant','chargesAnnuelles','retBaseDefunt','useMinReversion','parentIsole','newUnion','horizon','capPrive','dureePrive','capCPAM','lisserCPAM'].forEach(id=>{ document.getElementById(id).addEventListener('input',()=>{saveState(); simulate();}); });
+I.btnSave.onclick=()=>{saveState(); alert('Paramètres sauvegardés.');};
+I.btnReset.onclick=()=>{ if(confirm('Réinitialiser (v1.1) ?')){ enfants=[]; setDefaults(); localStorage.removeItem('simu_deces_simple_2025_sans_atmp_v1_1'); saveState(); simulate(); }};
+I.btnCSV.onclick=()=>{ simulate(); const S=getState(); const months=monthsH(S.horizonY); const rows=['mois;reversion;veuvage;asf;contrat;cpam_lisse;revenu_sans;revenu_avec']; const chargesM=S.chargesAn/12, revSurvM=S.ctx.revenusSurvivantAnnuel/12; const veuv=calcVeuvage(S.cfg,{...S.ctx}); const rev=calcReversion(S.cfg,{...S.ctx}); const rente=rentePedago(S.capPrive,S.dureePrive); const finPriv=rente>0?Math.round(S.dureePrive*12):null; const cpam=S.lisserCPAM?(S.capCPAM/12):0; for(let m=0;m<months;m++){ const v=(veuv.ok&&m<veuv.dur)?veuv.per:0; const r=(rev.ok&&m>=rev.startM)?rev.per:0; const a=calcASF(S.cfg,{...S.ctx},m); const revenu_sans=(revSurvM+v+r+a); const contratM=(m<(finPriv||0))?rente:0; const cpamM=(m<12&&S.lisserCPAM)?cpam:0; const revenu_avec=revenu_sans+contratM+cpamM; rows.push([m,r,v,a,contratM,cpamM,revenu_sans,revenu_avec].join(';')); } const blob=new Blob([rows.join('\\n')],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='simulation_deces_simple_2025_sans_atmp.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
+I.btnToggleDetails.onclick=()=>{ I.details.classList.toggle('open'); };
+I.btnToggleAdv.onclick=()=>{ I.adv.classList.toggle('open'); };
+document.querySelectorAll('[data-scenario]').forEach(x=>{ x.onclick=()=>{ const k=x.getAttribute('data-scenario'); setDefaults(); if(k==='T1'){ I.statut.value='marie'; I.parentDecede.value='A'; I.revenuA.value='35 000'; I.revenuB.value='28 000'; I.ageSurvivant.value='40'; I.chargesAnnuelles.value='24 000'; I.parentIsole.checked=true; I.newUnion.checked=false; enfants=[6,3]; renderEnfants(); } if(k==='T2'){ I.statut.value='pacse'; I.parentDecede.value='A'; I.revenuA.value='32 000'; I.revenuB.value='25 000'; I.ageSurvivant.value='40'; I.chargesAnnuelles.value='22 000'; I.parentIsole.checked=true; I.newUnion.checked=false; enfants=[7]; renderEnfants(); } if(k==='T5'){ I.capPrive.value='60 000'; I.dureePrive.value='5'; } saveState(); simulate(); }; });
+(function init(){ setDefaults(); updateParentOptions(); loadState(); simulate(); })();
+</script>
+</body>
+</html>
