@@ -4,20 +4,19 @@
             <div class="row" style="justify-content: space-between; align-items: center;">
                 <h3 class="section-title" style="margin: 0;">Simulateur d'Épargne Assurance Vie</h3>
                 <div class="actions">
-                    <button class="btn btn-primary calc">🔄 Calculer & Mettre à jour</button>
-                    <button class="btn btn-ghost pdf" disabled>📄 Exporter en PDF</button>
+                    <button class="btn btn-primary btn-calc">Calculer</button>
+                    <button class="btn btn-ghost btn-pdf" disabled>Exporter en PDF</button>
                 </div>
             </div>
         </section>
 
         <section class="card" style="grid-column: span 12; md:grid-column: span 5;">
-            <h3 class="section-title">Votre Projet</h3>
+            <h3 class="section-title">Paramètres du Projet</h3>
             <div class="row"><label class="small" style="flex:1;">Versement initial (€)</label><input class="initial" type="number" min="0" step="100" value="8000" style="flex:2;" /></div>
             <div class="row"><label class="small" style="flex:1;">Versement mensuel (€)</label><input class="monthly" type="number" min="0" step="10" value="0" style="flex:2;" /></div>
             <div class="row"><label class="small" style="flex:1;">Durée (années)</label><input class="years" type="range" min="1" max="40" value="10" style="flex:2;" /><span class="yearsValue small">10 ans</span></div>
-            <div class="hr"></div>
-            <h3 class="section-title">Hypothèses Générales</h3>
             <div class="row"><label class="small" style="flex:1;">Inflation annuelle (%)</label><input class="inflation" type="number" min="0" step="0.1" value="2.0" style="flex:2;" /></div>
+            <div class="row"><label class="small" style="flex:1;">Mode d'affichage</label><select class="modeAffichage" style="flex:2;"><option value="nominal" selected>Montants nominaux</option><option value="reel">Montants réels (constants)</option></select></div>
         </section>
 
         <section class="card" style="grid-column: span 12; md:grid-column: span 7;">
