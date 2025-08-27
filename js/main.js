@@ -1,5 +1,3 @@
-// Contenu simplifié et final pour js/main.js
-
 // --- Gestion du Thème (Dark/Light) ---
 const themeToggle = document.getElementById('theme-toggle');
 const LS_THEME_KEY = 'dashboard.theme';
@@ -11,7 +9,6 @@ if (themeToggle) { themeToggle.addEventListener('click', toggleTheme); }
 // --- Gestion des Onglets ---
 const tabs = document.querySelectorAll('.tab');
 const appContent = document.getElementById('app-content');
-const loadedModules = new Set();
 const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 async function loadTabContent(tabId) {
@@ -22,7 +19,8 @@ async function loadTabContent(tabId) {
         appContent.innerHTML = await htmlResponse.text();
 
         const initFunctionName = `init${capitalize(tabId)}Panel`;
-        if (loadedModules.has(tabId) && typeof window[initFunctionName] === 'function') {
+        
+        if (typeof window[initFunctionName] === 'function') {
             window[initFunctionName]();
             return;
         }
@@ -35,7 +33,6 @@ async function loadTabContent(tabId) {
             script.onload = () => {
                 if (typeof window[initFunctionName] === 'function') {
                     window[initFunctionName]();
-                    loadedModules.add(tabId);
                 }
             };
             document.body.appendChild(script);
@@ -48,6 +45,7 @@ async function loadTabContent(tabId) {
 
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
+        if(tab.classList.contains('active')) return;
         document.querySelector('.tab.active').classList.remove('active');
         tab.classList.add('active');
         loadTabContent(tab.dataset.tab);
