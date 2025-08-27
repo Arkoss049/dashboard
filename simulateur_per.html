@@ -120,6 +120,29 @@ Chart.defaults.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     .topo-under{margin-top:8px;border-top:1px dashed rgba(255,255,255,0.12);padding-top:10px}
     .topo-under .line{font-size:15px;line-height:1.6;color:#e5edf8}
     .topo-under b{color:#fff}
+    /* ===== CORRECTIF POUR LE TABLEAU "PALIERS UTILES" ===== */
+#paliers {
+    table-layout: fixed; /* Force le tableau à respecter nos largeurs */
+    width: 100%;
+}
+
+#paliers th:first-child,
+#paliers td:first-child {
+    width: 35%; /* On donne moins de place à la première colonne */
+    text-align: left;
+}
+
+#paliers th:last-child,
+#paliers td:last-child {
+    width: 65%; /* Et plus de place à la deuxième */
+    text-align: right;
+}
+
+#paliers .muted {
+    display: block; /* Place le texte "(théorie...)" à la ligne */
+    font-size: 11px;
+    opacity: 0.8;
+}
   </style>
 </head>
 <body>
