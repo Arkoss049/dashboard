@@ -1,4 +1,4 @@
-// Contenu Corrigé et Final pour js/modules/plan.js
+// Contenu Définitif et Corrigé pour js/modules/plan.js
 
 function initPlanPanel() {
     const root = document.getElementById('plan-panel');
@@ -16,8 +16,10 @@ function initPlanPanel() {
     function clone(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
     function addDays(d, n){ const r = clone(d); r.setDate(r.getDate()+n); return r; }
     function startOfISOWeek(d){ const r = clone(d); const day = (r.getDay()+6)%7; r.setDate(r.getDate()-day); return r; }
-    // LA FONCTION MANQUANTE, RÉ-AJOUTÉE :
+    
+    // LA FONCTION MANQUANTE, ENFIN AJOUTÉE ICI
     function endOfISOWeek(d){ return addDays(startOfISOWeek(d), 6); }
+
     function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
     function isoWeekYear(d){ const th = addDays(d, 3 - ((d.getDay()+6)%7)); return th.getFullYear(); }
     function isoWeekNumber(d){ const ws = startOfISOWeek(d); const th = addDays(d, 3 - ((d.getDay()+6)%7)); const jan4 = new Date(th.getFullYear(), 0, 4); const w1 = startOfISOWeek(jan4); const diffDays = Math.round((ws - w1)/86400000); return Math.floor(diffDays/7) + 1; }
@@ -33,7 +35,7 @@ function initPlanPanel() {
         return out;
     }
     
-    // --- Le reste de la logique est identique à la dernière version fonctionnelle ---
+    // --- Le reste de la logique ---
     function loadPrevData(){ try{ const j = localStorage.getItem('prev.data'); return j? JSON.parse(j): []; }catch(e){ return []; } }
     function autoTotalsFor(weeks){
         const data = loadPrevData(); const map = new Map();
