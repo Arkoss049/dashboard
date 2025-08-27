@@ -2,7 +2,8 @@
 
 function initAvPanel() {
     const root = document.getElementById('av-panel');
-    if (!root) return;
+    if (!root || root.dataset.initialized) return;
+    root.dataset.initialized = 'true';
 
     // UTILS INTÉGRÉS
     const fmt = (v, sign = false) => {
@@ -12,11 +13,12 @@ function initAvPanel() {
     };
     const $ = sel => root.querySelector(sel);
     const els = {
-        calcBtn: $('.calc'), pdfBtn: $('.pdf'), initial: $('.initial'), monthly: $('.monthly'),
+        calcBtn: $('.btn-calc'), pdfBtn: $('.btn-pdf'), initial: $('.initial'), monthly: $('.monthly'),
         years: $('.years'), yearsValue: $('.yearsValue'), inflation: $('.inflation'),
         harmRate: $('.harm-rate'), harmEntry: $('.harm-entry'), harmMgmt: $('.harm-mgmt'),
         cmpRate: $('.cmp-rate'), cmpEntry: $('.cmp-entry'), cmpMgmt: $('.cmp-mgmt'),
-        livreta: $('.livreta'), chartCanvas: $('.chart'), resultsBody: $('.results tbody')
+        livreta: $('.livreta'), chartCanvas: $('.chart'), resultsBody: $('.results tbody'),
+        modeAffichage: $('.modeAffichage')
     };
 
     let chartInstance;
@@ -49,24 +51,33 @@ function initAvPanel() {
         const initial = Number(els.initial.value || 0);
         const monthly = Number(els.monthly.value || 0);
         const years = Number(els.years.value || 10);
+        const inflation = Number(els.inflation.value || 0) / 100;
+        const mode = els.modeAffichage.value;
+
+        const harmData = simulate({ initial, monthly, grossRate: Number(els.harmRate.value), entryFee: Number(els.harmEntry.value), mgmtFee: Number(els.harmMgmt.value), years });
+        const cmpData = simulate({ initial, monthly, grossRate: Number(els.cmpRate.value), entryFee: Number(els.cmpEntry.value), mgmtFee: Number(els.cmpMgmt.value), years });
+        const laData = simulate({ initial, monthly, grossRate: Number(els.livreta.value), entryFee: 0, mgmtFee: 0, years });
         
-        const harm = simulate({ initial, monthly, grossRate: Number(els.harmRate.value), entryFee: Number(els.harmEntry.value), mgmtFee: Number(els.harmMgmt.value), years });
-        const cmp = simulate({ initial, monthly, grossRate: Number(els.cmpRate.value), entryFee: Number(els.cmpEntry.value), mgmtFee: Number(els.cmpMgmt.value), years });
-        const la = simulate({ initial, monthly, grossRate: Number(els.livreta.value), entryFee: 0, mgmtFee: 0, years });
+        const getSeries = (data) => mode === 'reel' ? data.yearlyNominal.map((v, i) => v / Math.pow(1 + inflation, i)) : data.yearlyNominal;
+
+        const harmSeries = getSeries(harmData);
+        const cmpSeries = getSeries(cmpData);
+        const laSeries = getSeries(laData);
         const deposits = Array.from({ length: years + 1 }, (_, i) => initial + monthly * 12 * i);
+        const depositsSeries = mode === 'reel' ? deposits.map((v,i) => v / Math.pow(1+inflation, i)) : deposits;
 
         // Update Table
-        $('.r-harm-cap').textContent = fmt(harm.totalCapital);
-        $('.r-cmp-cap').textContent = fmt(cmp.totalCapital);
-        $('.r-la-cap').textContent = fmt(la.totalCapital);
-        $('.r-harm-int').textContent = fmt(harm.interests);
-        $('.r-cmp-int').textContent = fmt(cmp.interests);
-        $('.r-la-int').textContent = fmt(la.interests);
-        $('.r-harm-fees').textContent = fmt(harm.totalFees);
-        $('.r-cmp-fees').textContent = fmt(cmp.totalFees);
+        $('.r-harm-cap').textContent = fmt(harmSeries[years]);
+        $('.r-cmp-cap').textContent = fmt(cmpSeries[years]);
+        $('.r-la-cap').textContent = fmt(laSeries[years]);
+        $('.r-harm-int').textContent = fmt(harmSeries[years] - depositsSeries[years]);
+        $('.r-cmp-int').textContent = fmt(cmpSeries[years] - depositsSeries[years]);
+        $('.r-la-int').textContent = fmt(laSeries[years] - depositsSeries[years]);
+        $('.r-harm-fees').textContent = fmt(harmData.totalFees);
+        $('.r-cmp-fees').textContent = fmt(cmpData.totalFees);
         $('.r-la-fees').textContent = fmt(0);
-        $('.r-diff-cmp').textContent = fmt(cmp.totalCapital - harm.totalCapital, true);
-        $('.r-diff-la').textContent = fmt(la.totalCapital - harm.totalCapital, true);
+        $('.r-diff-cmp').textContent = fmt(cmpSeries[years] - harmSeries[years], true);
+        $('.r-diff-la').textContent = fmt(laSeries[years] - harmSeries[years], true);
 
         // Update Chart
         if (chartInstance) chartInstance.destroy();
@@ -76,17 +87,19 @@ function initAvPanel() {
             data: {
                 labels: Array.from({ length: years + 1 }, (_, i) => i),
                 datasets: [
-                    { label: 'Harmonie', data: harm.yearlyNominal, borderColor: 'var(--accent-orange)', borderWidth: 3, tension: 0.3 },
-                    { label: 'Comparatif', data: cmp.yearlyNominal, borderColor: 'var(--accent-blue)', borderWidth: 2, tension: 0.3 },
-                    { label: 'Livret A', data: la.yearlyNominal, borderColor: 'var(--accent-green)', borderWidth: 2, tension: 0.3 },
-                    { label: 'Versements', data: deposits, borderColor: 'var(--muted)', borderWidth: 1, borderDash: [5, 5] }
+                    { label: 'Harmonie', data: harmSeries, borderColor: 'var(--accent-orange)', borderWidth: 3, tension: 0.3, pointRadius: 0 },
+                    { label: 'Comparatif', data: cmpSeries, borderColor: 'var(--accent-blue)', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+                    { label: 'Livret A', data: laSeries, borderColor: 'var(--accent-green)', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+                    { label: 'Versements', data: depositsSeries, borderColor: 'var(--muted)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 scales: {
-                    y: { ticks: { callback: value => fmt(value) } }
-                }
+                    y: { ticks: { callback: value => fmt(value), color: 'var(--muted)' }, grid: { color: 'var(--border)' } },
+                    x: { ticks: { color: 'var(--muted)' }, grid: { color: 'var(--border)' } }
+                },
+                plugins: { legend: { labels: { color: 'var(--text)' } } }
             }
         });
         els.pdfBtn.disabled = false;
@@ -96,18 +109,15 @@ function initAvPanel() {
     els.calcBtn.addEventListener('click', computeAndRender);
     els.years.addEventListener('input', () => { els.yearsValue.textContent = `${els.years.value} ans`; });
     
-    // Auto-compute on change
     Object.values(els).forEach(el => {
-        if(el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+        if(el && (el.tagName === 'INPUT' || el.tagName === 'SELECT')) {
             el.addEventListener('input', computeAndRender);
         }
     });
 
-    // PDF Export (simplified)
     els.pdfBtn.addEventListener('click', () => {
         alert("La fonction d'export PDF sera bientôt disponible dans ce nouvel onglet !");
     });
     
-    // Initial calculation
     computeAndRender();
 }
