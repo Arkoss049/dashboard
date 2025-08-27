@@ -87,10 +87,7 @@
   <div class="grid cols" style="margin-top:8px">
     <div class="card col-4">
       <h2>1) Situation</h2>
-      <div class="row">
-        <div><label>Statut familial</label><select id="statut"><option value="marie">Marié</option><option value="pacse">Pacsé</option><option value="concubin">Concubin</option><option value="celibataire">Célibataire</option></select></div>
-        <div><label>Parent décédé</label><select id="parentDecede"><option value="A">Parent A (assuré)</option><option value="B">Parent B (conjoint)</option></select></div>
-      </div>
+      <div class="row"><div><label>Statut familial</label><select id="statut"><option value="marie">Marié</option><option value="pacse">Pacsé</option><option value="concubin">Concubin</option><option value="celibataire">Célibataire</option></select></div><div><label>Parent décédé</label><select id="parentDecede"><option value="A">Parent A (assuré)</option><option value="B">Parent B (conjoint)</option></select></div></div>
       <div class="row"><div><label>Prénom A (assuré)</label><input id="prenomA" placeholder="Ex: Alice"/></div><div><label>Prénom B (conjoint)</label><input id="prenomB" placeholder="Ex: Benoît"/></div></div>
       <div class="row"><div><label>Revenu mensuel A (€)</label><input id="revenuA" inputmode="decimal" placeholder="ex: 3000"/></div><div><label>Revenu mensuel B (€)</label><input id="revenuB" inputmode="decimal" placeholder="ex: 2500"/></div></div>
       <div class="row"><div><label>Âge du survivant (ans)</label><input id="ageSurvivant" inputmode="numeric" placeholder="ex: 40"/></div><div><label>Charges mensuelles (€)</label><input id="chargesAnnuelles" inputmode="decimal" placeholder="ex: 2000"/></div></div>
@@ -127,9 +124,7 @@ function parseEuro(v){ if(v===null||v===undefined) return 0; if(typeof v==='numb
 let enfants=[];
 let chartInstance;
 const I={statut:$('statut'),parentDecede:$('parentDecede'),revenuA:$('revenuA'),revenuB:$('revenuB'),ageSurvivant:$('ageSurvivant'),chargesAnnuelles:$('chargesAnnuelles'),retBaseDefunt:$('retBaseDefunt'),useMinReversion:$('useMinReversion'),parentIsole:$('parentIsole'),newUnion:$('newUnion'),horizon:$('horizon'),ageEnfantAdd:$('ageEnfantAdd'),btnAddEnfant:$('btnAddEnfant'),enfantsList:$('enfantsList'),capPrive:$('capPrive'),dureePrive:$('dureePrive'),capCPAM:$('capCPAM'),lisserCPAM:$('lisserCPAM'),eligMsgs:$('eligMsgs'),chart:$('chart'),btnSave:$('btnSave'),btnReset:$('btnReset'),btnCSV:$('btnCSV'),banner:$('banner'),prenomA:$('prenomA'),prenomB:$('prenomB'),ageDefunt:$('ageDefunt'),btnMode:$('btnMode'),toggleStacked:$('toggleStacked'),btnPNG:$('btnPNG'),recapText:$('recapText'),need5:$('need5'),need10:$('need10')};
-// Config (hardcoded for simplicity)
 const CFG = { veuvage_m: 713.17, veuvage_plaf_m: 891.46, rev_min_m: 331.94, rev_plaf_solo_a: 24710.40, rev_plaf_couple_a: 39536.64, rev_apply_plaf: true, asf_m: 199.19, asf_age: 20, cpam_def: 3977 };
-
 function setDefaults(){ I.statut.value='marie'; I.parentDecede.value='A'; I.revenuA.value=3000; I.revenuB.value=2500; I.ageSurvivant.value=40; I.chargesAnnuelles.value=2000; I.retBaseDefunt.value=900; I.useMinReversion.checked=true; I.parentIsole.checked=true; I.newUnion.checked=false; I.horizon.value=25; I.capPrive.value=60000; I.dureePrive.value=5; I.capCPAM.value=CFG.cpam_def; I.lisserCPAM.checked=false; enfants=[6,3]; }
 function renderEnfants(){ I.enfantsList.innerHTML = enfants.length ? enfants.map((a,i)=>`<span class="chip">#${i+1} — ${a} ans <button data-del="${i}" style="padding:1px 5px;font-size:10px;border-radius:50%">x</button></span>`).join(' ') : '<span class="hint">Aucun enfant.</span>'; }
 function calcVeuvage(ctx){ const {statut,newUnion,ageSurvivantM,revenusSurvivantMensuel}=ctx; if(statut!=='marie') return {per:0,dur:0,ok:false,reason:'Non marié'}; if(newUnion) return {per:0,dur:0,ok:false,reason:'Nouvelle union'}; if(ageSurvivantM>=55*12) return {per:0,dur:0,ok:false,reason:'Âge ≥55'}; if(revenusSurvivantMensuel>CFG.veuvage_plaf_m) return {per:0,dur:0,ok:false,reason:'Plafond dépassé'}; let dur=24; if(ageSurvivantM>=50*12 && ageSurvivantM<55*12){ dur=Math.max(dur,Math.round(55*12-ageSurvivantM)); } return {per:CFG.veuvage_m,dur,ok:true,reason:'OK'}; }
@@ -164,18 +159,30 @@ function drawChart({labels,comp,chargesM}){
     const totals = labels.map((_,i)=> (compY.salary[i]||0)+(compY.veuv[i]||0)+(compY.rev[i]||0)+(compY.asf[i]||0)+(compY.cpam[i]||0)+(compY.contrat[i]||0));
     const seriesMax = Math.max(0, ...totals);
     const yMax = Math.max(500, Math.ceil((Math.max(seriesMax, chargesM)*1.20)/100)*100);
+    
+    // CORRECTION : Utiliser les variables CSS du thème
+    const styles = getComputedStyle(document.body);
+    const colors = {
+        acc: styles.getPropertyValue('--acc').trim() || '#6ae3ff',
+        ok: styles.getPropertyValue('--ok').trim() || '#80f2a1',
+        warn: styles.getPropertyValue('--warn').trim() || '#ffd166',
+        bad: styles.getPropertyValue('--bad').trim() || '#ff7b7b',
+        muted: styles.getPropertyValue('--muted').trim() || '#9bb1c9',
+        purple: '#a855f7'
+    };
+
     chartInstance = new Chart(ctx, {
         type:'bar',
         data:{ labels, datasets:[
-            {label:'Salaire survivant', data:compY.salary, backgroundColor:'#6ae3ff'},
-            {label:'Veuvage', data:compY.veuv, backgroundColor:'#80f2a1'},
-            {label:'Réversion', data:compY.rev, backgroundColor:'#ffd166'},
-            {label:'ASF', data:compY.asf, backgroundColor:'#a855f7'},
-            {label:'CPAM (lissé)', data:compY.cpam, backgroundColor:'#9bb1c9'},
-            {label:'Contrat (lissé)', data:compY.contrat, backgroundColor:'#ff7b7b'},
-            {label:`Charges (${nf2.format(chargesM)})`, data:new Array(labels.length).fill(chargesM), type:'line', borderColor:'var(--muted)', tension:0, pointRadius:0, borderDash:[5,5]}
+            {label:'Salaire survivant', data:compY.salary, backgroundColor: colors.acc},
+            {label:'Veuvage', data:compY.veuv, backgroundColor: colors.ok},
+            {label:'Réversion', data:compY.rev, backgroundColor: colors.warn},
+            {label:'ASF', data:compY.asf, backgroundColor: colors.purple},
+            {label:'CPAM (lissé)', data:compY.cpam, backgroundColor: colors.muted},
+            {label:'Contrat (lissé)', data:compY.contrat, backgroundColor: colors.bad},
+            {label:`Charges (${nf2.format(chargesM)})`, data:new Array(labels.length).fill(chargesM), type:'line', borderColor:colors.muted, tension:0, pointRadius:0, borderDash:[5,5]}
         ]},
-        options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true, ticks:{color:'var(--muted)'}, grid:{color:'var(--grid)'}}, y:{stacked:true, min:0, max:yMax, ticks:{color:'var(--muted)', callback:v=>nf2.format(v)}, grid:{color:'var(--grid)'}} }, plugins:{ legend:{ labels:{color:'var(--ink)'} } } }
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true, ticks:{color:colors.muted}, grid:{color:'var(--grid)'}}, y:{stacked:true, min:0, max:yMax, ticks:{color:colors.muted, callback:v=>nf2.format(v)}, grid:{color:'var(--grid)'}} }, plugins:{ legend:{ labels:{color:'var(--ink)'} } } }
     });
 }
 function saveState(){ const s={statut:I.statut.value,parentDecede:I.parentDecede.value,revenuA:I.revenuA.value,revenuB:I.revenuB.value,ageSurvivant:I.ageSurvivant.value,chargesAnnuelles:I.chargesAnnuelles.value,retBaseDefunt:I.retBaseDefunt.value,useMinReversion:I.useMinReversion.checked,parentIsole:I.parentIsole.checked,newUnion:I.newUnion.checked,horizon:I.horizon.value,capPrive:I.capPrive.value,dureePrive:I.dureePrive.value,capCPAM:I.capCPAM.value,lisserCPAM:I.lisserCPAM.checked,enfants:enfants, prenomA:I.prenomA.value, prenomB:I.prenomB.value, ageDefunt: I.ageDefunt.value }; localStorage.setItem('simu_deces_v1_1',JSON.stringify(s)); }
@@ -187,24 +194,18 @@ function updateUIForStatus(){
     conjointFields.forEach(el => {
         if(el) {
             el.disabled = isSingle;
-            el.style.opacity = isSingle ? 0.5 : 1;
-            el.style.cursor = isSingle ? 'not-allowed' : '';
+            if(isSingle) { el.value = (el.type==='checkbox' ? false : ''); }
         }
     });
-    if(isSingle){
-        I.prenomB.value = '';
-        I.revenuB.value = '';
-        I.parentDecede.value = 'A';
-        I.newUnion.checked = false;
-    }
     simulate();
 }
 I.btnAddEnfant.onclick=()=>{ const age=parseFloat(I.ageEnfantAdd.value||''); if(!isFinite(age)||age<0||age>25){alert('Âge invalide.');return;} enfants.push(age); I.ageEnfantAdd.value=''; renderEnfants(); saveState(); simulate(); };
 I.enfantsList.addEventListener('click', e=>{ if(e.target.dataset.del){ enfants.splice(parseInt(e.target.dataset.del),1); renderEnfants(); saveState(); simulate(); }});
 Object.keys(I).forEach(id=>{ if(I[id] && id!=='btnAddEnfant' && id!=='enfantsList' && !id.startsWith('btn')) I[id].addEventListener('input',()=>{saveState(); simulate();}); });
 I.btnSave.onclick=()=>{saveState(); alert('Sauvegardé.');};
-I.btnReset.onclick=()=>{ if(confirm('Réinitialiser ?')){ enfants=[]; setDefaults(); localStorage.removeItem('simu_deces_v1_1'); renderEnfants(); saveState(); simulate(); }};
+I.btnReset.onclick=()=>{ if(confirm('Réinitialiser ?')){ enfants=[]; setDefaults(); renderEnfants(); saveState(); updateUIForStatus(); }};
 document.querySelectorAll('[data-scenario]').forEach(x=>{ x.onclick=()=>{ const k=x.getAttribute('data-scenario'); setDefaults(); if(k==='T1'){ I.statut.value='marie'; I.revenuA.value=3000; I.revenuB.value=2500; I.ageSurvivant.value=40; I.chargesAnnuelles.value=2000; I.parentIsole.checked=true; enfants=[6,3]; } if(k==='T2'){ I.statut.value='pacse'; I.revenuA.value=2800; I.revenuB.value=2200; I.ageSurvivant.value=38; I.chargesAnnuelles.value=1800; I.parentIsole.checked=true; enfants=[7]; } if(k==='T5'){ I.capPrive.value=60000; I.dureePrive.value=5; } renderEnfants(); saveState(); updateUIForStatus(); }; });
+I.statut.addEventListener('input', updateUIForStatus);
 (function init(){ if(!loadState()){setDefaults();} renderEnfants(); updateUIForStatus(); })();
 </script>
 </body>
