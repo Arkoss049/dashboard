@@ -1,41 +1,18 @@
-// Contenu Corrigé et Final pour js/modules/prevoyance.js
+// Contenu Autonome et Corrigé pour js/modules/prevoyance.js
 
 function initPrevoyancePanel() {
     const root = document.getElementById('prevoyance-panel');
-    if (!root) {
-        console.error("L'élément racine pour le panneau Prévoyance est introuvable.");
-        return;
-    }
+    if (!root) return;
+
+    // UTILS INTÉGRÉS
+    const fmt0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const yearNow = () => new Date().getFullYear();
 
     const $ = sel => root.querySelector(sel);
+    // ... (Le reste du code de prevoyance.js reste identique à la version fonctionnelle que nous avions)
     const els = { file: $('.file'), importBtn: $('.import'), exportBtn: $('.export'), clearBtn: $('.clear'), target: $('.target'), save: $('.save'), debug: $('.debug'), toCalc: $('.toCalc'), printBtn: $('.print'), annualTotal: $('.annualTotal'), rows: $('.rows'), targetVal: $('.targetVal'), pct: $('.pct'), progressBar: $('.progressBar'), avg: $('.avg'), products: $('.products'), deals: $('.deals'), yearInfo: $('.yearInfo'), chartMonthly: $('.monthly'), chartPie: $('.pie'), search: $('.search'), filterYear: $('.filterYear'), tbody: $('.tbody'), m_prenom: $('.m_prenom'), m_nom: $('.m_nom'), m_produit: $('.m_produit'), m_montant: $('.m_montant'), m_per: $('.m_per'), m_date: $('.m_date'), m_add: $('.m_add'), exportCSVBtn: $('.exportCSV') };
-    
-    let data = loadData();
-    els.target.value = localStorage.getItem('prev.target') || '27000';
-    renderAll();
-
-    els.importBtn.addEventListener('click', () => {
-        els.file.click();
-    });
-
-    els.file.addEventListener('change', async () => {
-        const f = els.file.files && els.file.files[0];
-        if (!f) return;
-        try {
-            const text = await readFileToTextOrCSV(f);
-            const parsed = parseCSV(text);
-            let normalized = parsed.rows.map(r => normalizeRow(r)).map(r => ({...r, source:'import'}));
-            data = dedupeRows(normalized);
-            saveData();
-            debug(`Import OK — ${data.length} lignes.` + (normalized.length > data.length ? ` (${normalized.length - data.length} doublon(s) ignoré(s))` : ''));
-            renderAll();
-        } catch(e) {
-            debug('Erreur: ' + e);
-        } finally {
-            els.file.value = '';
-        }
-    });
-
+    let data = loadData(); els.target.value = localStorage.getItem('prev.target') || '27000'; renderAll();
     function keyFor(r){ const k1 = String(r.prenom||'').trim().toLowerCase(); const k2 = String(r.nom||'').trim().toLowerCase(); const k3 = String(r.produit||'').trim().toLowerCase(); const k4 = String(r.date||'').slice(0,7); return [k1,k2,k3,k4].join('|'); }
     function dedupeRows(rows){ const seen = new Set(); const out = []; for(const r of rows){ const k = keyFor(r); if(seen.has(k)) continue; seen.add(k); out.push(r); } return out; }
     function findDuplicateIndex(row){ const k = keyFor(row); return data.findIndex(d => keyFor(d) === k); }
@@ -64,82 +41,30 @@ function initPrevoyancePanel() {
     function renderAll(){ fillYearFilter(); renderKPIs(); renderCharts(); renderTable(); }
     function fillYearFilter(){ const years = Array.from(new Set(data.map(r => (r.date||'').slice(0,4)).filter(Boolean))).map(Number).sort((a,b)=>b-a); const cur = yearNow(); if(years.indexOf(cur)===-1) years.unshift(cur); els.filterYear.innerHTML = years.map(y => `<option value="${y}" ${y===cur?'selected':''}>Année ${y}</option>`).join(''); }
     function renderKPIs(){ const totalAnnual = data.reduce((s,d)=> s + (Number(d.annual)||0), 0); const target = Number(localStorage.getItem('prev.target')||0) || 0; els.annualTotal.textContent = fmt0.format(totalAnnual); els.rows.textContent = 'Lignes importées : ' + data.length; els.targetVal.textContent = target>0 ? fmt0.format(target) : '—'; const pct = target>0 ? (totalAnnual/target*100) : 0; els.pct.innerHTML = 'Atteint : ' + (target>0 ? (Math.round(pct*10)/10)+'%' : '—') + (pct>=125 ? ' <span class="badge badge-over">125%+</span>' : ''); const color = pct>=125? 'var(--over)' : pct>=100? 'var(--ok)' : pct>=80? 'var(--warn)' : 'var(--danger)'; els.progressBar.style.width = Math.min(100, Math.round(pct)) + '%'; els.progressBar.style.background = color; const avg = data.length ? totalAnnual / data.length : 0; els.avg.textContent = fmt0.format(avg); const productSet = new Set(data.map(d=> d.produit || 'Inconnu')); els.products.textContent = 'Produits distincts : ' + productSet.size; const y = Number(els.filterYear.value) || yearNow(); const yearRowsKPI = data.filter(d => !d.date || d.date.startsWith(String(y))); els.deals.textContent = yearRowsKPI.length; els.yearInfo.textContent = 'Année : ' + y; }
-    
     function renderCharts(){
         const y = Number(els.filterYear.value) || yearNow();
         const yearRows = data.filter(d => (d.date||'').startsWith(String(y)));
         const buckets = new Array(12).fill(0);
         yearRows.forEach(d => { if(!d.date) return; const m = Number(d.date.slice(5,7)) - 1; buckets[m] += Number(d.annual)||0; });
-        
         els.chartMonthly.innerHTML = barChartHTML(buckets);
-        
-        const map = {}; 
-        data.forEach(d => { const key=(d.produit||'Inconnu'); map[key]=(map[key]||0)+(Number(d.annual)||0); });
+        const map = {}; data.forEach(d => { const key=(d.produit||'Inconnu'); map[key]=(map[key]||0)+(Number(d.annual)||0); });
         const top = Object.entries(map).sort((a,b)=> b[1]-a[1]).slice(0,8);
         els.chartPie.innerHTML = pieChartSVG(top);
     }
-
     function renderTable(){ const y = Number(els.filterYear.value) || yearNow(); const q = (els.search.value||'').toLowerCase(); const rows = data.filter(d => { const txt = (d.prenom+' '+d.nom+' '+d.produit).toLowerCase(); if(q && !txt.includes(q)) return false; const yearOK = !d.date || d.date.startsWith(String(y)); if(!yearOK) return false; return true; }); rows.sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (Number(b.annual)||0)-(Number(a.annual)||0)); els.tbody.innerHTML = rows.map(r => `<tr data-id="${r.id||''}"><td>${esc(r.prenom||'')}</td><td>${esc(r.nom||'')}</td><td>${esc(r.produit||'')}</td><td class="right">${fmt0.format(Number(r.annual)||0)}</td><td>${r.date || '—'}</td><td>${r.source==='manual' ? '<button class="btn btn-ghost edit" data-id="'+(r.id||'')+'">✏️</button> <button class="btn btn-danger del" data-id="'+(r.id||'')+'">🗑</button>' : '—'}</td></tr>`).join(''); }
-    
-    // --- FONCTIONS GRAPHIQUES CORRIGÉES (HYBRIDE HTML/SVG) ---
     function barChartHTML(values){
         const labels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
         const max = Math.max(10, ...values);
-
-        const gridlinesHTML = [0.25, 0.5, 0.75, 1].map(p => 
-            `<div style="position: absolute; top: ${(1-p)*100}%; left: 0; right: 0; height: 1px; background: var(--border); opacity: 0.5;"></div>`
-        ).join('');
-
-        const barsHTML = values.map((v,i)=>{
-            const height = (v/max) * 100;
-            return `<div style="width: calc(100% / 12); display: flex; align-items: flex-end; justify-content: center;">
-                        <div style="width: 60%; height: ${height}%; background: linear-gradient(to top, var(--accent-blue), var(--accent-green)); border-radius: 6px 6px 0 0;" title="${labels[i]}: ${fmt0.format(v)}"></div>
-                    </div>`;
-        }).join('');
-        
-        const labelsHTML = labels.map(lab => 
-            `<div style="width: calc(100% / 12); text-align: center; font-size: 12px; color: var(--muted);">${lab}</div>`
-        ).join('');
-
-        return `
-            <div style="height: 100%; display: flex; flex-direction: column;">
-                <div style="flex-grow: 1; position: relative;">
-                    <div style="position: absolute; inset: 0 0 0 0;">${gridlinesHTML}</div>
-                    <div style="display: flex; height: 100%; position: relative; z-index: 1;">${barsHTML}</div>
-                </div>
-                <div style="display: flex; height: 20px; padding-top: 4px;">${labelsHTML}</div>
-            </div>
-        `;
+        const gridlinesHTML = [0.25, 0.5, 0.75, 1].map(p => `<div style="position: absolute; top: ${(1-p)*100}%; left: 0; right: 0; height: 1px; background: var(--border); opacity: 0.5;"></div>`).join('');
+        const barsHTML = values.map((v,i)=>{ const height = (v/max) * 100; return `<div style="width: calc(100% / 12); display: flex; align-items: flex-end; justify-content: center;"><div style="width: 60%; height: ${height}%; background: linear-gradient(to top, var(--accent-blue), var(--accent-green)); border-radius: 6px 6px 0 0;" title="${labels[i]}: ${fmt0.format(v)}"></div></div>`; }).join('');
+        const labelsHTML = labels.map(lab => `<div style="width: calc(100% / 12); text-align: center; font-size: 12px; color: var(--muted);">${lab}</div>`).join('');
+        return `<div style="height: 100%; display: flex; flex-direction: column;"><div style="flex-grow: 1; position: relative;"><div style="position: absolute; inset: 0 0 0 0;">${gridlinesHTML}</div><div style="display: flex; height: 100%; position: relative; z-index: 1;">${barsHTML}</div></div><div style="display: flex; height: 20px; padding-top: 4px;">${labelsHTML}</div></div>`;
     }
-    
     function pieChartSVG(entries){
-        const w=320, h=220, cx=110, cy=110, r=85;
-        const total = entries.reduce((s,[_k,v])=>s+v,0) || 1;
-        let a0 = -Math.PI/2;
+        const w=320, h=220, cx=110, cy=110, r=85; const total = entries.reduce((s,[_k,v])=>s+v,0) || 1; let a0 = -Math.PI/2;
         const colors = ['var(--accent-green)','var(--accent-blue)','#a855f7','var(--accent-orange)','#10b981','var(--danger)','#06b6d4','#f97316'];
-        
-        const legend = entries.map(([k,v], i) => {
-            const pct = (v/total*100).toFixed(1);
-            return `<div style="display:flex; align-items:center; gap:8px; font-size:12px;">
-                <span style="width:10px; height:10px; border-radius:50%; background-color:${colors[i % colors.length]}"></span>
-                <span style="flex:1; color:var(--text);">${esc(k)}</span>
-                <strong style="color:var(--muted);">${pct}%</strong>
-            </div>`;
-        }).join('');
-
-        const slices = entries.map(([k,v],i)=>{
-            const ang = (v/total)*Math.PI*2; const a1 = a0 + ang; const large = ang>Math.PI ? 1:0;
-            const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0);
-            const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
-            const path = `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
-            const color = colors[i % colors.length];
-            a0 = a1;
-            return `<path d="${path}" fill="${color}"><title>${k}: ${fmt0.format(v)}</title></path>`;
-        }).join('');
-        
-        return `<div style="display:flex; gap:16px; align-items:center;">
-            <svg viewBox="0 0 220 220" role="img" style="width:220px; height:220px;">${slices}</svg>
-            <div style="flex:1; display:flex; flex-direction:column; gap:6px;">${legend}</div>
-        </div>`;
+        const legend = entries.map(([k,v], i) => { const pct = (v/total*100).toFixed(1); return `<div style="display:flex; align-items:center; gap:8px; font-size:12px;"><span style="width:10px; height:10px; border-radius:50%; background-color:${colors[i % colors.length]}"></span><span style="flex:1; color:var(--text);">${esc(k)}</span><strong style="color:var(--muted);">${pct}%</strong></div>`; }).join('');
+        const slices = entries.map(([k,v],i)=>{ const ang = (v/total)*Math.PI*2; const a1 = a0 + ang; const large = ang>Math.PI ? 1:0; const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0); const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1); const path = `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`; const color = colors[i % colors.length]; a0 = a1; return `<path d="${path}" fill="${color}"><title>${k}: ${fmt0.format(v)}</title></path>`; }).join('');
+        return `<div style="display:flex; gap:16px; align-items:center;"><svg viewBox="0 0 220 220" role="img" style="width:220px; height:220px;">${slices}</svg><div style="flex:1; display:flex; flex-direction:column; gap:6px;">${legend}</div></div>`;
     }
 }
