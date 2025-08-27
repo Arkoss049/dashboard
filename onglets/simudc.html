@@ -1,16 +1,47 @@
 <div id="simudc-panel">
     <div class="grid">
-      <section class="card" style="grid-column: span 12">
-        <div class="row" style="justify-content:space-between; align-items:center">
-          <h3 class="section-title" style="margin:0;">Simulateur de pouvoir d’achat après décès</h3>
-          <a class="btn btn-primary" href="simulateur_dc.html" target="_blank" rel="noopener">Ouvrir en plein écran</a>
-        </div>
-        <div class="hr"></div>
-        <iframe 
-            src="simulateur_dc.html" 
-            title="Simulateur Décès" 
-            style="width:100%; height:85vh; border:none; border-radius:12px; overflow:hidden">
-        </iframe>
-      </section>
+        <section class="card" style="grid-column: span 12; lg:grid-column: span 4;">
+            <h3 class="section-title">Étape 1 : Qui protégeons-nous ?</h3>
+            <div class="note">Définissez la situation actuelle du foyer.</div>
+            <div class="hr"></div>
+            <div class="row"><label class="small" style="flex:1;">Statut familial</label><select class="status" style="flex:2;"><option value="marie">Marié</option><option value="pacse">Pacsé</option><option value="celibataire">Célibataire / Concubin</option></select></div>
+            <div class="row"><label class="small" style="flex:1;">Revenu net Parent 1 (€/mois)</label><input class="revA" type="number" value="3000" style="flex:2;" /></div>
+            <div class="row"><label class="small" style="flex:1;">Revenu net Parent 2 (€/mois)</label><input class="revB" type="number" value="2500" style="flex:2;" /></div>
+            <div class="row"><label class="small" style="flex:1;">Charges fixes (€/mois)</label><input class="charges" type="number" value="2000" style="flex:2;" /></div>
+            <div class="hr"></div>
+            <div class="row" style="align-items: flex-start;">
+                <div style="flex: 1;"><label class="small">Enfants à charge</label><div class="enfants-list note">Aucun enfant</div></div>
+                <div class="actions" style="flex: 0 0 120px;"><label class="small">Âge de l'enfant</label><input class="add-enfant-age" type="number" min="0" max="25" placeholder="ex: 8" /><button class="btn btn-primary add-enfant" style="margin-top: 4px;">+ Ajouter</button></div>
+            </div>
+        </section>
+
+        <section class="card" style="grid-column: span 12; lg:grid-column: span 8;">
+            <h3 class="section-title">Étape 2 : Que se passe-t-il sans protection ?</h3>
+            <div class="note">Visualisation de la chute des revenus après le décès (uniquement avec les aides sociales estimées).</div>
+            <div class="hr"></div>
+            <div class="chart-container" style="height: 250px; position: relative;"><canvas class="chart-sans"></canvas></div>
+            <div class="kpi card" style="background: var(--elev); margin-top: 16px;">
+                <div class="label">Déficit mensuel estimé</div>
+                <div class="value deficit-sans" style="color: var(--danger);">—</div>
+                <div class="delta">C'est le montant qu'il manque chaque mois pour couvrir les charges.</div>
+            </div>
+        </section>
+
+        <section class="card" style="grid-column: span 12;">
+            <h3 class="section-title">Étape 3 : Comment combler l'écart ?</h3>
+            <div class="note">Ajustez le capital privé pour sécuriser l'avenir du foyer. Le graphique se met à jour en temps réel.</div>
+            <div class="hr"></div>
+            <div class="row">
+                <label class="small" style="flex:1;">Capital Prévoyance souhaité (€)</label>
+                <input class="capital-prive" type="range" min="0" max="500000" step="10000" value="150000" style="flex:3;" />
+                <input class="capital-prive-val" type="number" value="150000" style="flex:1;" />
+            </div>
+            <div class="chart-container" style="height: 250px; position: relative;"><canvas class="chart-avec"></canvas></div>
+            <div class="kpi card" style="background: var(--elev); margin-top: 16px;">
+                <div class="label">Revenu mensuel sécurisé (avec contrat)</div>
+                <div class="value revenu-avec" style="color: var(--ok);">—</div>
+                <div class="delta">Cette rente fictive est calculée en lissant le capital sur 10 ans.</div>
+            </div>
+        </section>
     </div>
 </div>
