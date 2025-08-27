@@ -14,23 +14,22 @@ function initGavPanel() {
         search: $('.gav-search')
     };
 
-    // BASE DE DONNÉES COMPLÈTE DES CAS GAV
     const CASES = [
-        {"id": "E1", "cible": "Famille", "titre": "Enfant – brûlure eau bouillante", "emoji": "🔥", "resume": "Brûlures 2e degré, greffe, cicatrices.", "sans": 500, "avec": 42440, "tags": ["Hôpital", "Cicatrices", "Greffe"]},
-        {"id": "E2", "cible": "Famille", "titre": "Enfant – fracture du bras", "emoji": "🦴", "resume": "Fracture opérée avec broches, rééducation.", "sans": 200, "avec": 150, "tags": ["Plâtre", "Chirurgie", "IP<5%"]},
-        {"id": "E3", "cible": "Famille", "titre": "Enfant – dent cassée (vélo)", "emoji": "🦷", "resume": "Chute; incisive définitive cassée.", "sans": 300, "avec": 0, "tags": ["Prothèse dentaire", "IP<5%"]},
-        {"id": "E4", "cible": "Famille", "titre": "Enfant – coupure profonde (main)", "emoji": "✂️", "resume": "Coupure profonde suturée (sans section tendineuse).", "sans": 100, "avec": 22400, "tags": ["Sutures", "Cicatrice"]},
-        {"id": "A1", "cible": "Ado", "titre": "Ado – rupture LCA (sport)", "emoji": "🤾", "resume": "Chirurgie + rééduc; année scolaire perturbée.", "sans": 1000, "avec": 33440, "tags": ["Chirurgie", "Perte année scolaire"]},
-        {"id": "A2", "cible": "Ado", "titre": "Ado – fracture du poignet", "emoji": "🛼", "resume": "Chirurgie + orthèse; légère raideur.", "sans": 200, "avec": 100, "tags": ["Plâtre", "Cicatrice", "IP<5%"]},
-        {"id": "A5", "cible": "Ado", "titre": "Ado – chute VTT (clavicule)", "emoji": "🚲", "resume": "Fracture de la clavicule; petite cicatrice.", "sans": 200, "avec": 22400, "tags": ["Cicatrice", "Rééduc"]},
-        {"id": "P1", "cible": "Adulte", "titre": "Parent – chute d’échelle", "emoji": "🪜", "resume": "Fracture lombaire, séquelles dos, arrêt 6 mois.", "sans": 4000, "avec": 84100, "tags": ["Arrêt pro", "Rééduc"]},
-        {"id": "P2", "cible": "Adulte", "titre": "Parent – fracture humérus", "emoji": "💪", "resume": "Chirurgie + plaque; mobilité réduite.", "sans": 1500, "avec": 27580, "tags": ["Ostéosynthèse", "Cicatrice bras"]},
-        {"id": "P3", "cible": "Adulte", "titre": "Parent – fracture cheville", "emoji": "🦶", "resume": "Opération + vis; rééduc; boiterie légère.", "sans": 2000, "avec": 23550, "tags": ["Vis/plaques", "Rééduc 3 mois"]},
-        {"id": "P4", "cible": "Adulte", "titre": "Parent – fracture vertèbre", "emoji": "🏚️", "resume": "Fracture (hors hernie); douleurs résiduelles.", "sans": 3000, "avec": 45050, "tags": ["Chute hauteur", "Rééduc dos"]},
-        {"id": "P5", "cible": "Adulte", "titre": "Parent – trottinette (dents)", "emoji": "🛴", "resume": "Chute sans tiers; 4 incisives cassées; couronnes.", "sans": 1970, "avec": 26050, "tags": ["Dentaire", "EDP"]},
-        {"id": "S1", "cible": "Senior", "titre": "75 ans – fracture col fémur", "emoji": "🦴", "resume": "Prothèse, boiterie, adaptation douche.", "sans": 1500, "avec": 34150, "tags": ["Prothèse", "Aménagement"]},
-        {"id": "S2", "cible": "Senior", "titre": "72 ans – polytrauma + aide humaine", "emoji": "♿", "resume": "Paraplégie incomplète, fauteuil, gros travaux.", "sans": 35000, "avec": 705375, "tags": ["Tierce personne", "Invalidité lourde"]},
-        {"id": "S4", "cible": "Senior", "titre": "80 ans – perte de dents", "emoji": "🦷", "resume": "Édentation partielle; prothèses complètes.", "sans": 1500, "avec": 12700, "tags": ["Prothèse dentaire", "Abattement âge"]}
+        {"id": "E1", "cible": "Famille", "titre": "Enfant – brûlure eau bouillante", "emoji": "🔥", "resume": "Brûlures 2e degré, greffe, cicatrices.", "sans": 500, "avec": { "total": 42440, "ip": 29440, "souff": 6500, "esth": 6500 }, "tags": ["Hôpital", "Cicatrices", "Greffe"]},
+        {"id": "P1", "cible": "Adulte", "titre": "Parent – chute d’échelle", "emoji": "🪜", "resume": "Fracture lombaire, séquelles dos, arrêt 6 mois.", "sans": 4000, "avec": { "total": 84100, "ip": 73600, "souff": 6500, "pertesRevenus": 4000 }, "tags": ["Arrêt pro", "Rééduc"]},
+        {"id": "A1", "cible": "Ado", "titre": "Ado – rupture LCA (sport)", "emoji": "🤾", "resume": "Chirurgie + rééduc; année scolaire perturbée.", "sans": 1000, "avec": { "total": 33640, "ip": 29440, "souff": 4000, "hosp": 200 }, "tags": ["Chirurgie", "Perte année scolaire"]},
+        {"id": "P5", "cible": "Adulte", "titre": "Parent – trottinette (dents)", "emoji": "🛴", "resume": "Chute sans tiers; 4 incisives cassées; couronnes.", "sans": 1970, "avec": { "total": 26050, "ip": 22080, "souff": 2000, "prothese": 1970 }, "tags": ["Dentaire", "EDP"]},
+        {"id": "S1", "cible": "Senior", "titre": "75 ans – fracture col fémur", "emoji": "🦴", "resume": "Prothèse, boiterie, adaptation douche.", "sans": 1500, "avec": { "total": 34150, "ip": 27600, "souff": 4000, "esth": 1000, "hosp": 1050, "logement": 500 }, "tags": ["Prothèse", "Aménagement"]},
+        {"id": "S2", "cible": "Senior", "titre": "72 ans – polytrauma + aide humaine", "emoji": "♿", "resume": "Paraplégie incomplète, fauteuil, gros travaux.", "sans": 35000, "avec": { "total": 705375, "ip": 637875, "souff": 31000, "hosp": 1500, "prothese": 5000, "logement": 30000 }, "tags": ["Tierce personne", "Invalidité lourde"]},
+        {"id": "E2", "cible": "Famille", "titre": "Enfant – fracture du bras", "emoji": "🦴", "resume": "Fracture opérée, broches, rééducation.", "sans": 200, "avec": { "total": 0 }, "tags": ["Plâtre", "Chirurgie", "IP<5%"]},
+        {"id": "E3", "cible": "Famille", "titre": "Enfant – dent cassée (vélo)", "emoji": "🦷", "resume": "Chute; incisive définitive cassée.", "sans": 300, "avec": { "total": 0 }, "tags": ["Prothèse dentaire", "IP<5%"]},
+        {"id": "A2", "cible": "Ado", "titre": "Ado – fracture du poignet", "emoji": "🛼", "resume": "Chirurgie + orthèse; légère raideur.", "sans": 200, "avec": { "total": 0 }, "tags": ["Plâtre", "Cicatrice", "IP<5%"]},
+        {"id": "A5", "cible": "Ado", "titre": "Ado – chute VTT (clavicule)", "emoji": "🚲", "resume": "Fracture de la clavicule; petite cicatrice.", "sans": 200, "avec": { "total": 22400, "ip": 18400, "souff": 3000, "esth": 1000 }, "tags": ["Cicatrice", "Rééduc"]},
+        {"id": "P2", "cible": "Adulte", "titre": "Parent – fracture humérus", "emoji": "💪", "resume": "Chirurgie + plaque; mobilité réduite.", "sans": 1500, "avec": { "total": 27580, "ip": 22080, "souff": 3000, "esth": 1000, "pertesRevenus": 1500 }, "tags": ["Ostéosynthèse", "Cicatrice bras"]},
+        {"id": "P3", "cible": "Adulte", "titre": "Parent – fracture cheville", "emoji": "🦶", "resume": "Opération + vis; rééduc; boiterie légère.", "sans": 2000, "avec": { "total": 23550, "ip": 18400, "souff": 3000, "hosp": 150, "pertesRevenus": 2000 }, "tags": ["Vis/plaques", "Rééduc 3 mois"]},
+        {"id": "P4", "cible": "Adulte", "titre": "Parent – fracture vertèbre", "emoji": "🏚️", "resume": "Fracture (hors hernie); douleurs résiduelles.", "sans": 3000, "avec": { "total": 45050, "ip": 36800, "souff": 5000, "hosp": 250, "pertesRevenus": 3000 }, "tags": ["Chute hauteur", "Rééduc dos"]},
+        {"id": "S3", "cible": "Senior", "titre": "70 ans – fracture poignet", "emoji": "💪", "resume": "Plaque + rééduc; faiblesse permanente.", "sans": 200, "avec": { "total": 25280, "ip": 22080, "souff": 3000, "hosp": 200 }, "tags": ["Ostéosynthèse", "Rééduc"]},
+        {"id": "S4", "cible": "Senior", "titre": "80 ans – perte de dents", "emoji": "🦷", "resume": "Édentation partielle; prothèses complètes.", "sans": 1500, "avec": { "total": 12700, "ip": 9200, "souff": 2000, "prothese": 1500 }, "tags": ["Prothèse dentaire", "Abattement âge"]}
     ];
 
     function render() {
@@ -51,9 +50,19 @@ function initGavPanel() {
         arr.forEach(c => {
             const card = document.createElement('article');
             card.className = 'card';
-            const max = Math.max(1, c.sans, c.avec);
+            const avecTotal = c.avec.total || 0;
+            const max = Math.max(1, c.sans, avecTotal);
             const sansW = (c.sans / max * 100);
-            const avecW = (c.avec / max * 100);
+            const avecW = (avecTotal / max * 100);
+
+            let detailsHTML = '';
+            if (c.avec.ip) detailsHTML += `<li>IP: ${fmt0.format(c.avec.ip)}</li>`;
+            if (c.avec.souff) detailsHTML += `<li>Souffrances: ${fmt0.format(c.avec.souff)}</li>`;
+            if (c.avec.esth) detailsHTML += `<li>Esthétique: ${fmt0.format(c.avec.esth)}</li>`;
+            if (c.avec.hosp) detailsHTML += `<li>Hospitalisation: ${fmt0.format(c.avec.hosp)}</li>`;
+            if (c.avec.pertesRevenus) detailsHTML += `<li>Pertes revenus: ${fmt0.format(c.avec.pertesRevenus)}</li>`;
+            if (c.avec.prothese) detailsHTML += `<li>Prothèse: ${fmt0.format(c.avec.prothese)}</li>`;
+            if (c.avec.logement) detailsHTML += `<li>Logement: ${fmt0.format(c.avec.logement)}</li>`;
 
             card.innerHTML = `
                 <div class="row" style="justify-content:space-between;">
@@ -68,16 +77,31 @@ function initGavPanel() {
                     </div>
                     <div class="row" style="justify-content:space-between; font-size:12px; margin-top:4px;">
                         <span style="color:var(--danger)"><b>Sans GAV :</b> ${fmt0.format(c.sans)}</span>
-                        <span><b>Avec GAV :</b> ${fmt0.format(c.avec)}</span>
+                        <span><b>Avec GAV :</b> ${fmt0.format(avecTotal)}</span>
                     </div>
                 </div>
-                <div class="actions" style="margin-top: 10px; flex-wrap: wrap; gap: 6px;">
+                <div class="actions" style="margin-top: 10px;">
+                    <button class="btn btn-primary detail-btn">Voir le détail</button>
                     ${(c.tags || []).map(t => `<span class="badge">${t}</span>`).join(' ')}
+                </div>
+                <div class="details" style="display:none; margin-top:10px; border-top: 1px solid var(--border); padding-top:10px;">
+                    <h4 class="section-title" style="font-size: 1em; margin-bottom: 8px;">Détail de l'indemnisation GAV</h4>
+                    <ul style="margin:0; padding-left: 20px; font-size: 0.9em; color: var(--muted);">${detailsHTML}</ul>
                 </div>
             `;
             els.grid.appendChild(card);
         });
     }
+
+    els.grid.addEventListener('click', (e) => {
+        if (e.target.classList.contains('detail-btn')) {
+            const card = e.target.closest('.card');
+            const details = card.querySelector('.details');
+            if (details) {
+                details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+    });
 
     els.search.addEventListener('input', render);
     els.cible.addEventListener('change', render);
