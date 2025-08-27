@@ -111,7 +111,7 @@ function initPlanPanel() {
             const ytdBeforeCurrentMonth = Array.from({length: mSel - 1}, (_, i) => sumAnnualInMonth(prevData, ySel, i)).reduce((a, b) => a + b, 0);
             const remainingGoal = agoal - ytdBeforeCurrentMonth;
             const monthsRemaining = 12 - (mSel - 1);
-            const newMGoal = monthsRemaining > 0 ? round0(remainingGoal / monthsRemaining) : 0;
+            const newMGoal = monthsRemaining > 0 ? Math.round(remainingGoal / monthsRemaining) : 0;
             els.mgoal.value = newMGoal > 0 ? newMGoal : 0;
         }
         
