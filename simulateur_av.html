@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulateur d'Épargne — Pro+</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- jQuery & Select2 -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- jsPDF & html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #10162b;
+      --muted: #475569;
+      --text: #e8edf7;
+      --brand: #2dd4bf; /* teal-400 */
+      --brand-2: #fbbf24; /* amber-400 */
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --grid: rgba(255,255,255,0.06);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; padding: 24px;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 80% -20%, rgba(45,212,191,0.06), transparent 60%),
+                  radial-gradient(800px 500px at -10% 100%, rgba(251,191,36,0.08), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+    }
+    .shell {
+      max-width: 1080px; margin: 0 auto;
+    }
+    header {
+      display:flex; align-items:center; justify-content:space-between; gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.6vw, 30px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display:flex; gap:10px; align-items:center;
+    }
+    .badge {
+      font-size: 12px; padding: 4px 8px; border-radius: 999px;
+      background: rgba(45,212,191,0.12); color: var(--brand);
+      border: 1px solid rgba(45,212,191,0.35);
+    }
+    .toolbar {
+      display:flex; gap:8px; flex-wrap: wrap;
+    }
+    button, .btn {
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border:1px solid rgba(255,255,255,0.16);
+      color: var(--text); padding: 10px 14px; border-radius: 12px;
+      font-weight: 600; cursor:pointer; transition: .15s transform ease, .2s background;
+    }
+    button:hover, .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.10); }
+    button:disabled { opacity:.5; cursor: not-allowed; transform:none; }
+
+    .grid {
+      display:grid; gap:14px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .card h3 { margin: 0 0 10px; font-size: 16px; font-weight: 700; color: #dbeafe; }
+
+    .inputs { grid-column: span 5; }
+    .compare { grid-column: span 7; }
+    @media (max-width: 980px) {
+      .inputs, .compare { grid-column: 1 / -1; }
+    }
+
+    .row { display:flex; align-items:center; gap:10px; margin: 10px 0; flex-wrap: wrap; }
+    label { font-size: 13px; color: #cbd5e1; width: 200px; max-width: 100%; }
+    input[type="number"], select, .select2-selection--single {
+      background: #0f152a; color: var(--text);
+      border:1px solid rgba(255,255,255,0.16);
+      border-radius: 12px; padding: 10px 12px; min-width: 130px;
+    }
+    input[type="range"]{ width:200px; }
+    .muted { color: #93a4bb; font-size: 12px; }
+    .kpi {
+      display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:8px;
+    }
+    .kpi .item {
+      padding: 10px; border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+    .kpi .item .label { font-size: 12px; color:#9fb0c6; }
+    .kpi .item .value { font-size: 18px; font-weight:800; margin-top:6px; letter-spacing: -0.01em; }
+    @media (max-width:700px){ .kpi{ grid-template-columns:1fr 1fr; } }
+
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 10px;
+      border:1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;
+    }
+    th, td { padding: 10px; text-align: center; font-size: 13px; }
+    thead th {
+      background: rgba(2,6,23,0.75); border-bottom:1px solid rgba(255,255,255,0.10);
+      color:#cbd5e1;
+    }
+    tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+    tbody tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+    .tag { padding:2px 6px; border-radius: 8px; background: rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); font-size: 11px; color:#bfdbfe; }
+
+    .chart-card { position: relative; }
+    .legend { display:flex; gap:8px; flex-wrap: wrap; margin-top:10px; }
+    .legend label { width:auto; display:flex; align-items:center; gap:6px; }
+    .legend input[type="checkbox"]{ transform: translateY(1px); }
+
+    .footer {
+      margin-top: 20px; font-size: 12px; color:#9fb0c6; display:flex;
+      justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .danger { color: var(--danger); }
+    .pill { border:1px dashed rgba(255,255,255,0.2); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+  
+/* Select2 dark theme overrides */
+.select2-container--default .select2-selection--single {
+  background: #0f152a !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  height: 42px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: var(--text) !important;
+  line-height: 42px !important;
+  padding-left: 12px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--text) transparent transparent transparent !important;
+}
+.select2-dropdown {
+  background: #0b1020 !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.select2-results__options {
+  background: #0b1020 !important;
+  color: var(--text) !important;
+}
+.select2-results__option--highlighted.select2-results__option--selectable {
+  background: rgba(45,212,191,0.18) !important;
+  color: var(--text) !important;
+}
+.select2-search--dropdown .select2-search__field {
+  background: #10162b !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  color: var(--text) !important;
+  border-radius: 8px !important;
+}
+
+  
+/* Fix chart canvas height on dark layout to avoid huge scroll */
+#chart {
+  display: block;
+  width: 100% !important;
+  height: 420px !important;   /* fixed visual height */
+  max-height: 75vh !important;
+}
+.chart-card {
+  overflow: hidden; /* avoid accidental growth */
+}
+
+  
+/* Center text vertically in Select2 single selection */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  line-height: normal !important;
+}
+
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>Simulateur d'Épargne <span class="badge">Pro+</span></h1>
+      <div class="toolbar">
+        <button id="btn-calc">Calculer</button>
+        <button id="btn-reset" title="Réinitialiser">Réinitialiser</button>
+        <button id="btn-pdf" disabled>Télécharger le PDF</button>
+        <button id="btn-png" disabled>Exporter le graphique</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card inputs">
+        <h3>Paramètres</h3>
+
+        <div class="row">
+          <label for="initial">Versement initial (€)</label>
+          <input id="initial" type="number" min="0" step="100" value="8000" />
+        </div>
+
+        <div class="row">
+          <label for="monthly">Versement mensuel (€)</label>
+          <input id="monthly" type="number" min="0" step="10" value="0" />
+        </div>
+
+        <div class="row">
+          <label for="years">Durée (années)</label>
+          <input id="years" type="range" min="1" max="40" value="10" />
+          <span id="yearsValue" class="pill">10 ans</span>
+        </div>
+
+        <div class="row">
+          <label for="inflation">Inflation annuelle (%)</label>
+          <input id="inflation" type="number" min="0" step="0.1" value="2.0" />
+          <span class="muted">Permet d'afficher un capital « en euros constants ».</span>
+        </div>
+
+        <div class="row">
+          <label for="fiscalite">Fiscalité (option pédagogique)</label>
+          <select id="fiscalite">
+            <option value="none" selected>Sans fiscalité (brut de fiscalité)</option>
+            <option value="pfu">PFU 30% sur gains annuels (hypothèse simplifiée)</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="modeAffichage">Mode d'affichage</label>
+          <select id="modeAffichage">
+            <option value="nominal" selected>Montants nominaux</option>
+            <option value="reel">Montants réels (déflatés)</option>
+          </select>
+        </div>
+
+        <div class="kpi">
+          <div class="item">
+            <div class="label">Versements cumulés</div>
+            <div id="kpi-deposits" class="value">—</div>
+          </div>
+          <div class="item">
+            <div class="label">Année de break-even</div>
+            <div id="kpi-breakeven" class="value">—</div>
+          </div>
+          <div class="item">
+            <div class="label">Frais cumulés (Harmonie)</div>
+            <div id="kpi-fees" class="value">—</div>
+          </div>
+          <div class="item">
+            <div class="label">Écart vs Livret A</div>
+            <div id="kpi-gap" class="value">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card compare">
+        <h3>Produits & Hypothèses</h3>
+
+        <div class="row">
+          <label for="harm-rate">Harmonie — Rendement (%)</label>
+          <input id="harm-rate" type="number" step="0.01" min="0" value="4.5" />
+          <select id="harm-preset">
+            <option value="custom">Personnalisé</option>
+            <option value="4.5">Harmonie 30/70 (4,5%)</option>
+            <option value="5.5">Harmonie 50/50 (5,5%)</option>
+            <option value="6.5">Harmonie 70/30 (6,5%)</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Harmonie — Frais</label>
+          <span>Entrée: <input id="harm-entry" type="number" min="0" step="0.01" value="2.00" style="width:90px"> %</span>
+          <span>Gestion: <input id="harm-mgmt" type="number" min="0" step="0.01" value="0.60" style="width:90px"> %</span>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1); margin: 12px 0">
+
+        <div class="row">
+          <label for="compare-select">Contrat comparatif</label>
+          <select id="compare-select" style="min-width:280px"></select>
+          <span class="muted">(+ filtre auto, taper quelques lettres)</span>
+        </div>
+        <div class="row">
+          <label>Comparatif — Hypothèses</label>
+          <span>Entrée: <input id="cmp-entry" type="number" min="0" step="0.01" value="0.00" style="width:90px"> %</span>
+          <span>Gestion: <input id="cmp-mgmt" type="number" min="0" step="0.01" value="0.00" style="width:90px"> %</span>
+          <span>Rdt: <input id="cmp-rate" type="number" min="0" step="0.01" value="2.00" style="width:110px"> %</span>
+        </div>
+
+        <div class="row">
+          <label for="livreta">Livret A — Rendement (%)</label>
+          <input id="livreta" type="number" min="0" step="0.1" value="3.0" />
+          <span class="muted">Sans frais.</span>
+        </div>
+
+        <div class="row">
+          <label>Stress test (Harmonie)</label>
+          <span class="muted">Affiche ±1 pt de rendement</span>
+          <label class="pill"><input type="checkbox" id="stress" /> Afficher</label>
+        </div>
+      </section>
+
+      <section class="card chart-card" style="grid-column: 1 / -1;">
+        <h3>Évolution du capital</h3>
+        <canvas id="chart"></canvas>
+        <div class="legend">
+          <label><input type="checkbox" class="toggle-line" data-key="harm" checked /> Harmonie</label>
+          <label><input type="checkbox" class="toggle-line" data-key="cmp" checked /> Comparatif</label>
+          <label><input type="checkbox" class="toggle-line" data-key="la" checked /> Livret A</label>
+          <label><input type="checkbox" class="toggle-line" data-key="dep" checked /> Versements cumulés</label>
+          <label><input type="checkbox" class="toggle-line" data-key="stress" /> Stress ±1 pt</label>
+        </div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1;">
+        <h3>Tableau récapitulatif</h3>
+        <table id="results">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Harmonie</th>
+              <th id="th-cmp">Contrat comparatif</th>
+              <th>Livret A</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Capital final</td>
+              <td id="r-harm-cap">—</td>
+              <td id="r-cmp-cap">—</td>
+              <td id="r-la-cap">—</td>
+            </tr>
+            <tr>
+              <td>Intérêts cumulés</td>
+              <td id="r-harm-int">—</td>
+              <td id="r-cmp-int">—</td>
+              <td id="r-la-int">—</td>
+            </tr>
+            <tr>
+              <td>Frais d'entrée (€)</td>
+              <td id="r-harm-fe">—</td>
+              <td id="r-cmp-fe">—</td>
+              <td id="r-la-fe">—</td>
+            </tr>
+            <tr>
+              <td>Frais de gestion (€)</td>
+              <td id="r-harm-fg">—</td>
+              <td id="r-cmp-fg">—</td>
+              <td id="r-la-fg">—</td>
+            </tr>
+            <tr>
+              <td>Différence vs Harmonie</td>
+              <td>—</td>
+              <td id="r-diff-cmp">—</td>
+              <td id="r-diff-la">—</td>
+            </tr>
+            <tr>
+              <td>Année de break-even</td>
+              <td id="r-harm-be">—</td>
+              <td id="r-cmp-be">—</td>
+              <td id="r-la-be">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="footer">
+      <span>💡 Astuce: vous pouvez taper « linxea », « axa », « generali », etc., pour filtrer le contrat comparatif.</span>
+      <span class="muted">Simulation indicative. Hypothèses simplifiées (fiscalité, frais, rendement). Ne constitue pas un conseil.</span>
+    </div>
+  </div>
+
+  <script>
+    // ————— Utils ————————————————————————————————————————————————————————
+    const fmt = (v, sign=false) => {
+      if (isNaN(v)) return '—';
+      const f = new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' }).format(Math.abs(v));
+      return sign ? (v>=0?'+ ':'- ') + f : f;
+    };
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    function yearlyDeposits(initial, monthly, years){
+      const arr=[initial];
+      for(let y=1;y<=years;y++){ arr.push(initial + monthly*12*y); }
+      return arr;
+    }
+
+    function breakevenYear(yearlyValues, initial, monthly){
+      for(let y=0;y<yearlyValues.length;y++){
+        const deps = initial + monthly*12*y;
+        if (yearlyValues[y] >= deps) return y;
+      }
+      return '—';
+    }
+
+    // Core calc: monthly compounding; entry fees at deposit; mgmt fees charged yearly on capital
+    function simulate({initial, monthly, grossRate, entryFee, mgmtFee, years, inflation, tax}){
+      const r = grossRate/100;
+      const fei = entryFee/100;
+      const fmg = mgmtFee/100;
+      const infl = inflation/100;
+
+      const initFE = initial * fei;
+      const mFE = monthly * fei;
+      let totalEntry = initFE;
+      let totalMgmt = 0;
+
+      let capital = initial*(1-fei);
+      const monthlyRate = r / 12; // mgmt fees applied annually below (avoid double charge)
+
+      const yearlyNominal=[capital], yearlyEntry=[initFE], yearlyMgmt=[0];
+
+      for(let y=1;y<=years;y++){
+        let yEntry = 0;
+        let interestAccrued = 0;
+        for(let m=0;m<12;m++){
+          capital += monthly*(1-fei);
+          const before = capital;
+          capital *= (1+monthlyRate);
+          interestAccrued += (capital - before);
+          yEntry += mFE;
+        }
+        // simplified tax on gains
+        if (tax==='pfu' && interestAccrued>0){
+          const due = 0.30 * interestAccrued;
+          capital -= due;
+          totalMgmt += due; // display as "fees" bucket (pedagogic)
+        }
+        const yMgmtFees = capital * fmg; // annual mgmt fees
+        totalMgmt += yMgmtFees;
+        totalEntry += yEntry;
+        capital -= yMgmtFees;
+
+        yearlyNominal.push(capital);
+        yearlyEntry.push(totalEntry);
+        yearlyMgmt.push(totalMgmt);
+      }
+
+      const totalDeposits = initial + monthly*12*years;
+      const interests = capital - totalDeposits;
+
+      // real terms (euros constants)
+      const yearlyReal = yearlyNominal.map((v, i) => v / Math.pow(1+infl, i));
+
+      return {
+        totalCapital: capital,
+        totalDeposits,
+        interests,
+        entryFeesTotal: totalEntry,
+        mgmtFeesTotal: totalMgmt,
+        yearlyNominal,
+        yearlyReal,
+        yearlyEntry,
+        yearlyMgmt
+      };
+    }
+
+    function computeAll(){
+      const initial = Number(document.getElementById('initial').value||0);
+      const monthly = Number(document.getElementById('monthly').value||0);
+      const years = Number(document.getElementById('years').value||10);
+      const inflation = clamp(Number(document.getElementById('inflation').value||0),0,50);
+      const tax = document.getElementById('fiscalite').value;
+
+      const harmRate = clamp(Number(document.getElementById('harm-rate').value||0),0,100);
+      const harmEntry = clamp(Number(document.getElementById('harm-entry').value||0),0,100);
+      const harmMgmt = clamp(Number(document.getElementById('harm-mgmt').value||0),0,100);
+
+      const cmpEntry = clamp(Number(document.getElementById('cmp-entry').value||0),0,100);
+      const cmpMgmt = clamp(Number(document.getElementById('cmp-mgmt').value||0),0,100);
+      const cmpRate = clamp(Number(document.getElementById('cmp-rate').value||0),0,100);
+      const laRate = clamp(Number(document.getElementById('livreta').value||0),0,100);
+
+      const harm = simulate({initial, monthly, grossRate:harmRate, entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
+      const cmp = simulate({initial, monthly, grossRate:cmpRate, entryFee:cmpEntry, mgmtFee:cmpMgmt, years, inflation, tax});
+      const la = simulate({initial, monthly, grossRate:laRate, entryFee:0, mgmtFee:0, years, inflation, tax:'none'});
+
+      const deposits = yearlyDeposits(initial, monthly, years);
+      const mode = document.getElementById('modeAffichage').value;
+      const harmSeries = (mode==='reel') ? harm.yearlyReal : harm.yearlyNominal;
+      const cmpSeries  = (mode==='reel') ? cmp.yearlyReal  : cmp.yearlyNominal;
+      const laSeries   = (mode==='reel') ? la.yearlyReal   : la.yearlyNominal;
+
+      // Stress test bands ±1 pt on Harmonie
+      const stressON = document.getElementById('stress').checked;
+      const harmLow = simulate({initial, monthly, grossRate:Math.max(0,harmRate-1), entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
+      const harmHigh= simulate({initial, monthly, grossRate:harmRate+1, entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
+      const harmLowSeries  = (mode==='reel') ? harmLow.yearlyReal  : harmLow.yearlyNominal;
+      const harmHighSeries = (mode==='reel') ? harmHigh.yearlyReal : harmHigh.yearlyNominal;
+
+      return {
+        inputs: {initial, monthly, years, inflation, tax, harmRate, harmEntry, harmMgmt, cmpEntry, cmpMgmt, cmpRate, laRate, mode},
+        harm, cmp, la, deposits, harmSeries, cmpSeries, laSeries, stressON, harmLowSeries, harmHighSeries
+      };
+    }
+
+    // ————— Data ————————————————————————————————————————————————————————————
+    const contractsData = {
+      "ABEILLE EPARGNE ACTIVE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "ACTIVESEED VIE": { entryFees: 0, managementFees: 1.2, defaultRate: 4.0 },
+      "AFER": { entryFees: 0.5, managementFees: 0.48, defaultRate: 4.0 },
+      "AG2R / EXCELLIE VIE": { entryFees: 1.5, managementFees: 0.96, defaultRate: 4.0 },
+      "AG2R / TERRE DE VIE 2": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
+      "AG2R / VIVEPARGNE II": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
+      "AGIPI / EPARGNE CLER": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
+      "ALTAPROFITS / DIGITAL VIE PRIME": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "ALTAPROFITS / TITRES@VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "ALTAPROFITS VIE": { entryFees: 0, managementFees: 0.84, defaultRate: 4.0 },
+      "AMETIS / CNP TRESOR PROJETS": { entryFees: 4.0, managementFees: 0.9, defaultRate: 4.0 },
+      "AREAS ASSURANCES / MULTISUPPORT 3": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "ASAC FAPES / ASAC NEO VIE": { entryFees: 0, managementFees: 2.0, defaultRate: 4.0 },
+      "ASAC FAPES / EPARGNE RETRAITE 2 PLUS": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
+      "ASAC FAPES / ERMG": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
+      "ASAC FAPES / SOLID'R VIE": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
+      "ASSURANCE VIE RAMIFY": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
+      "ASSURANCEVIE.COM / EVOLUTION VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "ASSURANCEVIE.COM / LUCYA CARDIF": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
+      "ASSURANCEVIE.COM / PUISSANCE AVENIR": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "ASSURANCEVIE.COM / PUISSANCE SELECTION": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "ATHYMIS GESTION": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
+      "AUTRE": { entryFees: 0, managementFees: 0, defaultRate: 4.0 },
+      "AXA ARPEGES": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
+      "AXA EXCELIUM": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
+      "AXA PRIVILEGE": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
+      "BANQUE POPULAIRE / HORIZEO 2": { entryFees: 3.0, managementFees: 0.75, defaultRate: 4.0 },
+      "BANQUE POPULAIRE / PLAN EPARGNE ENFANT": { entryFees: 2.0, managementFees: 0.96, defaultRate: 4.0 },
+      "BANQUE POPULAIRE / QUINTESSA 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
+      "BNP PARIBAS MULTIPLACEMENTS 2": { entryFees: 2.75, managementFees: 0.85, defaultRate: 4.0 },
+      "BNP PARIBAS MULTIPLACEMENTS AVENIR": { entryFees: 2.75, managementFees: 0.85, defaultRate: 4.0 },
+      "BOURSE DIRECT HORIZON": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "BOURSE DIRECT VIE": { entryFees: 0, managementFees: 0.65, defaultRate: 4.0 },
+      "BOURSOBANK BOURSO VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "BPE EMERAUDE": { entryFees: 2.0, managementFees: 0.95, defaultRate: 4.0 },
+      "BRED BANQUE POPULAIRE / EVOLUVIE IV": { entryFees: 2.0, managementFees: 0.8, defaultRate: 4.0 },
+      "CAISSE D'ÉPARGNE / MILLEVIE ESSENTIELLE 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 0.0 },
+      "CAISSE D'ÉPARGNE / MILLEVIE INITIALE 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
+      "CARAC EPARGNE GENERATION": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
+      "CARAC EPARGNE PATRIMOINE": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
+      "CASHBEE +": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "CIC / CREDIT MUTUEL / PLAN ASSURANCE JEUNE": { entryFees: 1.0, managementFees: 0.65, defaultRate: 4.0 },
+      "CIC / CREDIT MUTUEL / PLAN ASSURANCE VIE - ESSENTIEL": { entryFees: 5.0, managementFees: 0.75, defaultRate: 4.0 },
+      "CONSERVATEUR HELIOS PATRIMOINE": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
+      "CORUM LIFE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / ANAE": { entryFees: 2.5, managementFees: 0.96, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / CARISSIME PAR TRANSFERTS": { entryFees: 4.5, managementFees: 0.6, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / FLORIAGRI": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / FLORIANE 2": { entryFees: 2.5, managementFees: 0.96, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / PREDISSIME 9 SÉRIE 2": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
+      "CREDIT AGRICOLE / VERS L'AVENIR": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
+      "CRÉDIT MUTUEL ARKÉA / NAVIG'OPTIONS": { entryFees: 2.0, managementFees: 0.8, defaultRate: 4.0 },
+      "EPARGNISSIMO / CROISSANCE AVENIR": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "EPARGNISSIMO / NETLIFE 2": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
+      "FORTUNEO VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "FRANCE MUTUALISTE / ACTEPARGNE 2": { entryFees: 0, managementFees: 0.77, defaultRate: 4.0 },
+      "GAN ASSURANCES / CHROMATYS EVOLUTION": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
+      "GAN PATRIMOINE EVOLUTION": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
+      "GAN PREVOYANCE RETRAITE ACTIVE": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
+      "GARANCE / CELEBEA VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "GARANCE EPARGNE": { entryFees: 1.0, managementFees: 0.6, defaultRate: 4.0 },
+      "GENERALI VIE / ESPACE INVEST 5": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "GENERALI VIE / HIMALIA": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "GENERALI VIE / L'EPARGNE GENERALI PLATINIUM": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "GMF / MULTEO": { entryFees: 2.0, managementFees: 0.75, defaultRate: 4.0 },
+      "GREEN GOT PLANET": { entryFees: 0, managementFees: 1.6, defaultRate: 4.0 },
+      "GRESHAM BANQUE PRIVEE / CONCORDANCES 4": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
+      "GRISBEE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "HEDIOS LIFE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "HELLO BANK! / ASSURANCE VIE HELLO!": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "HARMONIE MUTUELLE 30/70": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.5 },
+      "HARMONIE MUTUELLE 50/50": { entryFees: 2.0, managementFees: 0.6, defaultRate: 5.5 },
+      "HARMONIE MUTUELLE 70/30": { entryFees: 2.0, managementFees: 0.6, defaultRate: 6.5 },
+      "HSBC ESSENTIEL 2": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
+      "HSBC EVOLUTION PATRIMOINE VIE 2": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
+      "INTENCIAL LIBERALYS VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "LA BANQUE POSTALE / CACHEMIRE 2 SERIE 2": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
+      "LCL BANQUE PRIVEE / ACUITY EVOLUTION": { entryFees: 2.5, managementFees: 0.95, defaultRate: 4.0 },
+      "LCL VIE": { entryFees: 3.5, managementFees: 0.95, defaultRate: 4.0 },
+      "LINXEA AVENIR 2": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "LINXEA SPIRIT 2": { entryFees: 0, managementFees: 2.0, defaultRate: 4.0 },
+      "LINXEA VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "LINXEA ZEN": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "LOUVRE BANQUE PRIVEE / MYRIALIS VIE": { entryFees: 2.9, managementFees: 0.96, defaultRate: 4.0 },
+      "MAAF / WINALTO": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
+      "MACIF EPARGNE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "MACSF": { entryFees: 3.0, managementFees: 0.5, defaultRate: 4.0 },
+      "MAIF": { entryFees: 0.6, managementFees: 0.7, defaultRate: 4.0 },
+      "MATMUT / COMPLICE VIE": { entryFees: 1.5, managementFees: 0.85, defaultRate: 4.0 },
+      "MEILLEUR TAUX ALLOCATION VIE": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
+      "MEILLEUR TAUX LIBERTE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "MEILLEUR TAUX PLACEMENT VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "MIF / COMPTE EPARGNE LIBRE AVENIR MULTISUPPORT": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
+      "MIF EPARGNE ENFANT": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
+      "MMA MULTISUPPORTS": { entryFees: 4.0, managementFees: 0.8, defaultRate: 4.0 },
+      "MON PARTENAIRE ASSURANCE VIE": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
+      "MON PETIT PLACEMENT": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
+      "MONABANQ.VIE PREMIUM": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "MONIWAN VIE": { entryFees: 0, managementFees: 0.85, defaultRate: 4.0 },
+      "NALO / NALO PATRIMOINE": { entryFees: 0, managementFees: 0.85, defaultRate: 4.0 },
+      "PLACEMENT DIRECT ESSENTIEL": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
+      "PLACEMENT DIRECT VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "PREFON / PREFON VIE RESPONSABLE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
+      "PRIMONIAL ASSURANCES / TARGET +": { entryFees: 4.0, managementFees: 0.98, defaultRate: 4.0 },
+      "PRIMONIAL SERENIPIERRE": { entryFees: 4.0, managementFees: 0.95, defaultRate: 4.0 },
+      "PRO BTP / MULTISUPPORT CONFIANCE": { entryFees: 1.0, managementFees: 0.6, defaultRate: 4.0 },
+      "RADIANCE ASSURANCE VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "RAMIFY": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
+      "RITCHEE LIFE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "SELENCIA / MYPGA": { entryFees: 4.5, managementFees: 0.8, defaultRate: 4.0 },
+      "SELENCIA / PRIVILEGE GESTION ACTIVE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "SMAVIE / BATI EPARGNE": { entryFees: 2.5, managementFees: 0.84, defaultRate: 4.0 },
+      "SOCIETE GENERALE / SEQUOIA": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
+      "SWISSLIFE / EXPERT PREMIUM PLUS": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
+      "SWISSLIFE EVOLUTION PLUS": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
+      "SWISSLIFE RETRAITE": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
+      "SWISSLIFE STRATEGIC PREMIUM": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
+      "UAF LIFE PATRIMOINE / VERSION ABSOLUE 2": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "UNEP MULTISELECTION PLUS": { entryFees: 5.0, managementFees: 1.0, defaultRate: 4.0 },
+      "VIE PLUS / PATRIMOINE VIE PLUS": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
+      "VIE PLUS IMPACT": { entryFees: 4.5, managementFees: 1.9, defaultRate: 4.0 },
+      "VYV (SIMPLICITE + EXPERTISE)": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
+      "WESAVE PATRIMOINE": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
+      "YOMONI VIE / KIDS": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 }
+    };
+
+    // ————— UI init ———————————————————————————————————————————————————————
+    const $cmpSelect = $('#compare-select');
+    function initSelect(){
+      $cmpSelect.empty();
+      $cmpSelect.append(`<option value="__custom__">Choisir un contrat…</option>`);
+      Object.keys(contractsData).sort().forEach(name => {
+        $cmpSelect.append(`<option value="${name}">${name}</option>`);
+      });
+      $cmpSelect.select2({
+        placeholder: "Filtrer les contrats…",
+        allowClear: true,
+        matcher: (params, data) => {
+          if (!params.term || params.term.trim()==="") return data;
+          const t = params.term.toLowerCase();
+          return data.text.toLowerCase().includes(t) ? data : null;
+        }
+      });
+      $cmpSelect.on('change', () => {
+        const k = $cmpSelect.val();
+        if (k && k !== '__custom__' && contractsData[k]){
+          const c = contractsData[k];
+          document.getElementById('cmp-entry').value = Number(c.entryFees).toFixed(2);
+          document.getElementById('cmp-mgmt').value  = Number(c.managementFees).toFixed(2);
+          document.getElementById('cmp-rate').value  = Number(c.defaultRate).toFixed(2);
+          document.getElementById('th-cmp').textContent = k;
+        } else {
+          document.getElementById('th-cmp').textContent = "Contrat comparatif";
+        }
+      });
+    }
+
+    document.getElementById('harm-preset').addEventListener('change', (e)=>{
+      const v = e.target.value;
+      if (v !== 'custom') document.getElementById('harm-rate').value = Number(v).toFixed(2);
+    });
+    document.getElementById('years').addEventListener('input', (e)=>{
+      document.getElementById('yearsValue').textContent = e.target.value + ' ans';
+    });
+
+    // ————— Chart ————————————————————————————————————————————————————————
+    let chart;
+    function buildChart(payload){
+      const {inputs, harmSeries, cmpSeries, laSeries, deposits, stressON, harmLowSeries, harmHighSeries} = payload;
+      const labels = Array.from({length: inputs.years+1}, (_,i)=> i);
+      const showStress = document.querySelector('.toggle-line[data-key="stress"]').checked && stressON;
+
+      const datasets = [
+        { label: 'Harmonie', data: harmSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#f59e0b' },   // orange
+        { label: 'Comparatif', data: cmpSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#60a5fa' },  // blue
+        { label: 'Livret A', data: laSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#fde047' },     // yellow
+        { label: 'Versements cumulés', data: deposits, borderWidth:1, borderDash:[5,5], tension:0, pointRadius:0, borderColor:'rgba(148,163,184,1)' }
+      ];
+      // assign colors without specifying explicit hex? We'll let Chart.js auto, but set alpha fill off
+      if (showStress){
+        datasets.push({ label: 'Harmonie -1 pt', data: harmLowSeries, borderWidth:1, borderDash:[6,4], pointRadius:0, tension:.35, borderColor:'rgba(245,158,11,0.4)' });
+        datasets.push({ label: 'Harmonie +1 pt', data: harmHighSeries, borderWidth:1, borderDash:[6,4], pointRadius:0, tension:.35, borderColor:'rgba(245,158,11,0.4)' });
+      }
+
+      // Visibility from toggles
+      const toggles = document.querySelectorAll('.toggle-line');
+      const vis = { harm:true, cmp:true, la:true, dep:true, stress: showStress };
+      toggles.forEach(t => { vis[t.dataset.key] = t.checked; });
+
+      const indexed = {
+        'Harmonie': vis.harm,
+        'Comparatif': vis.cmp,
+        'Livret A': vis.la,
+        'Versements cumulés': vis.dep,
+        'Harmonie -1 pt': vis.stress,
+        'Harmonie +1 pt': vis.stress
+      };
+
+      if (chart) chart.destroy();
+      const chartEl = document.getElementById('chart');
+      chartEl.style.height = '420px';
+      chartEl.style.width = '100%';
+      const ctx = chartEl.getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode:'index', intersect:false },
+          plugins: {
+            legend: {
+              labels: { boxWidth: 12 }
+            },
+            tooltip: {
+              callbacks: {
+                title: (items)=> 'Année ' + items[0].label,
+                label: (ctx)=> `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: { grid:{ color:'rgba(255,255,255,0.08)' }, ticks:{ color:'#e8edf7' }, title:{ display:true, text:'Années', color:'#cbd5e1' } },
+            y: { grid:{ color:'rgba(255,255,255,0.08)' }, ticks:{ color:'#e8edf7', callback: (v)=> new Intl.NumberFormat('fr-FR').format(v) }, title:{ display:true, text:'Capital (€)', color:'#cbd5e1'} }
+          }
+        }
+      });
+
+      // apply visibility
+      chart.data.datasets.forEach(ds => {
+        ds.hidden = !indexed[ds.label];
+      });
+      chart.update();
+    }
+
+    // ————— Results binding —————————————————————————————————————————————
+    function updateUI(p){
+      const {inputs, harm, cmp, la, deposits} = p;
+
+      document.getElementById('kpi-deposits').textContent = fmt(deposits[deposits.length-1]);
+      document.getElementById('kpi-fees').textContent = fmt(harm.entryFeesTotal + harm.mgmtFeesTotal);
+      document.getElementById('kpi-gap').textContent = fmt(la.totalCapital - harm.totalCapital, true);
+
+      document.getElementById('r-harm-cap').textContent = fmt(harm.totalCapital);
+      document.getElementById('r-cmp-cap').textContent  = fmt(cmp.totalCapital);
+      document.getElementById('r-la-cap').textContent   = fmt(la.totalCapital);
+
+      document.getElementById('r-harm-int').textContent = fmt(harm.interests);
+      document.getElementById('r-cmp-int').textContent  = fmt(cmp.interests);
+      document.getElementById('r-la-int').textContent   = fmt(la.interests);
+
+      document.getElementById('r-harm-fe').textContent  = fmt(harm.entryFeesTotal);
+      document.getElementById('r-cmp-fe').textContent   = fmt(cmp.entryFeesTotal);
+      document.getElementById('r-la-fe').textContent    = fmt(0);
+
+      document.getElementById('r-harm-fg').textContent  = fmt(harm.mgmtFeesTotal);
+      document.getElementById('r-cmp-fg').textContent   = fmt(cmp.mgmtFeesTotal);
+      document.getElementById('r-la-fg').textContent    = fmt(0);
+
+      const beH = breakevenYear((inputs.mode==='reel'? harm.yearlyReal: harm.yearlyNominal), inputs.initial, inputs.monthly);
+      const beC = breakevenYear((inputs.mode==='reel'? cmp.yearlyReal : cmp.yearlyNominal ), inputs.initial, inputs.monthly);
+      const beL = breakevenYear((inputs.mode==='reel'? la.yearlyReal  : la.yearlyNominal  ), inputs.initial, inputs.monthly);
+      document.getElementById('kpi-breakeven').textContent = beH==='—'?'—': (beH + ' ans');
+      document.getElementById('r-harm-be').textContent = beH==='—'?'—': (beH + ' ans');
+      document.getElementById('r-cmp-be').textContent  = beC==='—'?'—': (beC + ' ans');
+      document.getElementById('r-la-be').textContent   = beL==='—'?'—': (beL + ' ans');
+
+      document.getElementById('r-diff-cmp').textContent = fmt(cmp.totalCapital - harm.totalCapital, true);
+      document.getElementById('r-diff-la').textContent  = fmt(la.totalCapital - harm.totalCapital, true);
+
+      // enable exports
+      document.getElementById('btn-pdf').disabled = false;
+      document.getElementById('btn-png').disabled = false;
+    }
+
+    // ————— PDF ————————————————————————————————————————————————————————————
+    
+
+async function exportPDF(payload){
+  try {
+    const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+    if (!jsPDF) { alert("Erreur PDF : jsPDF n'est pas chargé."); return; }
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const M = 8; // compact margins
+    let y = M;
+
+    // Helpers (sanitize spacing)
+    const money = (v) => {
+      try {
+        const s = new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' }).format(Number(v)||0);
+        return s.replace(/\u00A0|\u202F/g, ' ');
+      } catch(_) { return (Number(v)||0).toFixed(2) + ' €'; }
+    };
+    const signed = (v) => (v>=0?'+ ':'- ') + money(Math.abs(v));
+
+    // Header compact
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+    doc.text('Simulateur d’Épargne — Pro+', M, y); y += 5.5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Rapport de simulation — ' + new Date().toLocaleDateString('fr-FR'), M, y); y += 4.5;
+
+    const p = payload;
+
+    // Hypothèses (compact table)
+    if (doc.autoTable) {
+      const rows = [
+        ['Versement initial', money(p.inputs.initial)],
+        ['Versement mensuel', money(p.inputs.monthly)],
+        ['Durée (années)', String(p.inputs.years)],
+        ['Inflation', p.inputs.inflation.toFixed(1) + ' %'],
+        ['Fiscalité', p.inputs.tax==='pfu' ? 'PFU 30% (simplifié)' : 'Aucune (brut)'],
+        ['Harmonie (rdt / entrée / gestion)', p.inputs.harmRate.toFixed(2)+' % / '+p.inputs.harmEntry.toFixed(2)+' % / '+p.inputs.harmMgmt.toFixed(2)+' %'],
+        ['Comparatif (rdt / entrée / gestion)', p.inputs.cmpRate.toFixed(2)+' % / '+p.inputs.cmpEntry.toFixed(2)+' % / '+p.inputs.cmpMgmt.toFixed(2)+' %'],
+        ['Livret A (rdt)', p.inputs.laRate.toFixed(2)+' %']
+      ];
+      doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text('Hypothèses', M, y); y += 2.5;
+      doc.autoTable({
+        startY: y,
+        head: [['Paramètre','Valeur']],
+        body: rows,
+        theme: 'grid',
+        headStyles: { fillColor: [16,22,43], textColor: [230,235,245], fontSize: 8 },
+        styles: { font: 'helvetica', fontStyle: 'normal', fontSize: 8, lineColor: [210,210,210], cellPadding: 1.5 },
+        alternateRowStyles: { fillColor: [245,245,245] },
+        columnStyles: { 1: { halign: 'right' } },
+        margin: { left: M, right: M }
+      });
+      y = doc.lastAutoTable.finalY + 4;
+    }
+
+    // Graph (compact)
+    const canvas = document.getElementById('chart');
+    if (canvas && canvas.toDataURL) {
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgW = pageW - 2*M;
+      const imgH = Math.min(70, imgW * 0.45); // <= 70mm
+      if (y + imgH > pageH - 30) { doc.addPage(); y = M; } // rare, but safe
+      doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text('Évolution du capital', M, y); y += 3;
+      doc.addImage(imgData, 'PNG', M, y, imgW, imgH);
+      y += imgH + 4;
+    }
+
+    // Récapitulatif (compact table)
+    if (doc.autoTable) {
+      const body = [
+        ['Capital final', money(p.harm.totalCapital), money(p.cmp.totalCapital), money(p.la.totalCapital)],
+        ['Intérêts cumulés', money(p.harm.interests), money(p.cmp.interests), money(p.la.interests)],
+        ['Frais entrée (€)', money(p.harm.entryFeesTotal), money(p.cmp.entryFeesTotal), money(0)],
+        ['Frais gestion (€)', money(p.harm.mgmtFeesTotal), money(p.cmp.mgmtFeesTotal), money(0)],
+        ['Diff. vs Harmonie', '—', signed(p.cmp.totalCapital - p.harm.totalCapital), signed(p.la.totalCapital - p.harm.totalCapital)]
+      ];
+      if (y + 55 > pageH - 20) { doc.addPage(); y = M; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text('Comparatif récapitulatif', M, y); y += 2.5;
+      doc.autoTable({
+        startY: y,
+        head: [['', 'Harmonie', 'Comparatif', 'Livret A']],
+        body,
+        theme:'grid',
+        headStyles: { fillColor: [16,22,43], textColor: [230,235,245], fontSize: 8 },
+        styles:{ font: 'helvetica', fontStyle: 'normal', fontSize: 8, lineColor: [210,210,210], cellPadding: 1.5 },
+        alternateRowStyles: { fillColor: [245,245,245] },
+        columnStyles: { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
+        margin: { left: M, right: M }
+      });
+      y = doc.lastAutoTable.finalY + 3;
+    }
+
+    // Footer (compact)
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    const disclaimer = 'Simulation indicative. Hypothèses simplifiées (rendements, frais, fiscalité). Les performances passées ne préjugent pas des performances futures.';
+    const txt = doc.splitTextToSize(disclaimer, pageW - 2*M);
+    doc.text(txt, M, pageH - 8);
+
+    // Page numbers
+    const pages = doc.getNumberOfPages();
+    for (let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.text(`Page ${i}/${pages}`, pageW - M - 20, pageH - 4.5);
+    }
+
+    doc.save('Simulation_Epargne_Pro+.pdf');
+  } catch(e){
+    console.error(e);
+    alert('Échec export PDF : ' + (e && e.message ? e.message : e));
+  }
+}
+
+async function exportPNG(){
+      const canvas = document.getElementById('chart');
+      const link = document.createElement('a');
+      link.download = 'graphique_simulation.png';
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    }
+
+    // ————— Events ———————————————————————————————————————————————————————
+    function recalcAndRender(){
+      const payload = computeAll();
+      buildChart(payload);
+      updateUI(payload);
+      // persist
+      localStorage.setItem('simu_pro_plus', JSON.stringify(payload.inputs));
+      return payload;
+    }
+
+    document.getElementById('btn-calc').addEventListener('click', recalcAndRender);
+    document.getElementById('btn-reset').addEventListener('click', ()=>{
+      localStorage.removeItem('simu_pro_plus'); location.reload();
+    });
+    document.getElementById('btn-pdf').addEventListener('click', ()=> exportPDF(computeAll()));
+    document.getElementById('btn-png').addEventListener('click', exportPNG);
+
+    document.querySelectorAll('.toggle-line').forEach(cb => cb.addEventListener('change', ()=> buildChart(computeAll())));
+    document.getElementById('modeAffichage').addEventListener('change', recalcAndRender);
+    document.getElementById('stress').addEventListener('change', recalcAndRender);
+
+    // Try live updates for inputs
+    ['initial','monthly','years','inflation','fiscalite','harm-rate','harm-preset','harm-entry','harm-mgmt','cmp-entry','cmp-mgmt','cmp-rate','livreta']
+      .forEach(id => document.getElementById(id).addEventListener('input', ()=>{
+        if (id==='harm-preset') return;
+        recalcAndRender();
+      }));
+
+    // hydrate from localStorage
+    function hydrate(){
+      initSelect();
+      const saved = localStorage.getItem('simu_pro_plus');
+      if (saved){
+        try {
+          const s = JSON.parse(saved);
+          for (const [k,v] of Object.entries(s)){
+            const el = document.getElementById({
+              initial:'initial', monthly:'monthly', years:'years', inflation:'inflation', tax:'fiscalite',
+              harmRate:'harm-rate', harmEntry:'harm-entry', harmMgmt:'harm-mgmt',
+              cmpEntry:'cmp-entry', cmpMgmt:'cmp-mgmt', cmpRate:'cmp-rate', laRate:'livreta', mode:'modeAffichage'
+            }[k] || '');
+            if (el){
+              if (el.tagName==='SELECT') el.value = v;
+              else el.value = v;
+            }
+          }
+          document.getElementById('yearsValue').textContent = (document.getElementById('years').value || '10') + ' ans';
+        } catch(e){ /* ignore */ }
+      }
+      recalcAndRender();
+    }
+
+    // kick
+    document.addEventListener('DOMContentLoaded', hydrate);
+  </script>
+</body>
+</html>
