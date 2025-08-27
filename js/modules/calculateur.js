@@ -1,4 +1,4 @@
-// Contenu Simplifié et Final pour js/modules/calculateur.js
+// Contenu Corrigé et Final pour js/modules/calculateur.js
 
 function initCalculateurPanel() {
     const root = document.getElementById('calculateur-panel');
@@ -8,7 +8,7 @@ function initCalculateurPanel() {
     const $ = sel => root.querySelector(sel);
     const SAVE_PREFIX = 'v8.calc.';
     
-    const els = { profile: $('.profile'), clearBtn: $('.clear'), ca_prev: $('.ca_prev'), nb_er: $('.nb_er'), ca_er: $('.ca_er'), b_prev: $('.b_prev'), b_er_c: $('.b_er_c'), b_er_e: $('.b_er_e'), surprev: $('.surprev'), surer: $('.surer'), q_neo: $('.q_neo'), q_multi: $('.q_multi'), coll_palier: $('.coll_palier'), calc: $('.calc'), ro_prev: $('.ro_prev'), ro_er_c: $('.ro_er_c'), ro_er_e: $('.ro_er_e'), ro_prev_badge: $('.ro_prev_badge'), ro_er_c_badge: $('.ro_er_c_badge'), ro_er_e_badge: $('.ro_er_e_badge'), prime_eco: $('.prime_eco'), prime_surperf: $('.prime_surperf'), prime_qual: $('.prime_qual'), prime_coll: $('.prime_coll'), total: $('.total'), details: $('.details') };
+    const els = { profile: $('.profile'), clearBtn: $('.clear'), ca_prev: $('.ca_prev'), pullPrev: $('.pullPrev'), nb_er: $('.nb_er'), ca_er: $('.ca_er'), b_prev: $('.b_prev'), b_er_c: $('.b_er_c'), b_er_e: $('.b_er_e'), surprev: $('.surprev'), surer: $('.surer'), q_neo: $('.q_neo'), q_multi: $('.q_multi'), coll_palier: $('.coll_palier'), calc: $('.calc'), ro_prev: $('.ro_prev'), ro_er_c: $('.ro_er_c'), ro_er_e: $('.ro_er_e'), ro_prev_badge: $('.ro_prev_badge'), ro_er_c_badge: $('.ro_er_c_badge'), ro_er_e_badge: $('.ro_er_e_badge'), prime_eco: $('.prime_eco'), prime_surperf: $('.prime_surperf'), prime_qual: $('.prime_qual'), prime_coll: $('.prime_coll'), total: $('.total'), details: $('.details') };
     
     const fieldsToSave = ['profile', 'ca_prev', 'nb_er', 'ca_er', 'b_prev', 'b_er_c', 'b_er_e', 'surprev', 'surer', 'q_neo', 'q_multi', 'coll_palier'];
 
@@ -41,16 +41,24 @@ function initCalculateurPanel() {
         const roPrev = objPrev > 0 ? (caPrev/objPrev*100) : 0; const roERc = objER > 0 ? (nbER/objER*100) : 0; const roERe = objEREur > 0 ? (caER/objEREur*100) : 0;
         els.ro_prev.textContent = `${roPrev.toFixed(1)}%`; setBadge(els.ro_prev_badge, roPrev); els.ro_er_c.textContent = `${roERc.toFixed(1)}%`; setBadge(els.ro_er_c_badge, roERc); els.ro_er_e.textContent = `${roERe.toFixed(1)}%`; setBadge(els.ro_er_e_badge, roERe);
         const pPrev = valueFromBarème(roPrev, parseBarème(els.b_prev.value)); const pERc = valueFromBarème(roERc, parseBarème(els.b_er_c.value)); const pERe = valueFromBarème(roERe, parseBarème(els.b_er_e.value));
-        const primeEco = pPrev + pERc + pERe; els.prime_eco.textContent = fmt0.format(primeEco);
+        const primeEco = pPrev + pERc + pERe;
         const perPrev = Number(els.surprev.value||100); const perER = Number(els.surer.value||20);
         const trPrev = roPrev>125 ? Math.floor((roPrev-125)/5) : 0; const trER = roERc>125 ? Math.floor((roERc-125)/5) : 0;
-        const primeSurperf = trPrev*perPrev + trER*perER; els.prime_surperf.textContent = fmt0.format(primeSurperf);
+        const primeSurperf = trPrev*perPrev + trER*perER;
         const qNeo = Number(els.q_neo.value||0); const qMul = Number(els.q_multi.value||0);
-        const primeQual = Math.round(primeEco * (qNeo + qMul) / 100); els.prime_qual.textContent = fmt0.format(primeQual);
+        const primeQual = Math.round(primeEco * (qNeo + qMul) / 100);
         let primeColl = 0; const eligible = (roPrev>=65) || (roERc>=65) || (roERe>=65);
         if(eligible){ const pal = Number(els.coll_palier.value||0); primeColl = pal===1 ? 280 : pal===2 ? 555 : pal===3 ? 885 : 0; }
-        els.prime_coll.textContent = fmt0.format(primeColl); const total = primeEco + primeSurperf + primeQual + primeColl;
+        
+        // CORRECTION : On arrondit chaque total avant de l'afficher
+        const total = Math.round(primeEco + primeSurperf + primeQual + primeColl);
+        
+        els.prime_eco.textContent = fmt0.format(Math.round(primeEco));
+        els.prime_surperf.textContent = fmt0.format(Math.round(primeSurperf));
+        els.prime_qual.textContent = fmt0.format(primeQual);
+        els.prime_coll.textContent = fmt0.format(primeColl);
         els.total.textContent = fmt0.format(total);
+
         const state = { caPrev, objPrev, nbER, objER, caER, objEREur, roPrev, roERc, roERe, total };
         localStorage.setItem(SAVE_PREFIX + 'lastCalc', JSON.stringify(state));
         els.details.value = [`Profil: ${pf.label}`,`Objectifs: Prév(${fmt0.format(objPrev)}), ER Ctr(${objER}), ER CA(${fmt0.format(objEREur)})`,'---', `R/O Prév: ${roPrev.toFixed(1)}% -> Prime ${fmt0.format(pPrev)}`, `R/O ER Ctr: ${roERc.toFixed(1)}% -> Prime ${fmt0.format(pERc)}`, `R/O ER CA: ${roERe.toFixed(1)}% -> Prime ${fmt0.format(pERe)}`, `Surperf: ${fmt0.format(primeSurperf)}`, `Qualitatif: +${qNeo+qMul}% -> ${fmt0.format(primeQual)}`, `Collectif: ${fmt0.format(primeColl)}`, `TOTAL: ${fmt0.format(total)}`].join('\n');
@@ -73,7 +81,6 @@ function initCalculateurPanel() {
         }
     });
     
-    // Au chargement de l'onglet, on met à jour le CA Prévoyance automatiquement
     const autoImportedCaPrev = localStorage.getItem(SAVE_PREFIX + 'ca_prev');
     if (autoImportedCaPrev) {
         els.ca_prev.value = autoImportedCaPrev;
