@@ -1,4 +1,4 @@
-// Contenu Corrigé et Final pour js/modules/calculateur.js
+// Contenu Simplifié et Final pour js/modules/calculateur.js
 
 function initCalculateurPanel() {
     const root = document.getElementById('calculateur-panel');
@@ -8,24 +8,20 @@ function initCalculateurPanel() {
     const $ = sel => root.querySelector(sel);
     const SAVE_PREFIX = 'v8.calc.';
     
-    const els = { profile: $('.profile'), clearBtn: $('.clear'), ca_prev: $('.ca_prev'), pullPrev: $('.pullPrev'), nb_er: $('.nb_er'), ca_er: $('.ca_er'), b_prev: $('.b_prev'), b_er_c: $('.b_er_c'), b_er_e: $('.b_er_e'), surprev: $('.surprev'), surer: $('.surer'), q_neo: $('.q_neo'), q_multi: $('.q_multi'), coll_palier: $('.coll_palier'), calc: $('.calc'), ro_prev: $('.ro_prev'), ro_er_c: $('.ro_er_c'), ro_er_e: $('.ro_er_e'), ro_prev_badge: $('.ro_prev_badge'), ro_er_c_badge: $('.ro_er_c_badge'), ro_er_e_badge: $('.ro_er_e_badge'), prime_eco: $('.prime_eco'), prime_surperf: $('.prime_surperf'), prime_qual: $('.prime_qual'), prime_coll: $('.prime_coll'), total: $('.total'), details: $('.details') };
+    const els = { profile: $('.profile'), clearBtn: $('.clear'), ca_prev: $('.ca_prev'), nb_er: $('.nb_er'), ca_er: $('.ca_er'), b_prev: $('.b_prev'), b_er_c: $('.b_er_c'), b_er_e: $('.b_er_e'), surprev: $('.surprev'), surer: $('.surer'), q_neo: $('.q_neo'), q_multi: $('.q_multi'), coll_palier: $('.coll_palier'), calc: $('.calc'), ro_prev: $('.ro_prev'), ro_er_c: $('.ro_er_c'), ro_er_e: $('.ro_er_e'), ro_prev_badge: $('.ro_prev_badge'), ro_er_c_badge: $('.ro_er_c_badge'), ro_er_e_badge: $('.ro_er_e_badge'), prime_eco: $('.prime_eco'), prime_surperf: $('.prime_surperf'), prime_qual: $('.prime_qual'), prime_coll: $('.prime_coll'), total: $('.total'), details: $('.details') };
     
-    // NOUVELLE LISTE EXPLICITE DES CHAMPS À SAUVEGARDER
     const fieldsToSave = ['profile', 'ca_prev', 'nb_er', 'ca_er', 'b_prev', 'b_er_c', 'b_er_e', 'surprev', 'surer', 'q_neo', 'q_multi', 'coll_palier'];
 
     const PROFILES = { confirme: { obj_prev: 27000, obj_er: 11, obj_er_eur: 55000, b_prev: '80:750,85:1120,90:1490,95:1860,100:2240,105:2690,110:3030,115:3210,120:3390,125:3580', b_er: '80:160,85:240,90:320,95:400,100:480,105:575,110:645,115:685,120:725,125:765' }, qualifie: { obj_prev: 24000, obj_er: 6, obj_er_eur: 30000, b_prev: '80:650,85:980,90:1310,95:1640,100:1950,105:2340,110:2630,115:2790,120:2950,125:3110', b_er: '80:140,85:210,90:280,95:350,100:415,105:500,110:565,115:600,120:635,125:665' } };
     
-    // NOUVELLE FONCTION DE SAUVEGARDE/RESTAURATION
     function setupPersistence() {
         fieldsToSave.forEach(fieldName => {
             const el = els[fieldName];
             if (el) {
-                // Restaurer la valeur
                 const savedValue = localStorage.getItem(SAVE_PREFIX + fieldName);
                 if (savedValue !== null) {
                     el.value = savedValue;
                 }
-                // Sauvegarder la valeur à chaque changement
                 el.addEventListener('input', () => {
                     localStorage.setItem(SAVE_PREFIX + fieldName, el.value);
                 });
@@ -52,4 +48,36 @@ function initCalculateurPanel() {
         const qNeo = Number(els.q_neo.value||0); const qMul = Number(els.q_multi.value||0);
         const primeQual = Math.round(primeEco * (qNeo + qMul) / 100); els.prime_qual.textContent = fmt0.format(primeQual);
         let primeColl = 0; const eligible = (roPrev>=65) || (roERc>=65) || (roERe>=65);
-        if(eligible){ const pal = Number(els.coll_palier.value||0);
+        if(eligible){ const pal = Number(els.coll_palier.value||0); primeColl = pal===1 ? 280 : pal===2 ? 555 : pal===3 ? 885 : 0; }
+        els.prime_coll.textContent = fmt0.format(primeColl); const total = primeEco + primeSurperf + primeQual + primeColl;
+        els.total.textContent = fmt0.format(total);
+        const state = { caPrev, objPrev, nbER, objER, caER, objEREur, roPrev, roERc, roERe, total };
+        localStorage.setItem(SAVE_PREFIX + 'lastCalc', JSON.stringify(state));
+        els.details.value = [`Profil: ${pf.label}`,`Objectifs: Prév(${fmt0.format(objPrev)}), ER Ctr(${objER}), ER CA(${fmt0.format(objEREur)})`,'---', `R/O Prév: ${roPrev.toFixed(1)}% -> Prime ${fmt0.format(pPrev)}`, `R/O ER Ctr: ${roERc.toFixed(1)}% -> Prime ${fmt0.format(pERc)}`, `R/O ER CA: ${roERe.toFixed(1)}% -> Prime ${fmt0.format(pERe)}`, `Surperf: ${fmt0.format(primeSurperf)}`, `Qualitatif: +${qNeo+qMul}% -> ${fmt0.format(primeQual)}`, `Collectif: ${fmt0.format(primeColl)}`, `TOTAL: ${fmt0.format(total)}`].join('\n');
+    }
+
+    // --- Initialisation et Événements ---
+    setupPersistence();
+    const savedProfile = localStorage.getItem(SAVE_PREFIX+'profile') || 'confirme'; 
+    els.profile.value = savedProfile; 
+    applyProfile(savedProfile);
+    
+    els.profile.addEventListener('change', (e)=> applyProfile(e.target.value)); 
+    els.calc.addEventListener('click', compute);
+    els.clearBtn.addEventListener('click', () => { 
+        if(confirm('Réinitialiser les paramètres de cet onglet ?')){ 
+            fieldsToSave.forEach(fieldName => {
+                localStorage.removeItem(SAVE_PREFIX + fieldName);
+            });
+            location.reload();
+        }
+    });
+    
+    // Au chargement de l'onglet, on met à jour le CA Prévoyance automatiquement
+    const autoImportedCaPrev = localStorage.getItem(SAVE_PREFIX + 'ca_prev');
+    if (autoImportedCaPrev) {
+        els.ca_prev.value = autoImportedCaPrev;
+    }
+
+    compute();
+}
