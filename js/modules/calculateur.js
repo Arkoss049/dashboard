@@ -21,12 +21,7 @@ function initCalculateurPanel() {
             if (el) {
                 const savedValue = localStorage.getItem(SAVE_PREFIX + fieldName);
                 if (savedValue !== null) {
-                    // CORRECTION : On arrondit la valeur de CA Prévoyance à la restauration
-                    if (fieldName === 'ca_prev') {
-                        el.value = round0(savedValue);
-                    } else {
-                        el.value = savedValue;
-                    }
+                    el.value = savedValue;
                 }
                 el.addEventListener('input', () => {
                     localStorage.setItem(SAVE_PREFIX + fieldName, el.value);
@@ -77,20 +72,23 @@ function initCalculateurPanel() {
     
     els.profile.addEventListener('change', (e)=> applyProfile(e.target.value)); 
     els.calc.addEventListener('click', compute);
+    
+    // CORRECTION : On arrondit le total importé de l'onglet Prévoyance dès qu'il est lu
+    const autoImportedCaPrev = localStorage.getItem('v8.calc.ca_prev');
+    if (autoImportedCaPrev) {
+        els.ca_prev.value = round0(autoImportedCaPrev);
+        localStorage.setItem(SAVE_PREFIX + 'ca_prev', els.ca_prev.value); // On met à jour la sauvegarde avec la valeur arrondie
+    }
+
     els.clearBtn.addEventListener('click', () => { 
         if(confirm('Réinitialiser les paramètres de cet onglet ?')){ 
             fieldsToSave.forEach(fieldName => {
                 localStorage.removeItem(SAVE_PREFIX + fieldName);
             });
-            location.reload();
+            // Recharger la page pour repartir sur une base propre
+            window.location.reload();
         }
     });
     
-    const autoImportedCaPrev = localStorage.getItem('v8.calc.ca_prev'); // On utilise la même clé que Prévoyance
-    if (autoImportedCaPrev) {
-        // CORRECTION : On arrondit la valeur dès qu'on l'importe
-        els.ca_prev.value = round0(autoImportedCaPrev);
-    }
-
     compute();
 }
