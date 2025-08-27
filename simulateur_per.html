@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="fr">
+\1
+
+<script>
+// Safe localStorage shim for sandboxed contexts (data:, blob:, srcdoc)
+(function(){
+  function createMemoryStore(){
+    const mem = {};
+    return {
+      getItem: (k)=> Object.prototype.hasOwnProperty.call(mem,k) ? mem[k] : null,
+      setItem: (k,v)=>{ mem[k] = String(v); },
+      removeItem: (k)=>{ delete mem[k]; }
+    };
+  }
+  var _LS;
+  try {
+    // Accessing localStorage may throw SecurityError in opaque origins
+    _LS = window.localStorage;
+    // basic sanity check
+    const tkey='__ls_test__'+Math.random().toString(36).slice(2);
+    _LS.setItem(tkey,'1'); _LS.removeItem(tkey);
+  } catch(e){
+    _LS = createMemoryStore();
+  }
+  // Expose a stable alias used by the app
+  window.__LS__ = _LS;
+})();
+</script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulateur PER — Pro+ (2025 • Sortie LITE • Auto-plafond)</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = 'Inter, system-ui, Segoe UI, Roboto, sans-serif';
+Chart.defaults.font.size = 12;
+Chart.defaults.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1020; --surface:#10162b; --text:#e8edf7; --muted:#93a4bb;
+      --brand:#2dd4bf; --accent:#fbbf24;
+      --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --grey:#64748b; --line:#1f2937;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; padding:24px; color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;
+      background: radial-gradient(1200px 600px at 80% -20%, rgba(45,212,191,0.06), transparent 60%),
+                  radial-gradient(800px 500px at -10% 100%, rgba(251,191,36,0.08), transparent 60%),
+                  var(--bg);
+    }
+    .shell{max-width:1180px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+    h1{margin:0;font-size:clamp(20px,2.6vw,30px);font-weight:700;letter-spacing:-0.02em;display:flex;gap:10px;align-items:center}
+    .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(45,212,191,0.12);color:var(--brand);border:1px solid rgba(45,212,191,0.35)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));border:1px solid rgba(255,255,255,0.16);
+      color:var(--text);padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;transition:.15s transform ease,.2s background}
+    button:hover{transform:translateY(-1px);background:rgba(255,255,255,0.10)} button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px;padding:16px;backdrop-filter:blur(6px)}
+    .card h3{margin:0 0 10px;font-size:16px;font-weight:700;color:#dbeafe}
+    .inputs{grid-column:span 5}
+    .chartwrap{grid-column:span 7}
+    @media(max-width:1100px){.inputs,.chartwrap{grid-column:1 / -1}}
+    .row{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+    label{font-size:13px;color:#cbd5e1;width:250px;max-width:100%}
+    input[type="number"],select{background:#0f152a;color:var(--text);border:1px solid rgba(255,255,255,0.16);
+      border-radius:12px;padding:10px 12px;min-width:120px}
+    .muted{color:var(--muted);font-size:12px}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+    .kpi .item{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03)}
+    .kpi .label{font-size:12px;color:#9fb0c6}
+    .kpi .value{font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-0.01em}
+    @media(max-width:700px){.kpi{grid-template-columns:1fr 1fr}}
+    table{width:100%;border-collapse:collapse;margin-top:10px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden}
+    th,td{padding:10px;text-align:center;font-size:13px}
+    thead th{background:rgba(2,6,23,0.75);border-bottom:1px solid rgba(255,255,255,0.1);color:#cbd5e1}
+    tbody tr:nth-child(odd){background:rgba(255,255,255,0.03)}
+    tbody tr:nth-child(even){background:rgba(255,255,255,0.05)}
+    .chartbox{position:relative;height:440px;max-height:75vh}
+#chart{display:block;width:100%;height:100%}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+    .editable{width:110px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.16);font-size:12px;background:rgba(255,255,255,0.05)}
+    .ok{color:#22c55e} .warn{color:#f59e0b}
+
+    /* Sortie LITE */
+    .outlite{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+    @media(max-width:900px){.outlite{grid-template-columns:1fr}}
+    .bigline{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(255,255,255,0.12);padding:12px;border-radius:12px;background:rgba(255,255,255,0.03)}
+    .bigline .title{font-weight:700}
+    .bigline .value{font-size:22px;font-weight:800;letter-spacing:-0.01em}
+    .pill{border:1px dashed rgba(255,255,255,0.25);border-radius:999px;padding:4px 8px;font-size:12px}
+    .details{display:none;margin-top:8px;border-top:1px dashed rgba(255,255,255,0.2);padding-top:10px}
+    .details .row label{width:auto;min-width:200px}
+    .switch{display:inline-flex;align-items:center;gap:8px}
+
+    /* FRISE fiscale */
+    .frise-wrap{margin-top:10px}
+    .frise-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin:8px 0}
+    .frise-label{font-size:12px;color:#cbd5e1}
+    .frise-bar{display:flex;gap:4px;align-items:center;height:24px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:2px 4px;position:relative}
+    .seg{height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;min-width:0;position:relative;padding:0 6px}
+    .seg .lab{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:999px;background:rgba(255,255,255,0.75);color:#0b1020;font-weight:800;padding:0 6px}
+    .legend{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;font-size:12px;color:#cbd5e1}
+    .lg-badge{display:inline-flex;align-items:center;gap:6px}
+    .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+    /* TOPO under chart */
+    .topo-under{margin-top:8px;border-top:1px dashed rgba(255,255,255,0.12);padding-top:10px}
+    .topo-under .line{font-size:15px;line-height:1.6;color:#e5edf8}
+    .topo-under b{color:#fff}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Simulateur PER <span class="badge">Pro+ • 2025</span></h1>
+    <div class="toolbar">
+      <button id="btn-calc">Calculer</button>
+      <button id="btn-reset">Réinitialiser</button>
+      <button id="btn-pdf" disabled>PDF</button>
+      <button id="btn-png" disabled>PNG</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card inputs">
+      <h3>Paramètres épargne</h3>
+      <div class="row">
+        <label>Âge actuel</label>
+        <input id="age" type="number" min="18" max="70" value="36" />
+      </div>
+      <div class="row">
+        <label>Âge de départ (objectif)</label>
+        <input id="retireAge" type="number" min="55" max="70" value="64" />
+      </div>
+      <div class="row">
+        <label>Versement initial (€)</label>
+        <input id="initial" type="number" min="0" step="100" value="0" />
+      </div>
+      <div class="row">
+        <label>Versement mensuel (€)</label>
+        <input id="monthly" type="number" min="0" step="10" value="300" />
+        <span class="muted">Astuce : “Définir depuis l’optimal”.</span>
+      </div>
+      <div class="row">
+        <label>Rendement annuel net (%)</label>
+        <input id="rate" type="number" step="0.1" min="0" value="5.0" />
+      </div>
+
+      <h3 style="margin-top:16px">Paramètres fiscaux</h3>
+      <div class="row">
+        <label>Revenu fiscal de référence (€/an)</label>
+        <input id="rfr" type="number" min="0" step="100" value="45000" />
+      </div>
+      <div class="row">
+        <label>Nombre de parts (quotient familial)</label>
+        <input id="parts" type="number" min="1" step="0.5" value="1" />
+      </div>
+
+      <div class="row" style="align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="row" style="margin:0">
+            <label>Plafond PER disponible (€/an)</label>
+            <input id="cap" type="number" min="0" step="50" value="10000" />
+          </div>
+          <label class="switch" style="margin-left:0">
+            <input type="checkbox" id="capAutoOn" /> Calculer automatiquement
+          </label>
+        </div>
+      </div>
+
+      <div id="autoPanel" class="card" style="display:none;padding:12px;margin-top:8px">
+        <div class="chip">🧮 Calculette du plafond (A − B + C pour salarié • 154 bis pour TNS)</div>
+        <div class="row" style="margin-top:6px">
+          <label>Statut</label>
+          <select id="capStatus">
+            <option value="salarie">Salarié</option>
+            <option value="tns">TNS / Indépendant</option>
+          </select>
+          <label>PASS utilisé (€)</label>
+          <input id="capPASS" type="number" min="40000" step="1" value="46368" />
+        </div>
+
+        <div id="blockSalarie" class="two-col">
+          <div class="row">
+            <label>Revenus d’activité 2024 (nets de frais) €</label>
+            <input id="capIncomeNet" type="number" min="0" step="100" value="40000" />
+          </div>
+          <div class="row">
+            <label>Contributions retraite d’entreprise 2024 (art.83/PEROB/PERECO) €</label>
+            <input id="capB" type="number" min="0" step="100" value="0" />
+          </div>
+          <div class="row">
+            <label>Reports 3 ans (total) €</label>
+            <input id="capCarry" type="number" min="0" step="100" value="0" />
+          </div>
+          <div class="row">
+            <label>Enveloppe conjoint mobilisée € (optionnel)</label>
+            <input id="capSpouse" type="number" min="0" step="100" value="0" />
+          </div>
+        </div>
+
+        <div id="blockTNS" class="two-col" style="display:none">
+          <div class="row">
+            <label>Bénéfice imposable estimé (N) €</label>
+            <input id="capBene" type="number" min="0" step="100" value="80000" />
+          </div>
+          <div class="row">
+            <label>Prise en compte</label>
+            <select id="capTnsMode">
+              <option value="154bis" selected>Déduction pro (art. 154 bis)</option>
+              <option value="global">Déduction du revenu global (règle salarié)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button id="btnCapCompute">Calculer le plafond</button>
+          <span id="capExplain" class="muted">—</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="item">
+          <div class="label">Horizon</div>
+          <div id="kpi-years" class="value">—</div>
+        </div>
+        <div class="item">
+          <div class="label">TMI (calculé)</div>
+          <div id="kpi-tmi" class="value">—</div>
+        </div>
+        <div class="item">
+          <div class="label">Montant optimal (an)</div>
+          <div id="kpi-opt" class="value">—</div>
+        </div>
+        <div class="item">
+          <div class="label">Effort net mensuel</div>
+          <div id="kpi-effort" class="value">—</div>
+        </div>
+      </div>
+
+      <div class="two-col" style="margin-top:10px">
+        <div class="card" style="padding:12px">
+          <div class="row" style="margin:0 0 6px 0;align-items:flex-start">
+            <div style="flex:1">
+              <div class="chip"><span>🎯</span><b>Montant optimal annuel</b> (pour descendre d’une tranche)</div>
+              <div class="muted" id="opt-explain" style="margin-top:6px">—</div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:6px">
+            <label>Optimal conseillé (€/an)</label>
+            <input id="opt-amount" type="number" min="0" step="100" value="0" />
+            <button id="btn-apply-opt">Définir la mensualité = optimal ÷ 12</button>
+          </div>
+          <div class="muted" style="margin-top:6px">Plafonné par votre « Plafond PER disponible ».</div>
+        </div>
+
+        <div class="card" style="padding:12px">
+          <div class="chip">📊 <b>Paliers utiles</b></div>
+          <table id="paliers">
+            <thead>
+              <tr><th>Objectif</th><th>Montant à verser</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card chartwrap">
+      <h3>Évolution du capital</h3>
+      <div class="chartbox"><canvas id="chart"></canvas></div>
+      <div class="muted" style="margin-top:8px">Montants nominaux (inflation ignorée pour simplicité).</div>
+      <div id="topoUnder" class="topo-under">
+        <div id="topoLine1" class="line">—</div>
+        <div id="topoLine2" class="line">—</div>
+      </div>
+    </section>
+
+    <!-- FRISE fiscale -->
+    <section class="card" style="grid-column:1 / -1">
+      <h3>Répartition de l’impôt par tranche</h3>
+      <div class="frise-wrap">
+        <div class="frise-row">
+          <div class="frise-label">Avant PER</div>
+          <div id="frise-before" class="frise-bar"></div>
+        </div>
+        <div class="frise-row">
+          <div class="frise-label">Après PER</div>
+          <div id="frise-after" class="frise-bar"></div>
+        </div>
+        <div class="legend">
+          <span class="lg-badge"><span class="dot" style="background:var(--grey)"></span>0%</span>
+          <span class="lg-badge"><span class="dot" style="background:var(--ok)"></span>11%</span>
+          <span class="lg-badge"><span class="dot" style="background:var(--accent)"></span>30%</span>
+          <span class="lg-badge"><span class="dot" style="background:var(--warn)"></span>41%</span>
+          <span class="lg-badge"><span class="dot" style="background:var(--danger)"></span>45%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECAP moved above barème -->
+    <section class="card" style="grid-column:1 / -1">
+      <h3>Tableau récapitulatif</h3>
+      <table id="results">
+        <thead><tr><th>—</th><th>Valeur</th></tr></thead>
+        <tbody>
+          <tr><td>Durée (années)</td><td id="r-years">—</td></tr>
+          <tr><td>Versements cumulés</td><td id="r-deposits">—</td></tr>
+          <tr><td>Capital final</td><td id="r-capital">—</td></tr>
+          <tr><td>Avantage fiscal cumulé (approx.)</td><td id="r-tax">—</td></tr>
+          <tr><td>Effort net total</td><td id="r-effort">—</td></tr>
+          <tr><td>Effort net mensuel moyen</td><td id="r-effort-month">—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SORTIE LITE -->
+    <section class="card" style="grid-column:1 / -1">
+      <h3>Sortie à la retraite (LITE)</h3>
+      <div class="outlite">
+        <div>
+          <div class="bigline">
+            <span class="title">Capital net estimé (sortie en capital)</span>
+            <span id="out-capital-net" class="value">—</span>
+          </div>
+          <div class="bigline" style="margin-top:8px">
+            <span class="title">Rente nette estimée</span>
+            <span id="out-rente-net" class="value">— /mois</span>
+          </div>
+          <div class="muted" style="margin-top:6px">
+            Hypothèses rapides : PFU 30% sur gains, IR au TMI retraite sur versements déduits, rente RVTO (fraction imposable selon âge).
+          </div>
+        </div>
+        <div>
+          <div class="row" style="margin-top:0">
+            <label>TMI à la retraite</label>
+            <select id="tmiRetSelect">
+              <option value="same">= TMI actuel</option>
+              <option value="11">11%</option>
+              <option value="30">30%</option>
+              <option value="custom">Perso…</option>
+            </select>
+            <input id="tmiRetCustom" type="number" min="0" max="60" step="1" value="11" style="width:90px;display:none"> <span class="muted">%</span>
+          </div>
+          <div class="row">
+            <label>Part de versements déduits</label>
+            <input id="deduShare" type="range" min="0" max="100" value="100" />
+            <span id="deduShareV" class="pill">100 %</span>
+          </div>
+          <div class="row">
+            <label>Taux de conversion en rente</label>
+            <input id="convRate" type="number" min="2.0" max="8.0" step="0.1" value="4.2" />
+            <span class="muted">par an (défaut auto selon âge)</span>
+          </div>
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="pfuOn" checked> Appliquer PFU 30% sur les gains (sortie capital)</label>
+          </div>
+          <button id="btn-toggle-details" class="pill">Détails ▼</button>
+          <div id="details" class="details">
+            <div class="chip" style="margin-bottom:6px">Décompte rapide</div>
+            <table id="out-details" style="width:100%">
+              <thead>
+                <tr><th></th><th>Brut</th><th>IR/PS</th><th>Net</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Capital (une fois)</td><td id="d-cap-brut">—</td><td id="d-cap-taxes">—</td><td id="d-cap-net">—</td></tr>
+                <tr><td>Rente (par an)</td><td id="d-rente-brut">—</td><td id="d-rente-taxes">—</td><td id="d-rente-net">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BAREME after recap -->
+    <section class="card" style="grid-column:1 / -1">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <h3>Barème de l’impôt — 2025 (éditable)</h3>
+        <div class="toolbar">
+          <button id="btn-restore">Restaurer barème 2025</button>
+          <span class="muted">Seuils par part — modifiables si 2026 évolue.</span>
+        </div>
+      </div>
+      <table id="bareme">
+        <thead>
+          <tr>
+            <th>Tranche</th><th>Min (€)</th><th>Max (€)</th><th>Taux</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+</div>
+
+<script>
+// ——— Defaults (barème 2025 pour 1 part) ———
+const DEFAULT_BAREME_2025 = [
+  { label:'0%',  min:      0, max: 11497, rate: 0.00 },
+  { label:'11%', min:  11498, max: 29315, rate: 0.11 },
+  { label:'30%', min:  29316, max: 83823, rate: 0.30 },
+  { label:'41%', min:  83824, max:180294, rate: 0.41 },
+  { label:'45%', min: 180295, max: Infinity, rate: 0.45 },
+];
+
+// ——— Utils ———
+const fmt = (v) => isNaN(v) ? '—' : new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(v);
+const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const money = (v)=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(v)||0);
+
+// Load/save barème
+function loadBareme(){
+  const raw = __LS__.getItem('per_bareme_2025_editable');
+  if(!raw) return DEFAULT_BAREME_2025.map(x=>({...x}));
+  try{
+    const arr = JSON.parse(raw);
+    return arr.map(x=>({label:x.label, min:Number(x.min), max: (x.max===Infinity||x.max===null)?Infinity:Number(x.max), rate:Number(x.rate)}));
+  }catch(e){ return DEFAULT_BAREME_2025.map(x=>({...x})); }
+}
+function saveBareme(b){ __LS__.setItem('per_bareme_2025_editable', JSON.stringify(b)); }
+
+// Render editable barème table
+function renderBaremeTable(bareme){
+  const tbody = document.querySelector('#bareme tbody');
+  tbody.innerHTML = '';
+  bareme.forEach((tr,i)=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${tr.label||('Tranche '+(i+1))}</td>
+      <td><input class="editable" type="number" step="1" value="${isFinite(tr.min)?tr.min:0}" data-i="${i}" data-k="min"></td>
+      <td><input class="editable" type="number" step="1" value="${isFinite(tr.max)?tr.max:''}" placeholder="∞" data-i="${i}" data-k="max"></td>
+      <td><input class="editable" type="number" step="0.01" value="${tr.rate}" data-i="${i}" data-k="rate"></td>
+    `;
+    tbody.appendChild(row);
+  });
+  tbody.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const i = Number(inp.dataset.i); const k = inp.dataset.k;
+      let v = inp.value;
+      if(k==='rate') v = Number(v);
+      else if(k==='max') v = v===''?Infinity:Number(v);
+      else v = Number(v);
+      bareme[i][k] = v;
+      saveBareme(bareme);
+      computeAndRender(); // refresh TMI / optimal / frise
+    });
+  });
+}
+
+// Compute TMI from RFR & parts using barème per part
+function computeTMI(rfr, parts, bareme){
+  const pp = (rfr || 0) / Math.max(1, parts||1);
+  let idx = bareme.findIndex(tr => pp >= tr.min && pp <= tr.max);
+  if(idx === -1){ idx = bareme.length - 1; }
+  return { tmi: bareme[idx].rate, index: idx };
+}
+
+// Amount needed to drop to previous bracket (before cap)
+function amountToLowerBracket(rfr, parts, bareme, index){
+  if(index <= 0) return 0;
+  const targetMaxPrev = bareme[index-1].max;
+  const perPart = rfr / Math.max(1, parts||1);
+  const deltaPerPart = Math.max(0, perPart - targetMaxPrev);
+  return deltaPerPart * Math.max(1, parts||1);
+}
+
+// Build paliers table
+function paliersList(rfr, parts, bareme, cap){
+  const pal = [];
+  const {index} = computeTMI(rfr, parts, bareme);
+  for(let i=index; i>0; i--){
+    const target = bareme[i-1].max;
+    const needed = Math.max(0, (rfr/parts - target) * parts);
+    pal.push({
+      to: bareme[i-1].label || ((bareme[i-1].rate*100).toFixed(0)+'%'),
+      amount: Math.max(0, Math.min(needed, cap||Infinity)),
+      raw: needed
+    });
+  }
+  return pal;
+}
+
+// Progressive tax distribution (per tranche) for a given RFR (approximation)
+function taxDistribution(rfr, parts, bareme){
+  const pp = (rfr||0) / Math.max(1, parts||1);
+  const dist = [];
+  for(const tr of bareme){
+    const upper = isFinite(tr.max) ? tr.max : pp; // don't exceed income per part
+    const taxablePP = Math.max(0, Math.min(pp, upper) - tr.min);
+    const taxableTotal = taxablePP * Math.max(1, parts||1);
+    const tax = taxableTotal * tr.rate;
+    if(taxablePP > 0 || tr.rate===0){
+      dist.push({label:tr.label, rate:tr.rate, taxable:taxableTotal, tax});
+    }
+    if(pp <= upper) break;
+  }
+  const totalTax = dist.reduce((s,x)=>s+x.tax,0);
+  return { dist, totalTax };
+}
+
+// Render a frise into a container with visible € labels
+function renderFrise(containerId, dist){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  const total = dist.totalTax;
+  const colors = {
+    0.00: getComputedStyle(document.documentElement).getPropertyValue('--grey').trim(),
+    0.11: getComputedStyle(document.documentElement).getPropertyValue('--ok').trim(),
+    0.30: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+    0.41: getComputedStyle(document.documentElement).getPropertyValue('--warn').trim(),
+    0.45: getComputedStyle(document.documentElement).getPropertyValue('--danger').trim(),
+  };
+  const denom = total > 0 ? total : 1;
+  dist.dist.forEach(d=>{
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.style.flex = String(d.tax/denom);
+    seg.style.background = colors[d.rate] || '#888';
+    const label = document.createElement('div');
+    label.className = 'lab';
+    const amt = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(d.tax);
+    label.textContent = amt;
+    seg.title = `${d.label||Math.round(d.rate*100)+'%'} — Impôt: ${amt}`;
+    seg.appendChild(label);
+    el.appendChild(seg);
+  });
+}
+
+// Core PER accrual (no inflation).
+function simulatePER({years, initial, monthly, rate, tmi, cap}){
+  const monthlyRate = rate/100/12;
+  let capital = Math.max(0, initial);
+  let depositsTotal = Math.max(0, initial);
+  let taxSaveTotal = 0;
+  let effortNetTotal = depositsTotal - taxSaveTotal;
+
+  const yearlyCap = [capital];
+  const yearlyDeposits = [depositsTotal];
+  const yearlyTaxCum = [taxSaveTotal];
+  const yearlyEffortCum = [effortNetTotal];
+
+  for(let y=1; y<=years; y++){
+    for(let m=0;m<12;m++){
+      capital += monthly;
+      depositsTotal += monthly;
+      capital *= (1+monthlyRate);
+    }
+    const yearContribution = (y===1 ? initial : 0) + monthly*12;
+    const applied = cap>0 ? Math.min(cap, yearContribution) : yearContribution;
+    const yearTax = applied * (tmi||0);
+    taxSaveTotal += yearTax;
+    effortNetTotal = depositsTotal - taxSaveTotal;
+
+    yearlyCap.push(capital);
+    yearlyDeposits.push(depositsTotal);
+    yearlyTaxCum.push(taxSaveTotal);
+    yearlyEffortCum.push(effortNetTotal);
+  }
+  return {capital, depositsTotal, taxSaveTotal, effortNetTotal, series:{yearlyCap,yearlyDeposits,yearlyTaxCum,yearlyEffortCum}};
+}
+
+// ——— Sortie LITE helpers ———
+function rvtoFraction(age){
+  if(age < 50) return 0.70;
+  if(age < 60) return 0.50;
+  if(age < 70) return 0.40;
+  return 0.30;
+}
+function autoConvRate(age){
+  if(age >= 70) return 4.8;
+  if(age >= 67) return 4.5;
+  if(age >= 65) return 4.3;
+  if(age >= 64) return 4.2;
+  if(age >= 62) return 4.1;
+  return 4.0;
+}
+
+// Sortie LITE compute (returns details)
+function computeOutLite(sim){
+  const retireAge = Number(document.getElementById('retireAge').value||64);
+  const tmiNow = Number(document.getElementById('kpi-tmi').textContent.replace('%',''))/100 || 0.30;
+
+  // TMI retraite
+  let tmiRet;
+  const sel = document.getElementById('tmiRetSelect')?.value || 'same';
+  if(sel==='same') tmiRet = tmiNow;
+  else if(sel==='custom') tmiRet = Number(document.getElementById('tmiRetCustom').value||11)/100;
+  else tmiRet = Number(sel)/100;
+
+  // Part déduite
+  const deduShare = Number(document.getElementById('deduShare')?.value||100)/100;
+  if(document.getElementById('deduShareV')) document.getElementById('deduShareV').textContent = Math.round(deduShare*100) + ' %';
+
+  // Taux de conversion (auto par défaut)
+  let conv = Number(document.getElementById('convRate')?.value||0);
+  if(!conv || conv<=0){ conv = autoConvRate(retireAge); if(document.getElementById('convRate')) document.getElementById('convRate').value = conv.toFixed(1); }
+  const convRate = conv/100;
+
+  const pfuOn = document.getElementById('pfuOn') ? document.getElementById('pfuOn').checked : true;
+
+  // Décomposition capital
+  const capital = Math.max(0, sim.capital);
+  const contributions = Math.max(0, sim.depositsTotal);
+  const gains = Math.max(0, capital - contributions);
+  const contribDed = contributions * deduShare;
+  const contribNonDed = contributions - contribDed;
+
+  // Sortie en capital (net approximatif)
+  const taxOnDed = contribDed * tmiRet;
+  const taxOnGains = pfuOn ? gains * 0.30 : 0;
+  const netCapital = contribNonDed + (contribDed - taxOnDed) + (gains - taxOnGains);
+
+  // Rente (net estimé / mois) — RVTO
+  const renteBruteAn = capital * convRate;
+  const frac = rvtoFraction(retireAge);
+  const irRente = renteBruteAn * frac * tmiRet;
+  const psRente = renteBruteAn * frac * 0.172;
+  const renteNetteAn = Math.max(0, renteBruteAn - irRente - psRente);
+  const renteNetteMo = renteNetteAn / 12;
+
+  // Push to UI if present
+  if(document.getElementById('out-capital-net')){
+    document.getElementById('out-capital-net').textContent = fmt(netCapital);
+    document.getElementById('out-rente-net').textContent = fmt(renteNetteMo) + ' /mois';
+    document.getElementById('d-cap-brut').textContent = fmt(capital);
+    document.getElementById('d-cap-taxes').textContent = fmt(taxOnDed + taxOnGains);
+    document.getElementById('d-cap-net').textContent = fmt(netCapital);
+    document.getElementById('d-rente-brut').textContent = fmt(renteBruteAn);
+    document.getElementById('d-rente-taxes').textContent = fmt(irRente + psRente);
+    document.getElementById('d-rente-net').textContent = fmt(renteNetteAn);
+  }
+
+  return { netCapital, renteNetteMo, retireAge };
+}
+
+// Chart
+let chart;
+function buildChart(series, years){
+  const labels = Array.from({length: years+1}, (_,i)=>i);
+  if(chart) chart.destroy();
+  const ctx = document.getElementById('chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Capital', data:series.yearlyCap, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#f59e0b'},
+        {label:'Avantage fiscal cumulé', data:series.yearlyTaxCum, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#60a5fa'},
+        {label:'Effort net cumulé', data:series.yearlyEffortCum, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#22c55e'},
+        {label:'Versements cumulés', data:series.yearlyDeposits, borderWidth:1, tension:0, pointRadius:0, borderDash:[5,5], borderColor:'rgba(148,163,184,1)'}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{boxWidth:12}},
+        tooltip:{callbacks:{ title:(items)=> 'Année '+items[0].label, label:(ctx)=> `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` }}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:'#e8edf7'}, title:{display:true,text:'Années',color:'#cbd5e1'}},
+        y:{grid:{color:'rgba(255,255,255,0.08)'}, ticks:{color:'#e8edf7', callback:(v)=> new Intl.NumberFormat('fr-FR').format(v)}, title:{display:true,text:'Montants (€)',color:'#cbd5e1'}}
+      }
+    }
+  });
+}
+
+// —— Auto Plafond compute ——
+function computeCapAuto(){
+  const status = document.getElementById('capStatus').value;
+  const PASS = Number(document.getElementById('capPASS').value||46368);
+  let capAuto = 0;
+  let explain = '';
+
+  if(status==='salarie'){
+    const incomeNet = Number(document.getElementById('capIncomeNet').value||0);
+    const B = Number(document.getElementById('capB').value||0);
+    const C = Number(document.getElementById('capCarry').value||0);
+    const spouse = Number(document.getElementById('capSpouse').value||0);
+
+    const minA = 0.10 * PASS;
+    const maxA = 0.10 * 8 * PASS;
+    const Araw = 0.10 * incomeNet;
+    const A = Math.max(minA, Math.min(Araw, maxA)); // borné entre 10% PASS et 10%*8 PASS
+    capAuto = Math.max(0, A - B + C + spouse);
+    explain = `Salarié : A=${fmt(A)} (min ${fmt(minA)} – max ${fmt(maxA)}) ; −B=${fmt(B)} ; +C=${fmt(C)} ; +Conjoint=${fmt(spouse)} ⇒ ${fmt(capAuto)}`;
+  }else{
+    const bene = Number(document.getElementById('capBene').value||0);
+    const tnsMode = document.getElementById('capTnsMode').value;
+
+    if(tnsMode==='global'){
+      const minA = 0.10 * PASS;
+      const maxA = 0.10 * 8 * PASS;
+      const Araw = 0.10 * bene;
+      const A = Math.max(minA, Math.min(Araw, maxA));
+      capAuto = A;
+      explain = `TNS (global) : A=${fmt(A)} (min ${fmt(minA)} – max ${fmt(maxA)}) ⇒ ${fmt(capAuto)}`;
+    }else{
+      const capped = Math.min(bene, 8*PASS);
+      const above1 = Math.max(0, capped - PASS);
+      const limitA = 0.10*capped + 0.15*above1;
+      const limitB = 0.10*PASS;
+      capAuto = Math.max(limitA, limitB);
+      explain = `TNS (154 bis) : 10%×min(bénéf.,8PASS) + 15%×(part entre 1 et 8 PASS) = ${fmt(limitA)} ; plancher 10% PASS = ${fmt(limitB)} ⇒ ${fmt(capAuto)}`;
+    }
+  }
+
+  document.getElementById('cap').value = Math.round(capAuto/10)*10; // arrondi 10€
+  document.getElementById('capExplain').textContent = explain;
+  computeAndRender();
+}
+
+// Build topo-under summary
+function renderTopoUnder({monthly, tmi, cap, retireAge}, sim, out){
+  const annSave = Math.min(cap>0?cap:(monthly*12), monthly*12) * (tmi||0);
+  const effort = monthly - annSave/12;
+  const l1 = `Avec <b>${money(monthly)}</b>/mois, l’économie d’impôt moyenne est d’environ <b>${money(annSave)}</b>/an (TMI ${(tmi*100).toFixed(0)}%), soit un effort net ≈ <b>${money(effort)}</b>/mois.`;
+  const l2 = `À <b>${retireAge} ans</b>, capital estimé <b>${fmt(sim.capital)}</b> et <b>${fmt(out.renteNetteMo)}</b> de rente nette / mois (hypothèses LITE).`;
+  document.getElementById('topoLine1').innerHTML = l1;
+  document.getElementById('topoLine2').innerHTML = l2;
+}
+
+// Main compute
+function computeAndRender(){
+  const age = Number(document.getElementById('age').value||36);
+  const retireAge = Number(document.getElementById('retireAge').value||64);
+  const years = Math.max(0, Math.floor(retireAge - age));
+  const initial = Number(document.getElementById('initial').value||0);
+  const monthly = Number(document.getElementById('monthly').value||0);
+  const rate = clamp(Number(document.getElementById('rate').value||0),0,100);
+
+  const rfr = Number(document.getElementById('rfr').value||0);
+  const parts = Number(document.getElementById('parts').value||1);
+  let cap = Number(document.getElementById('cap').value||0);
+
+  // Auto cap panel visibility only
+  document.getElementById('autoPanel').style.display = document.getElementById('capAutoOn').checked ? 'block' : 'none';
+
+  const bareme = loadBareme();
+  const {tmi, index} = computeTMI(rfr, parts, bareme);
+  const tmiPct = (tmi*100).toFixed(0);
+
+  // Optimal to drop one bracket
+  const needRaw = amountToLowerBracket(rfr, parts, bareme, index);
+  const optimal = Math.max(0, Math.min(needRaw, cap>0?cap:needRaw));
+
+  // Simulation
+  const sim = simulatePER({years, initial, monthly, rate, tmi, cap});
+  const effortMonth = sim.effortNetTotal / Math.max(1, years*12);
+
+  // KPIs
+  document.getElementById('kpi-years').textContent = years + ' ans';
+  document.getElementById('kpi-tmi').textContent = tmiPct + ' %';
+  document.getElementById('kpi-opt').textContent = fmt(optimal);
+  document.getElementById('kpi-effort').textContent = fmt(effortMonth);
+
+  // Fill optimal input + explain
+  const optInput = document.getElementById('opt-amount');
+  optInput.value = Math.round(optimal/100)*100; // arrondi 100€
+  const explain = (needRaw>0)
+    ? `Pour passer de la tranche ${(bareme[index].label||Math.round(bareme[index].rate*100)+'%')} à ${(bareme[index-1]?.label||Math.round((bareme[index-1]?.rate||0)*100)+'%')}, il faut réduire le revenu imposable d’environ ${fmt(needRaw)}. On conseille ${fmt(optimal)} (plafond pris en compte).`
+    : `Vous êtes déjà dans la tranche la plus basse utile (ou aucun palier).`;
+  document.getElementById('opt-explain').textContent = explain;
+
+  // Paliers
+  const tbody = document.querySelector('#paliers tbody'); tbody.innerHTML='';
+  const pals = paliersList(rfr, parts, bareme, cap);
+  if(pals.length===0){ tbody.innerHTML = '<tr><td colspan="2" class="muted">Aucun palier pertinent</td></tr>'; }
+  else{
+    pals.forEach(p=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>Vers ${p.to}</td><td>${fmt(p.amount)} <span class="muted">(théorie : ${fmt(p.raw)})</span></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Results summary
+  document.getElementById('r-years').textContent = years;
+  document.getElementById('r-deposits').textContent = fmt(sim.depositsTotal);
+  document.getElementById('r-capital').textContent = fmt(sim.capital);
+  document.getElementById('r-tax').textContent = fmt(sim.taxSaveTotal);
+  document.getElementById('r-effort').textContent = fmt(sim.effortNetTotal);
+  document.getElementById('r-effort-month').textContent = fmt(effortMonth);
+
+  // Chart
+  buildChart(sim.series, years);
+
+  // enable exports
+  document.getElementById('btn-pdf').disabled = false;
+  document.getElementById('btn-png').disabled = false;
+
+  // Sortie LITE compute & Topo under
+  const out = computeOutLite(sim);
+  renderTopoUnder({monthly, tmi, cap, retireAge}, sim, out);
+
+  // Frise fiscale (avant / après)
+  const appliedDeduction = Math.max(0, Math.min(cap, monthly*12));
+  renderFrise('frise-before', taxDistribution(rfr, parts, bareme));
+  renderFrise('frise-after', taxDistribution(Math.max(0, rfr - appliedDeduction), parts, bareme));
+}
+
+// PDF export (light)
+function exportPDF(){
+  const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+  if(!jsPDF){ alert("Erreur PDF : jsPDF indisponible."); return; }
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const M = 10; let y = M;
+  doc.setFont('helvetica','bold'); doc.setFontSize(14);
+  doc.text('Simulation PER — Pro+ (2025)', M, y); y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Rapport — ' + new Date().toLocaleDateString('fr-FR'), M, y); y += 5;
+  // Graph only for compactness
+  const canvas = document.getElementById('chart');
+  if(canvas && canvas.toDataURL){
+    const img = canvas.toDataURL('image/png',1.0);
+    doc.addImage(img,'PNG',M,y,190,90); y += 94;
+  }
+  doc.save('Simulation_PER_Pro+_2025.pdf');
+}
+
+// UI events
+document.getElementById('btn-calc').addEventListener('click', ()=>{
+  if(document.getElementById('capAutoOn').checked) computeCapAuto();
+  computeAndRender();
+});
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  __LS__.removeItem('per_bareme_2025_editable'); location.reload();
+});
+document.getElementById('btn-pdf').addEventListener('click', exportPDF);
+document.getElementById('btn-png').addEventListener('click', ()=>{
+  const a = document.createElement('a'); a.download = 'graphique_PER.png';
+  a.href = document.getElementById('chart').toDataURL('image/png',1.0); a.click();
+});
+document.getElementById('btn-apply-opt').addEventListener('click', ()=>{
+  const opt = Number(document.getElementById('opt-amount').value||0);
+  document.getElementById('monthly').value = Math.round((opt/12)/10)*10; computeAndRender();
+});
+document.getElementById('btn-restore').addEventListener('click', ()=>{
+  saveBareme(DEFAULT_BAREME_2025.map(x=>({...x}))); renderBaremeTable(loadBareme()); computeAndRender();
+});
+['age','retireAge','initial','monthly','rate','rfr','parts','cap'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', computeAndRender);
+});
+// Auto cap events
+document.getElementById('capAutoOn').addEventListener('change', (e)=>{
+  const on = e.target.checked;
+  document.getElementById('autoPanel').style.display = on ? 'block' : 'none';
+  if(on) computeCapAuto(); else computeAndRender();
+});
+document.getElementById('capStatus').addEventListener('change', ()=>{ 
+  const status = document.getElementById('capStatus').value;
+  document.getElementById('blockSalarie').style.display = (status==='salarie') ? 'grid' : 'none';
+  document.getElementById('blockTNS').style.display = (status==='tns') ? 'grid' : 'none';
+  computeCapAuto(); 
+});
+document.getElementById('capPASS').addEventListener('input', computeCapAuto);
+['capIncomeNet','capB','capCarry','capSpouse','capBene','capTnsMode'].forEach(id=>{
+  const el = document.getElementById(id); if(el) el.addEventListener('input', computeCapAuto);
+});
+
+// Sortie LITE events
+document.getElementById('tmiRetSelect').addEventListener('change', (e)=>{
+  const v = e.target.value;
+  document.getElementById('tmiRetCustom').style.display = (v==='custom') ? 'inline-block' : 'none';
+  computeAndRender();
+});
+document.getElementById('tmiRetCustom').addEventListener('input', computeAndRender);
+document.getElementById('deduShare').addEventListener('input', computeAndRender);
+document.getElementById('convRate').addEventListener('input', computeAndRender);
+document.getElementById('pfuOn').addEventListener('change', computeAndRender);
+document.getElementById('btn-toggle-details').addEventListener('click', ()=>{
+  const d = document.getElementById('details');
+  d.style.display = d.style.display==='none'||!d.style.display ? 'block' : 'none';
+});
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderBaremeTable(loadBareme());
+  computeAndRender();
+});
+</script>
+</body>
+</html>
