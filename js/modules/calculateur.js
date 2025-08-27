@@ -1,10 +1,11 @@
-// Contenu Corrigé et Final pour js/modules/calculateur.js
+// Contenu Définitif et Corrigé pour js/modules/calculateur.js
 
 function initCalculateurPanel() {
     const root = document.getElementById('calculateur-panel');
     if (!root) return;
 
     const fmt0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const round0 = (x) => Math.round(Number(x) || 0);
     const $ = sel => root.querySelector(sel);
     const SAVE_PREFIX = 'v8.calc.';
     
@@ -19,7 +20,14 @@ function initCalculateurPanel() {
             const el = els[fieldName];
             if (el) {
                 const savedValue = localStorage.getItem(SAVE_PREFIX + fieldName);
-                if (savedValue !== null) { el.value = savedValue; }
+                if (savedValue !== null) {
+                    // CORRECTION : On arrondit la valeur de CA Prévoyance à la restauration
+                    if (fieldName === 'ca_prev') {
+                        el.value = round0(savedValue);
+                    } else {
+                        el.value = savedValue;
+                    }
+                }
                 el.addEventListener('input', () => {
                     localStorage.setItem(SAVE_PREFIX + fieldName, el.value);
                 });
@@ -48,7 +56,6 @@ function initCalculateurPanel() {
         let primeColl = 0; const eligible = (roPrev>=65) || (roERc>=65) || (roERe>=65);
         if(eligible){ const pal = Number(els.coll_palier.value||0); primeColl = pal===1 ? 280 : pal===2 ? 555 : pal===3 ? 885 : 0; }
         
-        // CORRECTION : On arrondit chaque total avant de l'afficher
         const total = Math.round(primeEco + primeSurperf + primeQual + primeColl);
         
         els.prime_eco.textContent = fmt0.format(Math.round(primeEco));
@@ -75,14 +82,14 @@ function initCalculateurPanel() {
             fieldsToSave.forEach(fieldName => {
                 localStorage.removeItem(SAVE_PREFIX + fieldName);
             });
-            // Recharger la page pour repartir sur une base propre avec les valeurs par défaut
             location.reload();
         }
     });
     
-    const autoImportedCaPrev = localStorage.getItem(SAVE_PREFIX + 'ca_prev');
+    const autoImportedCaPrev = localStorage.getItem('v8.calc.ca_prev'); // On utilise la même clé que Prévoyance
     if (autoImportedCaPrev) {
-        els.ca_prev.value = autoImportedCaPrev;
+        // CORRECTION : On arrondit la valeur dès qu'on l'importe
+        els.ca_prev.value = round0(autoImportedCaPrev);
     }
 
     compute();
