@@ -1,54 +1,16 @@
 <div id="av-panel">
     <div class="grid">
-      <section class="card" style="grid-column: span 12;">
-        <div class="row" style="justify-content: space-between; align-items: center;">
-            <h3 class="section-title" style="margin: 0;">Simulateur d'Épargne <span class="badge">Pro+</span></h3>
-            <div class="actions">
-                <button class="btn btn-primary" id="btn-calc">Calculer</button>
-                <button class="btn btn-ghost" id="btn-reset">Réinitialiser</button>
-                <button class="btn btn-ghost" id="btn-pdf" disabled>Exporter en PDF</button>
-            </div>
+      <section class="card" style="grid-column: span 12">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <h3 class="section-title" style="margin:0;">Simulateur d'Épargne Assurance Vie</h3>
+          <a class="btn btn-primary" href="simulateur_av.html" target="_blank" rel="noopener">Ouvrir en plein écran</a>
         </div>
-      </section>
-
-      <section class="card" style="grid-column: span 12; lg:grid-column: span 5;">
-        <h3 class="section-title">Paramètres</h3>
-        <div class="row"><label class="small" style="width: 150px;">Versement initial (€)</label><input id="initial" type="number" min="0" step="100" value="8000" /></div>
-        <div class="row"><label class="small" style="width: 150px;">Versement mensuel (€)</label><input id="monthly" type="number" min="0" step="10" value="0" /></div>
-        <div class="row"><label class="small" style="width: 150px;">Durée (années)</label><input id="years" type="range" min="1" max="40" value="10" style="flex-grow: 1;" /><span id="yearsValue" class="small" style="min-width: 50px;">10 ans</span></div>
-        <div class="row"><label class="small" style="width: 150px;">Inflation annuelle (%)</label><input id="inflation" type="number" min="0" step="0.1" value="2.0" /></div>
-        <div class="row"><label class="small" style="width: 150px;">Mode d'affichage</label><select id="modeAffichage"><option value="nominal" selected>Montants nominaux</option><option value="reel">Montants réels (constants)</option></select></div>
-      </section>
-
-      <section class="card" style="grid-column: span 12; lg:grid-column: span 7;">
-        <h3 class="section-title">Produits & Hypothèses</h3>
-        <div class="row"><label class="small" style="width: 150px;">Harmonie - Rdt. (%)</label><input id="harm-rate" type="number" step="0.01" value="4.5" /></div>
-        <div class="row"><label class="small" style="width: 150px;">Harmonie - Frais</label><span>Entrée: <input id="harm-entry" type="number" min="0" value="2.00" style="width:90px"> %</span> <span>Gestion: <input id="harm-mgmt" type="number" min="0" value="0.60" style="width:90px"> %</span></div>
         <div class="hr"></div>
-        <div class="row"><label class="small" style="width: 150px;">Comparatif - Rdt. (%)</label><input id="cmp-rate" type="number" step="0.01" value="2.00" /></div>
-        <div class="row"><label class="small" style="width: 150px;">Comparatif - Frais</label><span>Entrée: <input id="cmp-entry" type="number" min="0" value="0.00" style="width:90px"> %</span> <span>Gestion: <input id="cmp-mgmt" type="number" min="0" value="0.00" style="width:90px"> %</span></div>
-        <div class="hr"></div>
-        <div class="row"><label class="small" style="width: 150px;">Livret A - Rdt. (%)</label><input id="livreta" type="number" min="0" step="0.1" value="3.0" /></div>
-      </section>
-
-      <section class="card" style="grid-column: 1 / -1;">
-        <h3 class="section-title">Évolution du capital</h3>
-        <div class="chart-container" style="height: 400px; position: relative;"><canvas id="chart"></canvas></div>
-      </section>
-        
-      <section class="card" style="grid-column: 1 / -1;">
-        <h3 class="section-title">Tableau Récapitulatif</h3>
-        <div class="table-wrap">
-          <table id="results">
-              <thead><tr><th></th><th>Harmonie</th><th>Comparatif</th><th>Livret A</th></tr></thead>
-              <tbody>
-                  <tr><td>Capital final</td><td id="r-harm-cap">—</td><td id="r-cmp-cap">—</td><td id="r-la-cap">—</td></tr>
-                  <tr><td>Intérêts cumulés</td><td id="r-harm-int">—</td><td id="r-cmp-int">—</td><td id="r-la-int">—</td></tr>
-                  <tr><td>Total des frais</td><td id="r-harm-fees">—</td><td id="r-cmp-fees">—</td><td id="r-la-fees">—</td></tr>
-                  <tr><td>Différence vs Harmonie</td><td>—</td><td id="r-diff-cmp">—</td><td id="r-diff-la">—</td></tr>
-              </tbody>
-          </table>
-        </div>
+        <iframe 
+            src="simulateur_av.html" 
+            title="Simulateur Assurance Vie" 
+            style="width:100%; height:85vh; border:none; border-radius:12px; overflow:hidden">
+        </iframe>
       </section>
     </div>
 </div>
