@@ -19,9 +19,7 @@ function initCalculateurPanel() {
             const el = els[fieldName];
             if (el) {
                 const savedValue = localStorage.getItem(SAVE_PREFIX + fieldName);
-                if (savedValue !== null) {
-                    el.value = savedValue;
-                }
+                if (savedValue !== null) { el.value = savedValue; }
                 el.addEventListener('input', () => {
                     localStorage.setItem(SAVE_PREFIX + fieldName, el.value);
                 });
@@ -77,6 +75,7 @@ function initCalculateurPanel() {
             fieldsToSave.forEach(fieldName => {
                 localStorage.removeItem(SAVE_PREFIX + fieldName);
             });
+            // Recharger la page pour repartir sur une base propre avec les valeurs par défaut
             location.reload();
         }
     });
