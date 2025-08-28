@@ -1,0 +1,110 @@
+<style>
+  :root { --bg:#0b1020; --fg:#e9eef7; --muted:#a9b4c4; --card:#121a33; --accent:#4da3ff; --border:#223156; }
+  .wrap {max-width:1200px; margin:auto; padding:0;}
+  h1 {font-size:20px; margin:0 0 16px;}
+  .grid {display:grid; gap:16px; grid-template-columns:380px 1fr;}
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .card h2 {font-size:16px; margin:0 0 12px; color:var(--fg);}
+  label {display:block; font-size:12px; color:var(--muted); margin:10px 0 6px;}
+  input,select,textarea { width:100%; box-sizing:border-box; background:#0e1630; color:#fff; border:1px solid var(--border); border-radius:10px; padding:10px; font:inherit; }
+  textarea {min-height:84px; resize:vertical;}
+  .row {display:grid; gap:10px; grid-template-columns:1fr 1fr;}
+  .btns {display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  button { border:1px solid var(--border); background:#122043; color:var(--fg); border-radius:999px; padding:10px 14px; cursor:pointer; }
+  button.primary { background:var(--accent); color:#04162b; border-color:#3d7fcc; font-weight:600; }
+  .muted {color:var(--muted); font-size:12px;}
+  .preview { background:#fff; color:#111; border-radius:12px; overflow:hidden; border:1px solid #e6e6e6; }
+  .sheet { width:210mm; min-height:297mm; padding:20mm; box-sizing:border-box; margin:auto; background:#ffffff; color:#111; font-family: Arial, Helvetica, sans-serif; font-size:12px; line-height:1.55; }
+  .letterhead {display:flex; justify-content:space-between; font-size:12px; color:#333;}
+  .letterhead strong {font-weight:700;}
+  .block {margin-top:12px;}
+  .subject {margin-top:12px; font-weight:700; font-size:14px;}
+  .body p {margin:0 0 10px; line-height:1.5;}
+  .addr { font-size:12px; }
+  .footer {margin-top:24px; font-size:12px; color:#555;}
+  .chips {display:flex; flex-wrap:wrap; gap:6px; margin: 8px 0 0;}
+  .chip {font-size:11px; padding:6px 10px; border-radius:999px; background:#eef3ff; color:#0a1d3b; border:1px solid #cddfff;}
+  .sticky {position:sticky; top:16px;}
+  .row-3 {display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr;}
+  .kbd {font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; font-size:12px;}
+  .note {background:#0e1630; border:1px dashed var(--border); border-radius:12px; padding:10px; color:#a9b4c4;}
+  .pill-danger{background:#4b1e1e; border-color:#7a2b2b;}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr;} .sticky{position:static;} }
+  @media print { body{background:#fff; color:#000;} .wrap,.card{padding:0; border:none; background:#fff;} .grid{display:block;} .no-print{display:none !important;} .sheet{width:auto; min-height:auto; padding:0; margin:0;} }
+</style>
+
+<div class="wrap">
+  <h1>✉️ Générateur de courriers – Harmonie (v8)</h1>
+  <div class="grid">
+    <div class="card sticky">
+      <h2>Modèle & variables</h2>
+      <label for="templateSelect">Modèle de courrier</label>
+      <select id="templateSelect"></select>
+      <label for="tagFilter" style="margin-top:12px;">Filtrer par tag</label>
+      <select id="tagFilter"></select>
+      <div id="templateInfo" class="muted" style="margin-top:6px;"></div>
+      <div class="chips" id="chips"></div>
+      <div class="btns" style="margin-top:8px;">
+        <button id="btnNew">Nouveau modèle</button>
+        <button id="btnEdit">Éditer</button>
+        <button id="btnClone">Cloner → perso</button>
+      </div>
+      <div class="btns" style="margin-top:6px;">
+        <button id="btnRemove" class="pill-danger">🗑️ Supprimer ce modèle (définitif)</button>
+      </div>
+      <div class="btns" style="margin-top:6px;">
+        <button id="btnExport">Exporter mes modèles</button>
+        <button id="btnImport">Importer</button>
+      </div>
+      <div class="help">Variables entre {{…}} (ex. <span class="kbd">{{Contrat_Numero}}</span>).</div>
+      <div class="row" style="margin-top:12px;">
+        <div><label for="ville">Ville</label><input id="ville" placeholder="ex. Nantes" /></div>
+        <div><label for="dateAuto">Date</label><input id="dateAuto" /></div>
+      </div>
+      <h2 style="margin-top:18px;">Expéditeur</h2>
+      <label for="expNom">Nom & fonction</label><input id="expNom" placeholder="Prénom NOM – Fonction" />
+      <label for="expOrg">Organisation</label><input id="expOrg" placeholder="Harmonie Mutuelle" />
+      <label for="expAdr">Adresse</label><textarea id="expAdr" placeholder="Adresse (lignes)"></textarea>
+      <div class="row">
+        <div><label for="expTel">Téléphone</label><input id="expTel" placeholder="+33 ..." /></div>
+        <div><label for="expMail">E-mail</label><input id="expMail" placeholder="prenom.nom@..." /></div>
+      </div>
+      <label for="assureurSelect" style="margin-top:12px;">Assureur (optionnel)</label>
+      <select id="assureurSelect"></select>
+      <input id="assureurSearch" placeholder="Rechercher un assureur..." style="margin-top:8px;" />
+      <h2 style="margin-top:18px;">Destinataire</h2>
+      <label for="destNom">Société / Service</label><input id="destNom" placeholder="Pacifica / Service résiliation" />
+      <label for="destAttention">À l’attention de</label><input id="destAttention" placeholder="Madame / Monsieur ..." />
+      <label for="destAdr">Adresse</label><textarea id="destAdr" placeholder="Adresse (lignes)"></textarea>
+      <div id="dynamicFields"></div>
+      <div class="btns">
+        <button class="primary" id="btnPreview">Mettre à jour l’aperçu</button>
+        <button id="btnCopy">Copier le texte</button>
+        <button id="btnPDF">Télécharger en PDF</button>
+        <button id="btnReset" class="no-print">Réinitialiser</button>
+      </div>
+      <div class="muted" style="margin-top:6px;">Les données sont stockées en local (localStorage).</div>
+    </div>
+    <div class="card">
+      <h2>Aperçu</h2>
+      <div class="preview" id="preview"><div class="sheet" id="sheet"></div></div>
+      <div class="card" id="editorCard" style="margin-top:16px; display:none;">
+        <h2>Éditeur de modèle</h2>
+        <div class="note">Créez vos modèles avec variables <span class="kbd">{{Nom_Variable}}</span>.</div>
+        <div class="row-3" style="margin-top:12px;">
+          <div><label for="mdl_name">Nom du modèle</label><input id="mdl_name" placeholder="ex. Relance J+7 Devis santé"/></div>
+          <div><label for="mdl_tags">Tags (virgules)</label><input id="mdl_tags" placeholder="santé, relance, devis"/></div>
+          <div><label for="mdl_id">ID</label><input id="mdl_id" placeholder="auto" disabled /></div>
+        </div>
+        <label for="mdl_desc">Description</label><textarea id="mdl_desc" placeholder="Courte description du modèle"></textarea>
+        <label for="mdl_subject">Sujet (objet du courrier)</label><input id="mdl_subject" placeholder="Objet : ..." />
+        <label for="mdl_body">Corps</label><textarea id="mdl_body" style="min-height:160px;" placeholder="Texte du courrier..."></textarea>
+        <div class="btns">
+          <button id="mdl_save" class="primary">Enregistrer</button>
+          <button id="mdl_cancel">Annuler</button>
+          <button id="mdl_delete" style="display:none;">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
