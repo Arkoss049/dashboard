@@ -120,6 +120,21 @@
         font-size:clamp(18px,2.2vw,26px);}
 .kpi .neg{color:#ff5c5c}
 .kpi .pos{color:inherit}
+  /* ===== CORRECTIF POUR L'ALIGNEMENT DES KPI ===== */
+.kpi .v {
+    display: block;      /* S'assure que l'élément prend toute la largeur */
+    width: 100%;
+    text-align: right;   /* Aligne le texte (le chiffre) à droite */
+    white-space: nowrap; /* Empêche le chiffre de passer à la ligne */
+    font-weight: 700;    /* Assure une bonne lisibilité */
+    font-size: clamp(20px, 2.2vw, 28px); /* Taille de police harmonisée */
+}
+
+.kpi h3 {
+    font-size: 13px;     /* Taille de police harmonisée pour les titres */
+    font-weight: 500;
+    color: var(--muted);
+}
 </style>
 </head>
 <body>
