@@ -68,3 +68,34 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .wk-val { width: 160px !important; }
 #plan-panel .mgoal { flex: 0 0 18ch; min-width: 180px; font-size: 1.1rem; padding: .55rem .75rem; text-align: right; border-radius: .75rem; }
 #plan-panel .mgoal:disabled { opacity: 1; background: var(--surface); border-style: dashed; }
+
+/* --- KPI / Recap Items --- */
+.kpi .value, .recap .item .val {
+  font-size: 22px; /* Taille légèrement ajustée pour les grands nombres */
+  font-weight: 700;
+  text-align: right; /* Aligner à droite pour les nombres */
+  white-space: nowrap; /* Empêche le retour à la ligne inattendu */
+  overflow: hidden; /* Cache le débordement si vraiment trop long */
+  text-overflow: ellipsis; /* Ajoute des points de suspension si coupé */
+  display: block; /* S'assure que l'élément prend toute la largeur disponible */
+  line-height: 1.2; /* Améliore l'espacement vertical */
+}
+
+/* S'assurer que le symbole € ne déborde pas sur les nombres négatifs */
+.kpi .value::after, .recap .item .val::after {
+  content: " €"; /* Ajoute le symbole euro après le nombre */
+  font-size: 0.8em; /* Le rend légèrement plus petit que le nombre */
+  margin-left: 4px; /* Un petit espace entre le nombre et le symbole */
+  color: var(--muted); /* Couleur discrète pour le symbole */
+}
+
+/* Couleur pour les valeurs négatives, si vous ne l'avez pas déjà */
+.kpi .value.danger, .recap .item .val.danger {
+  color: var(--danger);
+}
+.kpi .value.ok, .recap .item .val.ok {
+  color: var(--accent-green);
+}
+.kpi .value.warn, .recap .item .val.warn {
+  color: var(--warn);
+}
