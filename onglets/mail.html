@@ -1,119 +1,80 @@
 <style>
+    /* Les variables restent globales pour le module */
     :root{
         --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb;
         --accent:#22c55e; --accent2:#3b82f6; --border:#1f2937; --warn:#f59e0b; --danger:#ef4444;
         --ok:#22c55e; --over:#3b82f6;
     }
-    *{box-sizing:border-box}
-    body{
-        margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto; color:var(--text);
-        background:radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,.18), transparent 40%),
-                    radial-gradient(1000px 500px at 100% 0%, rgba(34,197,94,.15), transparent 35%),
-                    linear-gradient(180deg,#0b1220,#0f172a 60%,#0b1220);
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-    }
-    /* ... (le reste de votre CSS est ici, je l'ai coupé pour la lisibilité mais il doit être présent) ... */
-    header{padding:22px 16px 10px}
-    h1{margin:0; font-size:clamp(20px,3vw,28px)}
-    .sub{color:var(--muted); font-size:14px}
-    .card{
+    
+    /* TOUS LES STYLES SONT MAINTENANT PRÉFIXÉS PAR .mail-module-container */
+    .mail-module-container header{padding:22px 16px 10px}
+    .mail-module-container h1{margin:0; font-size:clamp(20px,3vw,28px)}
+    .mail-module-container .sub{color:var(--muted); font-size:14px}
+    .mail-module-container .card{
         background:rgba(15,23,42,.72); backdrop-filter: blur(6px); border:1px solid var(--border);
         border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.03); padding:16px;
     }
-    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px; padding:0; max-width: 1200px; width: 100%; margin: auto;}
-    input, select, button, textarea{
+    /* La classe .grid a été modifiée pour ne pas interférer avec le dashboard */
+    .mail-module-container .mail-grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px; padding:0; max-width: 1200px; width: 100%; margin: auto;}
+    .mail-module-container input, .mail-module-container select, .mail-module-container button, .mail-module-container textarea{
         background:#0b1220; color:#e5e7eb; border:1px solid var(--border);
         border-radius:12px; padding:10px 12px; font-size:14px; outline:none;
         width: 100%;
+        box-sizing: border-box; /* Ajout du box-sizing ici */
     }
-    button{cursor:pointer; font-weight:600}
-    .btn{border:1px solid transparent}
-    .btn-primary{background:linear-gradient(180deg,#16a34a,#15803d); border-color:#14532d}
-    .btn-ghost{background:transparent; border-color:var(--border)}
-    .btn-danger{background:linear-gradient(180deg,#ef4444,#b91c1c); border-color:#7f1d1d}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .small{font-size:12px; color:#94a3b8}
-    .hr{height:1px; background:#1f2937; margin:8px 0 12px}
-    textarea{
+    .mail-module-container button{cursor:pointer; font-weight:600}
+    .mail-module-container .btn{border:1px solid transparent}
+    .mail-module-container .btn-primary{background:linear-gradient(180deg,#16a34a,#15803d); border-color:#14532d}
+    .mail-module-container .btn-ghost{background:transparent; border-color:var(--border)}
+    .mail-module-container .btn-danger{background:linear-gradient(180deg,#ef4444,#b91c1c); border-color:#7f1d1d}
+    .mail-module-container .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .mail-module-container .small{font-size:12px; color:#94a3b8}
+    .mail-module-container .hr{height:1px; background:#1f2937; margin:8px 0 12px}
+    .mail-module-container textarea{
         min-height: 400px;
         resize: vertical;
         font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto;
         line-height: 1.5;
     }
-    .manual-fields { display: none; }
-    .actions-buttons { display: none; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-    .right { margin-left:auto }
-    .pill{font-size:12px; padding:4px 8px; border-radius:999px; background:#0b1220; border:1px solid var(--border); color:var(--muted)}
-    .danger-text{ color:#fecaca; }
+    .mail-module-container .manual-fields { display: none; }
+    .mail-module-container .actions-buttons { display: none; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+    .mail-module-container .right { margin-left:auto }
+    .mail-module-container .pill{font-size:12px; padding:4px 8px; border-radius:999px; background:#0b1220; border:1px solid var(--border); color:var(--muted)}
+    .mail-module-container .danger-text{ color:#fecaca; }
     @media (max-width: 640px){
-        .row { flex-direction: column; align-items: stretch; }
+        .mail-module-container .row { flex-direction: column; align-items: stretch; }
     }
 </style>
 
-<div class="grid">
-    <section class="card" style="grid-column: span 12;">
-        <header>
-            <h1>Générateur de Mails - Harmonie Mutuelle</h1>
-            <div class="sub">v2 — Gérez facilement vos modèles de mails personnalisés</div>
-        </header>
-        <div class="hr"></div>
-        
-        <div class="row">
-            <div style="flex: 1; min-width: 240px;">
-                <span class="small">Modèle de mail</span>
-                <select id="code-action" onchange="onModelChange()" style="min-width: 200px;"></select>
-            </div>
-            <div class="right row" style="gap:8px">
-                <button id="btn-top-modify" class="btn btn-primary" onclick="modifyModel()" disabled>Modifier</button>
-                <button id="btn-top-delete" class="btn btn-danger" onclick="deleteModel()" disabled>Supprimer</button>
-            </div>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-            <div style="flex: 1;">
-                <span class="small">Nom de l'adhérent</span>
-                <input type="text" id="adherent-name" placeholder="Nom de l'adhérent" oninput="generateEmail()">
-            </div>
-            <div class="pill" id="badge-info">—</div>
-        </div>
-
-        <div id="manual-fields" class="manual-fields">
+<div class="mail-module-container">
+    <div class="mail-grid">
+        <section class="card" style="grid-column: span 12;">
+            <header>
+                <h1>Générateur de Mails - Harmonie Mutuelle</h1>
+                <div class="sub">v2 — Gérez facilement vos modèles de mails personnalisés</div>
+            </header>
             <div class="hr"></div>
+            
             <div class="row">
-                <div style="flex: 1;">
-                    <span class="small">Nom du modèle</span>
-                    <input type="text" id="manual-name" placeholder="Ex: Relance Assurance-vie">
+                <div style="flex: 1; min-width: 240px;">
+                    <span class="small">Modèle de mail</span>
+                    <select id="code-action" onchange="onModelChange()" style="min-width: 200px;"></select>
                 </div>
-                <div style="flex: 1;">
-                    <span class="small">Objet du mail</span>
-                    <input type="text" id="manual-subject" placeholder="Ex: Suite à votre demande">
-                </div>
-            </div>
-            <div class="row">
-                <div style="flex: 1;">
-                    <span class="small">Corps du mail</span>
-                    <textarea id="manual-body" placeholder="Saisissez le corps du mail..."></textarea>
+                <div class="right row" style="gap:8px">
+                    <button id="btn-top-modify" class="btn btn-primary" onclick="modifyModel()" disabled>Modifier</button>
+                    <button id="btn-top-delete" class="btn btn-danger" onclick="deleteModel()" disabled>Supprimer</button>
                 </div>
             </div>
-            <div class="row" style="justify-content: flex-end;">
-                <button id="save-button" class="btn btn-primary" onclick="saveModel()">Sauvegarder ce modèle</button>
+
+            <div class="row" style="margin-top:8px">
+                <div style="flex: 1;">
+                    <span class="small">Nom de l'adhérent</span>
+                    <input type="text" id="adherent-name" placeholder="Nom de l'adhérent" oninput="generateEmail()">
+                </div>
+                <div class="pill" id="badge-info">—</div>
             </div>
-        </div>
-        
-        <div class="hr"></div>
-        
-        <div>
-            <span class="small">Contenu du mail</span>
-            <textarea id="email-content" readonly></textarea>
-            <div id="dynamic-buttons" class="actions-buttons">
-                <button id="delete-button" class="btn btn-danger" onclick="deleteModel()">Supprimer</button>
-                <button id="modify-button" class="btn btn-primary" onclick="modifyModel()">Modifier</button>
-            </div>
-            <button id="copy-button" class="btn btn-primary" onclick="copyEmail()" style="width: 100%; margin-top: 10px;">Copier le mail</button>
-        </div>
-    </section>
-</div>
+
+            <div id="manual-fields" class="manual-fields">
+                <div class="hr"></div>
+                <div class="row">
+                    <div style="
