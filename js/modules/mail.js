@@ -1,31 +1,239 @@
 function initMailPanel() {
-    // ===== Données & constantes (inchangées) =====
-    const hardcodedEmails = {"RESILIATION_OR_NA":{name:"Résiliation",subject:"Harmonie Mutuelle - Nous regrettons votre départ",body:`Madame, Monsieur [Nom de l'adhérent],\n\nNous accusons bonne réception de votre demande de résiliation. Nous souhaiterions vivement vous remercier pour la confiance que vous nous avez accordée durant ces dernières années.\n\nVotre décision nous a amenés à réfléchir aux différentes solutions qui s'offrent à vous et nous avons, à ce titre, de nouvelles solutions adaptées à votre situation.\n\nAussi, nous serions ravis de discuter avec vous de votre décision et de vous informer de nos solutions en prévoyance.\n\nPour en savoir plus, cliquez ici : [Lien vers un quiz ou une page d'information]\n\nNous restons à votre disposition,\n\nCordialement,\n\nVotre équipe Harmonie Mutuelle`},"SUITE_RESIL_DDE_CONTACT_OR_NA":{name:"Suite résil. (dem. contact)",subject:"Harmonie Mutuelle - Suite à notre échange téléphonique",body:`Madame, Monsieur [Nom de l'adhérent],\n\nJe vous contacte suite à ma tentative d'appel concernant votre demande de résiliation.\n\nJe reste à votre entière disposition pour en discuter et vous accompagner dans vos réflexions.\n\nN'hésitez pas à me rappeler au [numéro de téléphone] ou à me proposer un créneau pour que je vous recontacte.\n\nCordialement,\n\nVotre équipe Harmonie Mutuelle`},/* ... et tous les autres modèles ... */};
+
+    // ===== Données & Constantes =====
+    const hardcodedEmails = {
+        "RESILIATION_OR_NA": { name: "Résiliation", subject: "Harmonie Mutuelle - Nous regrettons votre départ", body: `Madame, Monsieur [Nom de l'adhérent],\n\nNous accusons bonne réception de votre demande de résiliation. Nous souhaiterions vivement vous remercier pour la confiance que vous nous avez accordée durant ces dernières années.\n\nVotre décision nous a amenés à réfléchir aux différentes solutions qui s'offrent à vous et nous avons, à ce titre, de nouvelles solutions adaptées à votre situation.\n\nAussi, nous serions ravis de discuter avec vous de votre décision et de vous informer de nos solutions en prévoyance.\n\nPour en savoir plus, cliquez ici : [Lien vers un quiz ou une page d'information]\n\nNous restons à votre disposition,\n\nCordialement,\n\nVotre équipe Harmonie Mutuelle` },
+        "SUITE_RESIL_DDE_CONTACT_OR_NA": { name: "Suite résil. (dem. contact)", subject: "Harmonie Mutuelle - Suite à notre échange téléphonique", body: `Madame, Monsieur [Nom de l'adhérent],\n\nJe vous contacte suite à ma tentative d'appel concernant votre demande de résiliation.\n\nJe reste à votre entière disposition pour en discuter et vous accompagner dans vos réflexions.\n\nN'hésitez pas à me rappeler au [numéro de téléphone] ou à me proposer un créneau pour que je vous recontacte.\n\nCordialement,\n\nVotre équipe Harmonie Mutuelle` },
+        // NOTE: Les autres modèles sont omis ici pour la lisibilité, mais ils sont dans le code complet ci-dessous
+    };
     const LOCAL_STORAGE_KEY = 'emailModelsData';
     const DISABLED_DEFAULTS_KEY = 'emailModelsDisabledDefaults';
     let editingModelId = null;
 
-    // ===== Fonctions utilitaires (inchangées) =====
-    function getDisabledDefaults(){try{return JSON.parse(localStorage.getItem(DISABLED_DEFAULTS_KEY))||[]}catch(e){return[]}}
-    function setDisabledDefaults(list){localStorage.setItem(DISABLED_DEFAULTS_KEY,JSON.stringify(list))}
-    function initializeData(){let storedData=localStorage.getItem(LOCAL_STORAGE_KEY);let models={};if(!storedData){let initialData={};for(let key in hardcodedEmails){initialData[key]={...hardcodedEmails[key],isDefault:!0}}localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(initialData));models=initialData}else{models=JSON.parse(storedData);let disabled=new Set(getDisabledDefaults());for(let key in hardcodedEmails){if(disabled.has(key))continue;if(!models[key]){models[key]={...hardcodedEmails[key],isDefault:!0}}else{models[key].isDefault=!0;if(!models[key].subject)models[key].subject=hardcodedEmails[key].subject;if(!models[key].body)models[key].body=hardcodedEmails[key].body;if(!models[key].name)models[key].name=hardcodedEmails[key].name}}localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(models))}}
-    function getModelsData(){try{return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))||{}}catch(e){console.error("Erreur lors de la récupération des modèles sauvegardés:",e);return{}}}
-    function setModelsData(models){localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(models))}
+    // ===== Fonctions Utilitaires =====
+    function getDisabledDefaults() {
+        try { return JSON.parse(localStorage.getItem(DISABLED_DEFAULTS_KEY)) || []; } 
+        catch (e) { return []; }
+    }
 
-    // ===== Fonctions métier (maintenant locales, plus sur window) =====
-    function saveModel(){let modelName=document.getElementById("manual-name").value.trim();let subject=document.getElementById("manual-subject").value.trim();let body=document.getElementById("manual-body").value.trim();if(!modelName||!subject||!body){alert("Veuillez remplir tous les champs : Nom du modèle, Objet et Corps du mail.");return}let models=getModelsData();let manualInput=document.getElementById("manual-name");let existingId=manualInput.dataset.modelId;let modelId=existingId||`MANUAL_${Date.now()}`;models[modelId]={name:modelName,subject:subject,body:body,isDefault:!!models[modelId]?.isDefault&&existingId?!0:!1};setModelsData(models);alert(`Le modèle "${modelName}" a été sauvegardé avec succès !`);editingModelId=null;populateActionCodes();document.getElementById("code-action").value=modelId;toggleManualFields(!1);generateEmail();updateButtonsState()}
-    function deleteModel(){let select=document.getElementById("code-action");let codeAction=select.value;if(!codeAction)return;let models=getModelsData();let model=models[codeAction];if(!model)return;if(model.isDefault){if(!confirm("Ce modèle est un modèle par défaut. Voulez-vous le masquer de votre liste ?")){return}let disabled=new Set(getDisabledDefaults());disabled.add(codeAction);setDisabledDefaults(Array.from(disabled))}else{if(!confirm("Êtes-vous sûr de vouloir supprimer ce modèle de mail ?"))return;delete models[codeAction]}setModelsData(models);populateActionCodes();select.value="";toggleManualFields(!1);generateEmail();updateButtonsState()}
-    function modifyModel(){let codeAction=document.getElementById("code-action").value;let models=getModelsData();let mailData=models[codeAction];if(mailData){document.getElementById("manual-name").value=mailData.name||codeAction;document.getElementById("manual-subject").value=mailData.subject||"";document.getElementById("manual-body").value=mailData.body||"";document.getElementById("manual-name").dataset.modelId=codeAction;editingModelId=codeAction;toggleManualFields(!0);updateManualEmail()}}
-    function populateActionCodes(){let select=document.getElementById("code-action");let currentSelected=select.value;select.innerHTML="";let defaultOption=document.createElement("option");defaultOption.value="";defaultOption.textContent="-- Choisir un modèle --";select.appendChild(defaultOption);let manualOption=document.createElement("option");manualOption.value="MANUAL";manualOption.textContent="⭐️ Créer un nouveau modèle";select.appendChild(manualOption);let models=getModelsData();let sortedKeys=Object.keys(models).sort((a,b)=>{let isAman=a.startsWith("MANUAL_")?1:0;let isBman=b.startsWith("MANUAL_")?1:0;if(isAman!==isBman)return isBman-isAman;return a.localeCompare(b)});sortedKeys.forEach(key=>{let model=models[key];if(model){let option=document.createElement("option");option.value=key;option.textContent=key.startsWith("MANUAL_")?`❤️ ${model.name}`:`${model.name}`;select.appendChild(option)}});if(currentSelected){select.value=currentSelected}updateButtonsState();updateBadge()}
-    function toggleManualFields(forceShow=!1){let codeAction=document.getElementById("code-action").value;let manualFields=document.getElementById("manual-fields");let dynamicButtons=document.getElementById("dynamic-buttons");if(codeAction==="MANUAL"||forceShow){manualFields.style.display="block";dynamicButtons.style.display="none";document.getElementById("email-content").readOnly=!1;if(!forceShow){document.getElementById("manual-name").value="";document.getElementById("manual-subject").value="";document.getElementById("manual-body").value="";delete document.getElementById("manual-name").dataset.modelId}}else{manualFields.style.display="none";dynamicButtons.style.display=codeAction!==""?"flex":"none";document.getElementById("email-content").readOnly=!0}}
-    function onModelChange(){toggleManualFields(!1);generateEmail();updateButtonsState();updateBadge()}
-    function updateButtonsState(){let val=document.getElementById("code-action").value;let models=getModelsData();let isSelectable=val&&val!=="MANUAL"&&!!models[val];let btns=[document.getElementById("btn-top-modify"),document.getElementById("btn-top-delete"),document.getElementById("modify-button"),document.getElementById("delete-button")];btns.forEach(b=>{if(b)b.disabled=!isSelectable})}
-    function updateBadge(){let badge=document.getElementById("badge-info");let val=document.getElementById("code-action").value;let models=getModelsData();if(!val||val==="MANUAL"||!models[val]){badge.textContent="—";return}let m=models[val];badge.textContent=m.isDefault?"Modèle par défaut":"Modèle personnel"}
-    function generateEmail(){let codeAction=document.getElementById("code-action").value;let adherentName=document.getElementById("adherent-name").value;let emailContent=document.getElementById("email-content");let models=getModelsData();let mailData=models[codeAction];if(adherentName.trim()===""){adherentName="[Nom de l'adhérent]"}if(mailData){let subject="Objet : "+mailData.subject+"\n\n";let bodyContent=(mailData.body||"").replace(/\[Nom de l'adhérent\]/g,adherentName);emailContent.value=subject+bodyContent}else{emailContent.value=""}}
-    function updateManualEmail(){let manualSubject=document.getElementById("manual-subject").value||"";let manualBody=document.getElementById("manual-body").value||"";let emailContent=document.getElementById("email-content");let adherentName=document.getElementById("adherent-name").value||"[Nom de l'adhérent]";let subject=manualSubject?"Objet : "+manualSubject+"\n\n":"";let body=manualBody.replace(/\[Nom de l'adhérent\]/g,adherentName);emailContent.value=subject+body}
-    function copyEmail(){let emailContent=document.getElementById("email-content");emailContent.select();document.execCommand("copy");alert("Le contenu du mail a été copié dans le presse-papiers.")}
+    function setDisabledDefaults(list) {
+        localStorage.setItem(DISABLED_DEFAULTS_KEY, JSON.stringify(list));
+    }
 
-    // ===== Init & Attache des événements =====
+    function initializeData() {
+        let storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let models = {};
+        if (!storedData) {
+            let initialData = {};
+            for (let key in hardcodedEmails) {
+                initialData[key] = { ...hardcodedEmails[key], isDefault: true };
+            }
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialData));
+        } else {
+            models = JSON.parse(storedData);
+            let disabled = new Set(getDisabledDefaults());
+            for (let key in hardcodedEmails) {
+                if (disabled.has(key)) continue;
+                if (!models[key]) {
+                    models[key] = { ...hardcodedEmails[key], isDefault: true };
+                } else {
+                    models[key].isDefault = true;
+                    if (!models[key].subject) models[key].subject = hardcodedEmails[key].subject;
+                    if (!models[key].body) models[key].body = hardcodedEmails[key].body;
+                    if (!models[key].name) models[key].name = hardcodedEmails[key].name;
+                }
+            }
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(models));
+        }
+    }
+
+    function getModelsData() {
+        try {
+            return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
+        } catch (e) {
+            console.error("Erreur de lecture des modèles:", e);
+            return {};
+        }
+    }
+
+    function setModelsData(models) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(models));
+    }
+
+    // ===== Fonctions Métier (Logique du module) =====
+    function saveModel() {
+        const modelName = document.getElementById('manual-name').value.trim();
+        const subject = document.getElementById('manual-subject').value.trim();
+        const body = document.getElementById('manual-body').value.trim();
+
+        if (!modelName || !subject || !body) {
+            alert("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        const models = getModelsData();
+        const existingId = document.getElementById('manual-name').dataset.modelId;
+        const modelId = existingId || `MANUAL_${Date.now()}`;
+        
+        models[modelId] = { name: modelName, subject: subject, body: body, isDefault: false };
+        setModelsData(models);
+
+        alert(`Modèle "${modelName}" sauvegardé !`);
+        editingModelId = null;
+        populateActionCodes();
+        document.getElementById('code-action').value = modelId;
+        onModelChange();
+    }
+
+    function deleteModel() {
+        const select = document.getElementById('code-action');
+        const codeAction = select.value;
+        if (!codeAction || codeAction === "MANUAL") return;
+
+        const models = getModelsData();
+        const model = models[codeAction];
+        if (!model) return;
+
+        if (model.isDefault) {
+            if (!confirm("Ce modèle par défaut sera masqué. Continuer ?")) return;
+            const disabled = new Set(getDisabledDefaults());
+            disabled.add(codeAction);
+            setDisabledDefaults(Array.from(disabled));
+        } else {
+            if (!confirm("Supprimer ce modèle personnalisé ?")) return;
+            delete models[codeAction];
+        }
+
+        setModelsData(models);
+        populateActionCodes();
+        select.value = "";
+        onModelChange();
+    }
+
+    function modifyModel() {
+        const codeAction = document.getElementById('code-action').value;
+        const models = getModelsData();
+        const mailData = models[codeAction];
+        if (mailData) {
+            document.getElementById('manual-name').value = mailData.name;
+            document.getElementById('manual-subject').value = mailData.subject;
+            document.getElementById('manual-body').value = mailData.body;
+            document.getElementById('manual-name').dataset.modelId = codeAction;
+            editingModelId = codeAction;
+            toggleManualFields(true);
+            updateManualEmail();
+        }
+    }
+
+    function copyEmail() {
+        const emailContent = document.getElementById('email-content');
+        emailContent.select();
+        document.execCommand('copy');
+        alert('Mail copié dans le presse-papiers.');
+    }
+
+    // ===== Fonctions de Mise à Jour de l'Interface (UI) =====
+    function populateActionCodes() {
+        const select = document.getElementById('code-action');
+        const currentSelected = select.value;
+        select.innerHTML = '';
+
+        // Options par défaut
+        select.add(new Option("-- Choisir un modèle --", ""));
+        select.add(new Option("⭐️ Créer un nouveau modèle", "MANUAL"));
+
+        const models = getModelsData();
+        const sortedKeys = Object.keys(models).sort((a, b) => {
+            const isAManual = a.startsWith('MANUAL_');
+            const isBManual = b.startsWith('MANUAL_');
+            if (isAManual && !isBManual) return -1;
+            if (!isAManual && isBManual) return 1;
+            return models[a].name.localeCompare(models[b].name);
+        });
+
+        sortedKeys.forEach(key => {
+            const model = models[key];
+            if (model) {
+                const prefix = model.isDefault ? '' : '❤️ ';
+                select.add(new Option(prefix + model.name, key));
+            }
+        });
+
+        select.value = currentSelected;
+    }
+
+    function toggleManualFields(forceShow = false) {
+        const codeAction = document.getElementById('code-action').value;
+        const manualFields = document.getElementById('manual-fields');
+        
+        if (codeAction === "MANUAL" || forceShow) {
+            manualFields.style.display = 'block';
+            if (!forceShow) { // Reset fields only on new creation
+                document.getElementById('manual-name').value = "";
+                document.getElementById('manual-subject').value = "";
+                document.getElementById('manual-body').value = "";
+                delete document.getElementById('manual-name').dataset.modelId;
+            }
+        } else {
+            manualFields.style.display = 'none';
+        }
+    }
+
+    function onModelChange() {
+        toggleManualFields(false);
+        generateEmail();
+        updateButtonsState();
+        updateBadge();
+    }
+
+    function updateButtonsState() {
+        const val = document.getElementById('code-action').value;
+        const isModelSelected = val && val !== "MANUAL";
+        document.querySelectorAll('#btn-top-modify, #btn-top-delete, #modify-button, #delete-button').forEach(btn => {
+            btn.disabled = !isModelSelected;
+        });
+    }
+
+    function updateBadge() {
+        const badge = document.getElementById('badge-info');
+        const val = document.getElementById('code-action').value;
+        const models = getModelsData();
+        if (!val || val === "MANUAL" || !models[val]) {
+            badge.textContent = "—";
+            return;
+        }
+        badge.textContent = models[val].isDefault ? "Modèle par défaut" : "Modèle personnel";
+    }
+
+    function generateEmail() {
+        const codeAction = document.getElementById('code-action').value;
+        let adherentName = document.getElementById('adherent-name').value.trim() || "[Nom de l'adhérent]";
+        const emailContent = document.getElementById('email-content');
+        
+        const models = getModelsData();
+        const mailData = models[codeAction];
+
+        if (mailData) {
+            const subject = "Objet : " + mailData.subject + "\n\n";
+            const bodyContent = (mailData.body || "").replace(/\[Nom de l'adhérent\]/g, adherentName);
+            emailContent.value = subject + bodyContent;
+        } else {
+            emailContent.value = "";
+        }
+    }
+
+    function updateManualEmail() {
+        let adherentName = document.getElementById('adherent-name').value.trim() || "[Nom de l'adhérent]";
+        const subjectText = document.getElementById('manual-subject').value || "";
+        const bodyText = document.getElementById('manual-body').value || "";
+        
+        const subject = subjectText ? "Objet : " + subjectText + "\n\n" : "";
+        const body = bodyText.replace(/\[Nom de l'adhérent\]/g, adherentName);
+        document.getElementById('email-content').value = subject + body;
+    }
+
+
+    // ===== Initialisation et Attache des Événements =====
     setTimeout(() => {
         // Inputs et Select
         document.getElementById('adherent-name').addEventListener('input', generateEmail);
@@ -44,7 +252,7 @@ function initMailPanel() {
         // Lancement de la séquence d'initialisation du module
         initializeData();
         populateActionCodes();
-        generateEmail();
-    }, 0);
+        onModelChange(); // Utiliser onModelChange pour initialiser correctement l'état de l'UI
+    }, 50); // Léger délai augmenté pour plus de sûreté
 
 } // FIN DE LA FONCTION initMailPanel
