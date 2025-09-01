@@ -16,7 +16,7 @@
     <h1>Dashboard Prévoyance + Prime</h1>
     <div class="sub">Team Jules de Bretagne — Conseil & performance</div>
     <div class="actions" style="margin-top:12px; justify-content:flex-end;">
-      <button id="theme-toggle" class="btn btn-ghost" title="Changer de thème">🌓</button>
+        <button id="theme-toggle" class="btn btn-ghost" title="Changer de thème">🌓</button>
     </div>
   </div>
 </header>
@@ -33,82 +33,18 @@
   <div class="tab" data-tab="simudc">Simulateur DC</div>
   <div class="tab" data-tab="courrier">Modèle courrier</div>
   <div class="tab" data-tab="mail">📧 Modèles Mail</div>
-  <div class="tab" data-tab="scripts">📜 Scripts d'appel</div>
 </nav>
 
-<main id="app-content">
-  <div id="prevoyance-container" class="tab-content" data-tab-content="prevoyance">
-    </div>
-  <div id="calculateur-container" class="tab-content" data-tab-content="calculateur" style="display:none;">
-    </div>
-  <div id="global-container" class="tab-content" data-tab-content="global" style="display:none;">
-    </div>
-  <div id="plan-container" class="tab-content" data-tab-content="plan" style="display:none;">
-    </div>
-  <div id="av-container" class="tab-content" data-tab-content="av" style="display:none;">
-    </div>
-  <div id="per-container" class="tab-content" data-tab-content="per" style="display:none;">
-    </div>
-  <div id="argumentaire-container" class="tab-content" data-tab-content="argumentaire" style="display:none;">
-    </div>
-  <div id="gav-container" class="tab-content" data-tab-content="gav" style="display:none;">
-    </div>
-  <div id="simudc-container" class="tab-content" data-tab-content="simudc" style="display:none;">
-    </div>
-  <div id="courrier-container" class="tab-content" data-tab-content="courrier" style="display:none;">
-    </div>
-  <div id="mail-container" class="tab-content" data-tab-content="mail" style="display:none;">
-    </div>
-  <div id="scripts-container" class="tab-content" data-tab-content="scripts" style="display:none;">
-    </div>
-</main>
+<main id="app-content" class="panel active"></main>
 
 <footer>
   Architecture Modulaire v8.0 — Version Stable
 </footer>
 
-<div class="modal" id="editModal" aria-hidden="true">
-  <div class="dialog">
-    <header>
-      <div id="modalTitle">Nouveau script</div>
-      <button class="btn btn-ghost" onclick="closeModal()" title="Fermer">✕</button>
-    </header>
-    <div class="body">
-      <div class="row">
-        <div class="stack" style="flex:1">
-          <label for="m-name">Nom du script</label>
-          <input id="m-name" placeholder="Ex: GAV — #1 · Lacune accident">
-        </div>
-        <div class="stack" style="width:220px">
-          <label for="m-product">Produit</label>
-          <select id="m-product">
-            <option>GAV</option><option>Obsèques</option><option>PER</option>
-            <option>Assurance Vie</option><option>Santé</option><option>Prévoyance Décès</option>
-          </select>
-        </div>
-      </div>
-      <div class="stack">
-        <label for="m-body">Contenu du script (utiliser ||bénéfice|| pour surligner en orange)</label>
-        <textarea id="m-body" placeholder="Bonjour, je suis [Nom], de l’agence Harmonie Mutuelle de [Agence]. …"></textarea>
-      </div>
-      <div class="stack">
-        <label for="m-objs">Objections (1 par ligne, format : objection ::: réponse)</label>
-        <textarea id="m-objs" placeholder="Je suis déjà couvert ::: Justement, …&#10;Pas le temps ::: Je vous propose 10 minutes …&#10;Envoyez-moi un mail ::: Avec plaisir, et …"></textarea>
-      </div>
-    </div>
-    <div class="footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveModal()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
 <script src="js/main.js"></script>
-<script src="js/modules/scripts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 </body>
 </html>
