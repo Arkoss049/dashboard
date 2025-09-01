@@ -23,7 +23,6 @@ if (themeToggle) {
 // --- Gestion des Onglets ---
 const tabs = document.querySelectorAll('.tab');
 const appContent = document.getElementById('app-content');
-const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 async function loadTabContent(tabId) {
     // Affiche un message de chargement
@@ -40,24 +39,6 @@ async function loadTabContent(tabId) {
             throw new Error(`Fichier HTML pour "${tabId}" introuvable.`);
         }
         appContent.innerHTML = await htmlResponse.text();
-
-        // Tente de charger et d'initialiser le module JS associé
-        const initFunctionName = `init${capitalize(tabId)}Panel`;
-        const modulePath = `js/modules/${tabId}.js`;
-
-        const moduleResponse = await fetch(modulePath, { method: 'HEAD' });
-        if (moduleResponse.ok) {
-            const script = document.createElement('script');
-            script.src = modulePath;
-            script.onload = () => {
-                if (typeof window[initFunctionName] === 'function') {
-                    window[initFunctionName]();
-                } else if (tabId === 'scripts' && typeof window.loadScriptsModule === 'function') {
-                    window.loadScriptsModule();
-                }
-            };
-            document.body.appendChild(script);
-        }
 
     } catch (error) {
         console.error('Erreur de chargement de l\'onglet:', error);
