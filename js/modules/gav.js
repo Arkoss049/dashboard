@@ -16,8 +16,8 @@ function initGavPanel() {
 
     // Nouveaux éléments pour les boutons et la modale
     const imagePaths = {
-        'btn-info-1': 'chemin/vers/votre-image-1.png',
-        'btn-info-2': 'chemin/vers/votre-image-2.png'
+        'btn-info-1': 'https://github.com/Arkoss049/dashboard/blob/main/DOCUMENTS/ma-protection-accident.png?raw=true',
+        'btn-info-2': 'https://raw.githubusercontent.com/Arkoss049/dashboard/refs/heads/main/DOCUMENTS/frise%20accident.jfif'
     };
     const overlay = document.getElementById('gav-modal-overlay');
     const modalImage = document.getElementById('gav-modal-image');
