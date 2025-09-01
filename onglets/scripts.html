@@ -1,121 +1,16 @@
-<div class="app">
-  <aside class="panel" id="leftPanel">
-    <header>
-      <h1>Scripts d'appel</h1>
-      <div class="muted" style="font-size:13px">Recherchez par mot-clé ou `product:GAV`...</div>
-    </header>
-    <div class="content">
-      <div class="searchbar">
-        <input id="searchInput" placeholder="Rechercher…" oninput="debouncedSearch()" />
-        <div class="search-row">
-          <select id="productFilter" onchange="runSearch()">
-            <option value="">Produit : tous</option>
-            <option>GAV</option><option>Obsèques</option><option>PER</option>
-            <option>Assurance Vie</option><option>Santé</option><option>Prévoyance Décès</option>
-          </select>
-          <button class="btn btn-primary" onclick="openCreateModal()">Nouveau</button>
-        </div>
-        <div class="count" id="resultCount">—</div>
+<div id="scripts-panel">
+  <div class="grid">
+    <section class="card" style="grid-column: span 12">
+      <div class="row" style="justify-content:space-between; align-items:center">
+        <h3 class="section-title" style="margin:0;">Scripts d'appel</h3>
+        <a class="btn btn-primary" href="scripts-complets.html" target="_blank" rel="noopener">Ouvrir en plein écran</a>
       </div>
-      <div class="bar"></div>
-      <div id="scriptList" class="script-list"></div>
-    </div>
-  </aside>
-
-  <main class="panel" id="centerPanel">
-    <header>
-      <div class="center-head">
-        <div class="stack" style="min-width:200px; flex:1">
-          <label for="var-nom">Votre nom</label>
-          <input id="var-nom" value="Damien Richard" oninput="renderScript()">
-        </div>
-        <div class="stack" style="min-width:240px; flex:1.2">
-          <label for="var-agence">Votre agence</label>
-          <input id="var-agence" value="Nantes Anne de Bretagne" oninput="renderScript()">
-        </div>
-        <div class="tone-tabs" role="tablist" aria-label="Choix du ton">
-          <button id="tone-standard" class="active" onclick="setTone('standard')">Standard</button>
-          <button id="tone-incisif" onclick="setTone('incisif')">Incisif</button>
-          <button id="tone-doux" onclick="setTone('doux')">Doux</button>
-        </div>
-        <div class="row" style="margin-left:auto; align-items:center">
-          <button class="btn btn-ghost" onclick="toggleTheme()" title="Changer de thème">🌓</button>
-        </div>
-      </div>
-    </header>
-    <div class="content">
-      <div id="formattedView" class="preview">
-        <p class="muted" id="emptyHint">Choisissez un script dans le panneau de gauche pour commencer.</p>
-      </div>
-      <div class="actions">
-        <button id="btnCopy" class="btn btn-primary" onclick="copyScript()" disabled>Copier le script</button>
-        <button id="btnModify" class="btn btn-ghost" onclick="openEditModal()" disabled>Modifier</button>
-        <button id="btnDuplicate" class="btn btn-ghost" onclick="duplicateScript()" disabled>Dupliquer</button>
-        <button id="btnDelete" class="btn btn-danger" onclick="deleteScript()" disabled>Supprimer</button>
-      </div>
-    </div>
-  </main>
-
-  <aside class="panel" id="rightPanel">
-    <header>
-      <h1>Objections & Assistant</h1>
-      <div id="toneChip" class="tone-chip">Ton : Standard</div>
-    </header>
-    <div class="content">
-      <div id="objections" class="obj-list"></div>
-      <div class="bar"></div>
-      <div class="ia-box">
-        <label>Assistant IA — réécriture rapide</label>
-        <div class="ia-actions">
-          <button class="btn" onclick="iaRewrite('incisif')">+ Incisif</button>
-          <button class="btn" onclick="iaRewrite('doux')">+ Doux</button>
-          <button class="btn" onclick="iaRewrite('raccourcir')">Raccourcir</button>
-          <button class="btn" onclick="iaRewrite('simplifier')">Simplifier</button>
-          <button class="btn" onclick="iaRewrite('cta')">Ajouter CTA</button>
-          <button class="btn" onclick="iaRewrite('empathie')">+ Empathie</button>
-        </div>
-        <div id="iaOut" class="ia-output">Sélectionnez un script, puis cliquez sur une action pour voir une proposition de réécriture ici.</div>
-        <div class="actions" style="justify-content:flex-end">
-          <button class="btn btn-ghost" onclick="copyIA()">Copier</button>
-          <button class="btn btn-primary" onclick="applyIA()">Appliquer</button>
-        </div>
-      </div>
-    </div>
-  </aside>
-</div>
-
-<div class="modal" id="editModal" aria-hidden="true">
-  <div class="dialog">
-    <header>
-      <div id="modalTitle">Nouveau script</div>
-      <button class="btn btn-ghost" onclick="closeModal()" title="Fermer">✕</button>
-    </header>
-    <div class="body">
-      <div class="row">
-        <div class="stack" style="flex:1">
-          <label for="m-name">Nom du script</label>
-          <input id="m-name" placeholder="Ex: GAV — #1 · Lacune accident">
-        </div>
-        <div class="stack" style="width:220px">
-          <label for="m-product">Produit</label>
-          <select id="m-product">
-            <option>GAV</option><option>Obsèques</option><option>PER</option>
-            <option>Assurance Vie</option><option>Santé</option><option>Prévoyance Décès</option>
-          </select>
-        </div>
-      </div>
-      <div class="stack">
-        <label for="m-body">Contenu du script (utiliser ||bénéfice|| pour surligner en orange)</label>
-        <textarea id="m-body" placeholder="Bonjour, je suis [Nom], de l’agence Harmonie Mutuelle de [Agence]. …"></textarea>
-      </div>
-      <div class="stack">
-        <label for="m-objs">Objections (1 par ligne, format : objection ::: réponse)</label>
-        <textarea id="m-objs" placeholder="Je suis déjà couvert ::: Justement, …&#10;Pas le temps ::: Je vous propose 10 minutes …&#10;Envoyez-moi un mail ::: Avec plaisir, et …"></textarea>
-      </div>
-    </div>
-    <div class="footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveModal()">Enregistrer</button>
-    </div>
+      <div class="hr"></div>
+      <iframe
+        src="scripts-complets.html"
+        title="Scripts d'appel"
+        style="width:100%; height:85vh; border:none; border-radius:12px; overflow:hidden">
+      </iframe>
+    </section>
   </div>
 </div>
