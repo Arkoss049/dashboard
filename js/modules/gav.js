@@ -14,6 +14,43 @@ function initGavPanel() {
         search: $('.gav-search')
     };
 
+    // Nouveaux éléments pour les boutons et la modale
+    const imagePaths = {
+        'btn-info-1': 'chemin/vers/votre-image-1.png',
+        'btn-info-2': 'chemin/vers/votre-image-2.png'
+    };
+    const overlay = document.getElementById('gav-modal-overlay');
+    const modalImage = document.getElementById('gav-modal-image');
+    const closeBtn = document.querySelector('.gav-modal-close');
+    const infoBtns = root.querySelectorAll('.btn-info');
+
+    function showImage(imageSrc) {
+        modalImage.src = imageSrc;
+        overlay.style.display = 'flex';
+    }
+
+    function hideModal() {
+        overlay.style.display = 'none';
+    }
+
+    infoBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const imageSrc = imagePaths[btn.id];
+            if (imageSrc) {
+                showImage(imageSrc);
+            }
+        });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', hideModal);
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                hideModal();
+            }
+        });
+    }
+
     const CASES = [
         {"id": "E1", "cible": "Famille", "titre": "Enfant – brûlure eau bouillante", "emoji": "🔥", "resume": "Brûlures 2e degré, greffe, cicatrices.", "sans": 500, "avec": { "total": 42440, "ip": 29440, "souff": 6500, "esth": 6500 }, "tags": ["Hôpital", "Cicatrices", "Greffe"]},
         {"id": "P1", "cible": "Adulte", "titre": "Parent – chute d’échelle", "emoji": "🪜", "resume": "Fracture lombaire, séquelles dos, arrêt 6 mois.", "sans": 4000, "avec": { "total": 84100, "ip": 73600, "souff": 6500, "pertesRevenus": 4000 }, "tags": ["Arrêt pro", "Rééduc"]},
