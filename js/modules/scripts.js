@@ -4,7 +4,6 @@
   const THEME_KEY = 'callScriptsTheme_v16';
 
   const defaultScripts = {
-    // ... (tout le code de tes scripts par défaut est inchangé ici)
     "GAV_1": {
       name: "GAV — #1 · Lacune accident", product: "GAV",
       body: "Bonjour, je suis [Nom], de l’agence Harmonie Mutuelle de [Agence].\nJe vous dérange ?\nEn faisant le point sur votre dossier, je vois que vous êtes bien couvert(e) pour la maladie, mais il reste un angle mort sur les accidents du quotidien.\nEst-ce un oubli, ou le choix de ne pas vous protéger sur ce risque ?\n||Je peux vous montrer en 10 minutes en agence l’impact concret et une solution adaptée. Vous aurez une vision claire pour décider en toute sérénité.||",
@@ -279,5 +278,4 @@
   function iaRewrite(kind){ const s = getCurrent(); if (!s){ document.getElementById('iaOut').textContent='Aucun script sélectionné.'; return; } let t = replaceVars(s.body); if (kind==='incisif') t = toneRewrite(t, 'incisif'); else if (kind==='doux') t = toneRewrite(t, 'doux'); else if (kind==='raccourcir'){ t = t.replace(/\b(très|vraiment|simplement|justement|clairement|rapidement)\b/gi, ''); t = t.replace(/,\s?vous [^,.!?]+/gi, ''); t = t.replace(/\s{2,}/g,' ').trim(); } else if (kind==='simplifier'){ t = t.replace(/\bindemnisation\b/gi,'prise en charge'); t = t.replace(/\bmodalités\b/gi,'règles'); t = t.replace(/\bscénarios\b/gi,'exemples'); t = t.replace(/\bstructure\b/gi,'cadre'); } else if (kind==='cta'){ if (!/\bagence\b/i.test(t)) t += " On peut voir ça à l’agence si vous voulez."; t += " Je vous propose mardi 9h30 ou jeudi 17h30, lequel vous convient ?"; } else if (kind==='empathie'){ t = t.replace(/Je comprends ?;?/gi,'').trim(); t = "Je comprends votre point de vue. " + t; } lastIA = t; document.getElementById('iaOut').textContent = t.replace(/\|\|/g,''); }
   function copyIA(){ if (lastIA) navigator.clipboard.writeText(lastIA.replace(/\|\|/g,'')); }
   function applyIA(){ if (!lastIA || !currentId) return; const data = getData(); const s = data[currentId]; if (!s) return; const nom = document.getElementById('var-nom').value || '[Nom]'; const agence = document.getElementById('var-agence').value || '[Agence]'; let back = lastIA.replaceAll(nom,'[Nom]').replaceAll(agence,'[Agence]'); s.body = back; setData(data); renderScript(); }
-  
-})(); // <-- N'oublie pas les parenthèses à la fin pour exécuter la fonction
+})();
