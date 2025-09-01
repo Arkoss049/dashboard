@@ -1,5 +1,5 @@
 (function() {
-  const CSV_PATH = '../../CORRESPONDANCE.csv';
+  const CSV_PATH = '../../Correspondance.csv';
   let data = [];
   let debouncedSearchTimer = null;
 
