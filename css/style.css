@@ -144,8 +144,8 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  max-width: 90%;
-  max-height: 90%;
+  max-width: 70%;
+  max-height: 70%;
   overflow: auto; /* Permet le défilement si l'image est trop grande */
 }
 
