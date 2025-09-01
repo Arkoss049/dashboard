@@ -1,0 +1,33 @@
+<div class="app">
+  <div class="panel-full">
+    <header>
+      <h1>Recherche de correspondances</h1>
+      <div class="muted">Recherchez un acte ou un mot-clé pour trouver les correspondances.</div>
+    </header>
+    <div class="content">
+      <div class="searchbar">
+        <input id="searchInput" placeholder="Rechercher par code (ex: 9PHN) ou libellé…" oninput="debouncedSearch()" />
+        <div class="count" id="resultCount">—</div>
+      </div>
+      <div class="bar"></div>
+      <div id="resultsTableContainer" style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>CODE_CORRESPONDANCE</th>
+              <th>Correspondance</th>
+              <th>Acte Externe</th>
+              <th>Acte RC</th>
+              <th>Libellé Acte</th>
+              <th>Domaine Court Séjour</th>
+              <th>Libellé DCS</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody">
+            <tr><td colspan="7" class="muted">Recherchez un acte pour afficher les résultats.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
