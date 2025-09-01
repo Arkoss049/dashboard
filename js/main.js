@@ -35,7 +35,7 @@ async function loadTabContent(tabId) {
 
     try {
         // Charge le contenu HTML de l'onglet
-        const htmlResponse = await fetch(`modules/${tabId}.html`);
+        const htmlResponse = await fetch(`onglets/${tabId}.html`);
         if (!htmlResponse.ok) {
             throw new Error(`Fichier HTML pour "${tabId}" introuvable.`);
         }
