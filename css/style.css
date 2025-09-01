@@ -145,16 +145,15 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   
-  /* Les ajustements clés pour que l'image ne déborde pas */
-  max-width: 90vw; /* La largeur maximale est 90% de la largeur de la fenêtre */
-  max-height: 90vh; /* La hauteur maximale est 90% de la hauteur de la fenêtre */
+  max-width: 90vw;
+  max-height: 90vh;
   
-  overflow: auto; /* Ajoute des barres de défilement si le contenu dépasse */
+  overflow: auto;
 }
 
 .gav-modal-image {
-  max-width: 100%; /* L'image ne dépassera jamais la largeur de son conteneur (la modale) */
-  height: auto; /* Maintient les proportions de l'image */
+  max-width: 100% !important; /* Force l'image à se réduire */
+  height: auto !important; /* Force le maintien des proportions */
   display: block;
 }
 
