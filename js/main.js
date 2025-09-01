@@ -1,57 +1,66 @@
-// --- Gestion du Thème (Dark/Light) ---
-const themeToggle = document.getElementById('theme-toggle');
-const LS_THEME_KEY = 'dashboard.theme';
-function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem(LS_THEME_KEY, theme); }
-function toggleTheme() { const currentTheme = localStorage.getItem(LS_THEME_KEY) || 'dark'; applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
-(function() { applyTheme(localStorage.getItem(LS_THEME_KEY) || 'dark'); })();
-if (themeToggle) { themeToggle.addEventListener('click', toggleTheme); }
+// Fonction pour basculer entre les onglets
+function switchTab(tabName) {
+    // 1. Gérer la classe "active" pour les onglets
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
 
-// --- Gestion des Onglets ---
-const tabs = document.querySelectorAll('.tab');
-const appContent = document.getElementById('app-content');
-const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+    // 2. Gérer le contenu des onglets
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    const activeContent = document.querySelector(`.tab-content[data-tab-content="${tabName}"]`);
+    if (activeContent) {
+        activeContent.style.display = 'grid'; // Ou 'flex', selon le style de ton onglet
+    }
 
-async function loadTabContent(tabId) {
-    appContent.innerHTML = '<div class="grid"><div class="card" style="grid-column: span 12;">Chargement...</div></div>';
-    try {
-        const htmlResponse = await fetch(`onglets/${tabId}.html`);
-        if (!htmlResponse.ok) throw new Error(`Fichier HTML pour "${tabId}" introuvable.`);
-        appContent.innerHTML = await htmlResponse.text();
-
-        const initFunctionName = `init${capitalize(tabId)}Panel`;
-        
-        if (typeof window[initFunctionName] === 'function') {
-            window[initFunctionName]();
-            return;
-        }
-
-        const modulePath = `js/modules/${tabId}.js`;
-        const moduleResponse = await fetch(modulePath, { method: 'HEAD' });
-        if (moduleResponse.ok) {
-            const script = document.createElement('script');
-            script.src = modulePath;
-            script.onload = () => {
-                if (typeof window[initFunctionName] === 'function') {
-                    window[initFunctionName]();
+    // 3. Charger et initialiser le module si nécessaire
+    if (tabName === 'scripts' && !document.getElementById('scripts-module-container').innerHTML.trim()) {
+        // Charge le contenu HTML du module "scripts"
+        fetch('modules/scripts.html')
+            .then(response => response.text())
+            .then(html => {
+                const container = document.getElementById('scripts-container');
+                container.innerHTML = html;
+                // Initialise le module une fois le contenu chargé
+                if (window.loadScriptsModule) {
+                    window.loadScriptsModule();
                 }
-            };
-            document.body.appendChild(script);
-        }
-    } catch (error) {
-        console.error('Erreur de chargement de l\'onglet:', error);
-        appContent.innerHTML = `<div class="grid"><div class="card" style="grid-column: span 12; border-color: var(--danger);"><h3 class="section-title" style="color:var(--danger)">Erreur</h3><p>${error.message}</p></div></div>`;
+            })
+            .catch(error => {
+                console.error('Erreur de chargement du module scripts:', error);
+            });
     }
 }
 
-tabs.forEach(tab => {
+// Ajouter des écouteurs d'événements pour les onglets
+document.querySelectorAll('.tabs .tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        if(tab.classList.contains('active')) return;
-        document.querySelector('.tab.active').classList.remove('active');
-        tab.classList.add('active');
-        loadTabContent(tab.dataset.tab);
+        const tabName = tab.getAttribute('data-tab');
+        switchTab(tabName);
     });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadTabContent('prevoyance');
-});
+// Gérer le changement de thème
+const themeToggle = document.getElementById('theme-toggle');
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const root = document.documentElement;
+        const currentTheme = root.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            root.setAttribute('data-theme', 'light');
+        } else {
+            root.setAttribute('data-theme', 'dark');
+        }
+    });
+}
+
+// Fonction pour initialiser l'application au chargement de la page
+function initApp() {
+    // Affiche l'onglet "Prévoyance" par défaut au démarrage
+    switchTab('prevoyance');
+}
+
+// Écouteur d'événement pour le chargement de la page
+document.addEventListener('DOMContentLoaded', initApp);
