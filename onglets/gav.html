@@ -4,6 +4,14 @@
             <div class="row" style="justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <h3 class="section-title" style="margin:0;">Exemples GAV</h3>
                 <div class="actions">
+                    <div class="gav-info-buttons">
+                        <button id="btn-info-1" class="btn-info">
+                            <i class="fas fa-question-circle"></i>
+                        </button>
+                        <button id="btn-info-2" class="btn-info">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
                     <select class="gav-cible">
                         <option value="all">Toutes cibles</option>
                         <option value="Famille">Famille</option>
@@ -16,9 +24,16 @@
             </div>
         </section>
         <div class="gav-grid" style="grid-column: span 12; display:grid; grid-template-columns: repeat(auto-fill,minmax(360px,1fr)); gap:16px;">
-            </div>
+        </div>
         <div class="gav-empty" style="display:none; grid-column: span 12; text-align: center; padding: 40px;" class="card">
             <p class="muted">Aucun cas ne correspond à vos filtres.</p>
         </div>
     </div>
+</div>
+
+<div id="gav-modal-overlay" class="gav-modal-overlay">
+  <div id="gav-modal-content" class="gav-modal-content">
+    <span class="gav-modal-close">&times;</span>
+    <img id="gav-modal-image" src="" alt="Image descriptive">
+  </div>
 </div>
