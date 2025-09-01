@@ -20,13 +20,57 @@ if (themeToggle) {
     themeToggle.addEventListener('click', toggleTheme);
 }
 
-// --- Gestion des onglets actifs ---
-const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-document.querySelectorAll('.tab').forEach(tab => {
-  const tabPath = tab.getAttribute('href');
-  if (tabPath && tabPath.includes(currentPath)) {
-    tab.classList.add('active');
-  } else {
-    tab.classList.remove('active');
-  }
+// --- Gestion des Onglets ---
+const tabs = document.querySelectorAll('.tab');
+const appContent = document.getElementById('app-content');
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+async function loadTabContent(tabId) {
+    // Affiche un message de chargement
+    appContent.innerHTML = '<div class="grid"><div class="card" style="grid-column: span 12;">Chargement...</div></div>';
+
+    // Met à jour l'état "actif" des onglets
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+
+    try {
+        // Charge le contenu HTML de l'onglet
+        const htmlResponse = await fetch(`onglets/${tabId}.html`);
+        if (!htmlResponse.ok) {
+            throw new Error(`Fichier HTML pour "${tabId}" introuvable.`);
+        }
+        appContent.innerHTML = await htmlResponse.text();
+
+        // Tente de charger et d'initialiser le module JS associé
+        const initFunctionName = `init${capitalize(tabId)}Panel`;
+        const modulePath = `js/modules/${tabId}.js`;
+
+        const moduleResponse = await fetch(modulePath, { method: 'HEAD' });
+        if (moduleResponse.ok) {
+            const script = document.createElement('script');
+            script.src = modulePath;
+            script.onload = () => {
+                if (typeof window[initFunctionName] === 'function') {
+                    window[initFunctionName]();
+                }
+            };
+            document.body.appendChild(script);
+        }
+
+    } catch (error) {
+        console.error('Erreur de chargement de l\'onglet:', error);
+        appContent.innerHTML = `<div class="grid"><div class="card" style="grid-column: span 12; border-color: var(--danger);"><h3 class="section-title" style="color:var(--danger)">Erreur</h3><p>${error.message}</p></div></div>`;
+    }
+}
+
+// Ajoute les écouteurs d'événements pour les clics sur les onglets
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        loadTabContent(tab.dataset.tab);
+    });
+});
+
+// Initialise l'application au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    loadTabContent('prevoyance');
 });
