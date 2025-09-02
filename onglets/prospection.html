@@ -10,10 +10,29 @@
         <input type="number" id="prospectNumber" placeholder="N° adhérent" />
         <input type="number" id="prospectPP" placeholder="Nombre de PP" />
         <input type="number" id="prospectAge" placeholder="Âge" />
-        <input type="number" id="prospectCotisation" placeholder="Cotisation annuelle" />
+        <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
+        <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
+        <select id="prospectStatus">
+          <option value="A contacter">A contacter</option>
+          <option value="A relancer">A relancer</option>
+          <option value="RDV Pris">RDV Pris</option>
+          <option value="RDV Refusé">RDV Refusé</option>
+          <option value="Message répondeur">Message répondeur</option>
+        </select>
         <button id="addProspectBtn" class="btn btn-primary">Ajouter un prospect</button>
       </div>
       <div class="bar"></div>
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <h3>Liste des prospects</h3>
+        <select id="statusFilter" onchange="filterProspects()">
+          <option value="all">Tous les statuts</option>
+          <option value="A contacter">A contacter</option>
+          <option value="A relancer">A relancer</option>
+          <option value="RDV Pris">RDV Pris</option>
+          <option value="RDV Refusé">RDV Refusé</option>
+          <option value="Message répondeur">Message répondeur</option>
+        </select>
+      </div>
       <div id="prospectTableContainer">
         <table class="data-table">
           <thead>
@@ -22,12 +41,14 @@
               <th>N° adhérent</th>
               <th>Nbre PP</th>
               <th>Âge</th>
-              <th>Cotisation annuelle</th>
+              <th>Téléphone</th>
+              <th>Cotisation mensuelle</th>
+              <th>Statut</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="prospectTableBody">
-            <tr><td colspan="6" class="muted">Aucun prospect ajouté.</td></tr>
+            <tr><td colspan="8" class="muted">Aucun prospect ajouté.</td></tr>
           </tbody>
         </table>
       </div>
