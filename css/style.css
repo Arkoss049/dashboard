@@ -1,4 +1,4 @@
-/* --- Base Styles for Dashboard --- */
+/* --- Styles de base du Dashboard --- */
 
 :root {
   --bg: #0a0f1f;
@@ -131,7 +131,7 @@ footer {
   font-size: 12px;
 }
 
-/* --- General Module Styles --- */
+/* --- Styles des modules --- */
 .app {
   width: min(1440px, 100%);
   display: grid;
@@ -302,7 +302,7 @@ textarea {
   transition: all .2s ease;
 }
 
-/* --- Prospection Module Styles --- */
+/* --- Styles du module de prospection --- */
 
 .prospect-form {
   display: flex;
