@@ -131,7 +131,7 @@ footer {
   font-size: 12px;
 }
 
-/* --- Styles des modules --- */
+/* --- General Module Styles --- */
 .app {
   width: min(1440px, 100%);
   display: grid;
@@ -302,7 +302,7 @@ textarea {
   transition: all .2s ease;
 }
 
-/* --- Styles du module de prospection --- */
+/* --- Prospection Module Styles --- */
 
 .prospect-form {
   display: flex;
