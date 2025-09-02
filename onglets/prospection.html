@@ -5,24 +5,32 @@
       <div class="muted">Gérez et suivez vos prospects facilement.</div>
     </header>
     <div class="content">
-      <div class="form-grid">
-        <input type="text" id="prospectName" placeholder="Nom/Prénom" />
-        <input type="number" id="prospectNumber" placeholder="N° adhérent" />
-        <input type="number" id="prospectPP" placeholder="Nombre de PP" />
-        <input type="number" id="prospectAge" placeholder="Âge" />
-        <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
-        <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
-        <select id="prospectStatus">
-          <option value="A contacter">A contacter</option>
-          <option value="A relancer">A relancer</option>
-          <option value="RDV Pris">RDV Pris</option>
-          <option value="RDV Refusé">RDV Refusé</option>
-          <option value="Message répondeur">Message répondeur</option>
-        </select>
-        <button id="addProspectBtn" class="btn btn-primary">Ajouter un prospect</button>
+      <div class="prospect-form">
+        <div class="form-row">
+          <input type="text" id="prospectName" placeholder="Nom/Prénom" />
+          <input type="number" id="prospectNumber" placeholder="N° adhérent" />
+          <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+        </div>
+        <div class="form-row">
+          <input type="number" id="prospectAge" placeholder="Âge" />
+          <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
+          <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
+        </div>
+        <div class="form-row">
+          <select id="prospectStatus">
+            <option value="A contacter">A contacter</option>
+            <option value="A relancer">A relancer</option>
+            <option value="RDV Pris">RDV Pris</option>
+            <option value="RDV Refusé">RDV Refusé</option>
+            <option value="Message répondeur">Message répondeur</option>
+          </select>
+          <button id="addProspectBtn" class="btn btn-primary">Ajouter un prospect</button>
+        </div>
       </div>
+
       <div class="bar"></div>
-      <div class="row" style="align-items:center; justify-content:space-between;">
+      
+      <div class="prospect-toolbar">
         <h3>Liste des prospects</h3>
         <select id="statusFilter" onchange="filterProspects()">
           <option value="all">Tous les statuts</option>
@@ -33,6 +41,7 @@
           <option value="Message répondeur">Message répondeur</option>
         </select>
       </div>
+
       <div id="prospectTableContainer">
         <table class="data-table">
           <thead>
