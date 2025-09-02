@@ -30,7 +30,7 @@
         <td>${p.age}</td>
         <td>${p.phone}</td>
         <td>${p.monthly} €</td>
-        <td>${p.status}</td>
+        <td><span class="status-chip status-${p.status.toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status}</span></td>
         <td><button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button></td>
       `;
       tbody.appendChild(tr);
@@ -65,6 +65,7 @@
       document.getElementById('prospectAge').value = '';
       document.getElementById('prospectPhone').value = '';
       document.getElementById('prospectMonthly').value = '';
+      document.getElementById('prospectStatus').value = 'A contacter';
     }
   }
 
