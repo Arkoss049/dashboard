@@ -1,0 +1,36 @@
+<div class="app">
+  <div class="panel-full">
+    <header>
+      <h1>Tableau de prospection</h1>
+      <div class="muted">Gérez et suivez vos prospects facilement.</div>
+    </header>
+    <div class="content">
+      <div class="form-grid">
+        <input type="text" id="prospectName" placeholder="Nom/Prénom" />
+        <input type="number" id="prospectNumber" placeholder="N° adhérent" />
+        <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+        <input type="number" id="prospectAge" placeholder="Âge" />
+        <input type="number" id="prospectCotisation" placeholder="Cotisation annuelle" />
+        <button id="addProspectBtn" class="btn btn-primary">Ajouter un prospect</button>
+      </div>
+      <div class="bar"></div>
+      <div id="prospectTableContainer">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom/Prénom</th>
+              <th>N° adhérent</th>
+              <th>Nbre PP</th>
+              <th>Âge</th>
+              <th>Cotisation annuelle</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="prospectTableBody">
+            <tr><td colspan="6" class="muted">Aucun prospect ajouté.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
