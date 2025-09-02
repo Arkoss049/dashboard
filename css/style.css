@@ -174,3 +174,62 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .gav-modal-close:hover {
   color: #fff;
 }
+
+.prospect-form {
+  display: grid;
+  gap: 12px;
+}
+
+.prospect-form .form-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prospect-form input,
+.prospect-form select {
+  flex: 1;
+}
+
+.prospect-form button {
+  width: auto;
+}
+
+.prospect-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  color: #fff;
+}
+
+.status-a-contacter {
+  background-color: #3b82f6; /* Bleu */
+}
+
+.status-a-relancer {
+  background-color: #f59e0b; /* Orange */
+}
+
+.status-rdv-pris {
+  background-color: #22c55e; /* Vert */
+}
+
+.status-rdv-refuse {
+  background-color: #ef4444; /* Rouge */
+}
+
+.status-message-repondeur {
+  background-color: #64748b; /* Gris */
+}
