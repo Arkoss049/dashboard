@@ -13,23 +13,25 @@
     }
   }
 
-  function renderTable() {
+  function renderTable(filteredProspects = prospects) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
-    if (prospects.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="muted">Aucun prospect ajouté.</td></tr>';
+    if (filteredProspects.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="muted">Aucun prospect trouvé.</td></tr>';
       return;
     }
 
-    prospects.forEach((p, index) => {
+    filteredProspects.forEach((p, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.name}</td>
         <td>${p.number}</td>
         <td>${p.pp}</td>
         <td>${p.age}</td>
-        <td>${p.cotisation} €</td>
-        <td><button class="btn btn-danger btn-small" data-index="${index}">Supprimer</button></td>
+        <td>${p.phone}</td>
+        <td>${p.monthly} €</td>
+        <td>${p.status}</td>
+        <td><button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -49,19 +51,32 @@
     const number = document.getElementById('prospectNumber').value;
     const pp = document.getElementById('prospectPP').value;
     const age = document.getElementById('prospectAge').value;
-    const cotisation = document.getElementById('prospectCotisation').value;
+    const phone = document.getElementById('prospectPhone').value;
+    const monthly = document.getElementById('prospectMonthly').value;
+    const status = document.getElementById('prospectStatus').value;
 
     if (name) {
-      prospects.push({ name, number, pp, age, cotisation });
+      prospects.push({ name, number, pp, age, phone, monthly, status });
       saveProspects();
       renderTable();
       document.getElementById('prospectName').value = '';
       document.getElementById('prospectNumber').value = '';
       document.getElementById('prospectPP').value = '';
       document.getElementById('prospectAge').value = '';
-      document.getElementById('prospectCotisation').value = '';
+      document.getElementById('prospectPhone').value = '';
+      document.getElementById('prospectMonthly').value = '';
     }
   }
+
+  window.filterProspects = function() {
+    const filterStatus = document.getElementById('statusFilter').value;
+    if (filterStatus === 'all') {
+      renderTable();
+    } else {
+      const filtered = prospects.filter(p => p.status === filterStatus);
+      renderTable(filtered);
+    }
+  };
 
   window.initProspectionPanel = function() {
     loadProspects();
