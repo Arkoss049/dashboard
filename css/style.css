@@ -261,3 +261,16 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .status-message-repondeur {
   background-color: #64748b;
 }
+.btn-status {
+    background-color: var(--elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-status:hover {
+    background-color: var(--surface-hover);
+}
