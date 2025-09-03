@@ -192,7 +192,7 @@
     }
     
     renderTable(filtered);
-    updateStats(); // Mise à jour des stats après le filtrage
+    updateStats();
   };
 
   window.initProspectionPanel = function() {
