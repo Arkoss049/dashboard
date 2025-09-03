@@ -38,6 +38,50 @@
     }
   }
 
+  function updateStats() {
+    const stats = {
+      'total': prospects.length,
+      'A contacter': 0,
+      'A relancer': 0,
+      'RDV Pris': 0,
+      'RDV Refusé': 0,
+      'Message répondeur': 0
+    };
+    prospects.forEach(p => {
+      if (stats[p.status] !== undefined) {
+        stats[p.status]++;
+      }
+    });
+
+    document.getElementById('stat-total').textContent = stats.total;
+    document.getElementById('stat-a-contacter').textContent = stats['A contacter'];
+    document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
+    document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
+    document.getElementById('stat-rdv-refuse').textContent = stats['RDV Refusé'];
+  }
+
+  function exportToCsv(data, filename) {
+    const csvRows = [];
+    const headers = Object.keys(data[0]);
+    csvRows.push(headers.join(';'));
+
+    for (const row of data) {
+      const values = headers.map(header => {
+        const escaped = ('' + row[header]).replace(/"/g, '\\"');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(';'));
+    }
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function renderTable(list) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
@@ -46,7 +90,7 @@
       return;
     }
 
-    list.forEach((p, index) => {
+    list.forEach((p) => {
       const tr = document.createElement('tr');
       const notesIcon = p.notes ? '<span class="icon-note-filled">📝</span>' : '<span class="icon-note-empty">🗒️</span>';
       
@@ -115,7 +159,7 @@
             monthly: document.getElementById('prospectMonthly').value,
             status: 'A contacter',
             lastUpdate: new Date().toLocaleDateString('fr-FR'),
-            notes: '' // Ajout d'un champ notes vide par défaut
+            notes: ''
         });
         saveProspects();
         filterAndSortProspects();
@@ -148,6 +192,7 @@
     }
     
     renderTable(filtered);
+    updateStats(); // Mise à jour des stats après le filtrage
   };
 
   window.initProspectionPanel = function() {
@@ -156,5 +201,8 @@
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        exportToCsv(prospects, 'prospects.csv');
+    });
   };
 })();
