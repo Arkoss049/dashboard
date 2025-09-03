@@ -13,15 +13,15 @@
     }
   }
 
-  function renderTable(filteredProspects = prospects) {
+  function renderTable(list) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
-    if (filteredProspects.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="muted">Aucun prospect trouvé.</td></tr>';
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="muted">Aucun prospect trouvé.</td></tr>';
       return;
     }
 
-    filteredProspects.forEach((p, index) => {
+    list.forEach((p, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.name}</td>
@@ -29,6 +29,7 @@
         <td>${p.monthly} €</td>
         <td>${p.pp}</td>
         <td><span class="status-chip status-${p.status.toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status}</span></td>
+        <td>${p.notes || ''}</td>
         <td>${p.lastUpdate || ''}</td>
         <td>
           <button class="btn btn-status" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
@@ -39,18 +40,17 @@
       `;
       tbody.appendChild(tr);
     });
-
-    // Gestion de la suppression
+    
+    // Gestion des événements de la table
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = e.target.dataset.index;
         prospects.splice(index, 1);
         saveProspects();
-        renderTable();
+        filterAndSortProspects();
       });
     });
 
-    // Gestion du changement de statut
     document.querySelectorAll('#prospectTableBody .btn-status').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = e.target.dataset.index;
@@ -58,7 +58,7 @@
             prospects[index].status = newStatus;
             prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
             saveProspects();
-            renderTable();
+            filterAndSortProspects();
         });
     });
   }
@@ -67,7 +67,7 @@
     const name = document.getElementById('prospectName').value;
     const phone = document.getElementById('prospectPhone').value;
     
-    if (name && phone) {
+    if (name) {
         prospects.push({
             name,
             number: document.getElementById('prospectNumber').value,
@@ -75,28 +75,42 @@
             age: document.getElementById('prospectAge').value,
             phone,
             monthly: document.getElementById('prospectMonthly').value,
+            notes: document.getElementById('prospectNotes').value,
             status: 'A contacter',
             lastUpdate: new Date().toLocaleDateString('fr-FR')
         });
         saveProspects();
-        renderTable();
+        filterAndSortProspects();
         document.getElementById('prospectName').value = '';
         document.getElementById('prospectNumber').value = '';
         document.getElementById('prospectPP').value = '';
         document.getElementById('prospectAge').value = '';
         document.getElementById('prospectPhone').value = '';
         document.getElementById('prospectMonthly').value = '';
+        document.getElementById('prospectNotes').value = '';
     }
   }
-
-  window.filterProspects = function() {
+  
+  window.filterAndSortProspects = function() {
     const filterStatus = document.getElementById('statusFilter').value;
-    if (filterStatus === 'all') {
-      renderTable();
-    } else {
-      const filtered = prospects.filter(p => p.status === filterStatus);
-      renderTable(filtered);
+    const sortValue = document.getElementById('sortFilter').value;
+    
+    let filtered = prospects;
+    if (filterStatus !== 'all') {
+      filtered = prospects.filter(p => p.status === filterStatus);
     }
+    
+    // Logic de tri
+    switch (sortValue) {
+      case 'name_asc': filtered.sort((a,b) => a.name.localeCompare(b.name)); break;
+      case 'name_desc': filtered.sort((a,b) => b.name.localeCompare(a.name)); break;
+      case 'age_asc': filtered.sort((a,b) => a.age - b.age); break;
+      case 'age_desc': filtered.sort((a,b) => b.age - a.age); break;
+      case 'monthly_asc': filtered.sort((a,b) => a.monthly - b.monthly); break;
+      case 'monthly_desc': filtered.sort((a,b) => b.monthly - a.monthly); break;
+    }
+    
+    renderTable(filtered);
   };
 
   window.initProspectionPanel = function() {
