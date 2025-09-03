@@ -13,7 +13,7 @@
     }
   }
 
-  function renderTable(list) {
+  function renderTable(list = prospects) { // La correction se trouve ici: "list = prospects"
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
     if (list.length === 0) {
@@ -40,8 +40,7 @@
       `;
       tbody.appendChild(tr);
     });
-    
-    // Gestion des événements de la table
+
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = e.target.dataset.index;
@@ -100,7 +99,6 @@
       filtered = prospects.filter(p => p.status === filterStatus);
     }
     
-    // Logic de tri
     switch (sortValue) {
       case 'name_asc': filtered.sort((a,b) => a.name.localeCompare(b.name)); break;
       case 'name_desc': filtered.sort((a,b) => b.name.localeCompare(a.name)); break;
@@ -115,7 +113,7 @@
 
   window.initProspectionPanel = function() {
     loadProspects();
-    renderTable();
+    filterAndSortProspects();
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
   };
 })();
