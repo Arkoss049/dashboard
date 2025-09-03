@@ -26,6 +26,8 @@
       tr.innerHTML = `
         <td>${p.name}</td>
         <td>${p.phone}</td>
+        <td>${p.monthly} €</td>
+        <td>${p.pp}</td>
         <td><span class="status-chip status-${p.status.toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status}</span></td>
         <td>${p.lastUpdate || ''}</td>
         <td>
