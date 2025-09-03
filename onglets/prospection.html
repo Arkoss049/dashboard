@@ -16,16 +16,8 @@
           <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
           <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
         </div>
-        <div class="form-row" style="flex-wrap: nowrap;">
-          <input type="text" id="prospectNotes" placeholder="Notes..." style="flex:1" />
-          <select id="prospectStatus">
-            <option value="A contacter">A contacter</option>
-            <option value="A relancer">A relancer</option>
-            <option value="RDV Pris">RDV Pris</option>
-            <option value="RDV Refusé">RDV Refusé</option>
-            <option value="Message répondeur">Message répondeur</option>
-          </select>
-          <button id="addProspectBtn" class="btn btn-primary" style="flex:0">Ajouter</button>
+        <div class="form-row">
+          <button id="addProspectBtn" class="btn btn-primary" style="flex:1">Ajouter un prospect</button>
         </div>
       </div>
 
@@ -60,8 +52,8 @@
               <th>Cotisation mensuelle</th>
               <th>Nbre PP</th>
               <th>Statut</th>
-              <th>Notes</th>
               <th>Date de statut</th>
+              <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -70,6 +62,21 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="notesModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4>Notes du prospect</h4>
+      <button class="btn btn-close" id="closeNotesModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="notesTextarea" placeholder="Entrez vos notes ici..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="saveNotesBtn">Enregistrer</button>
     </div>
   </div>
 </div>
