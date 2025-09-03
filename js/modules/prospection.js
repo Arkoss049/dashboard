@@ -1,6 +1,7 @@
 (function() {
   const PROSPECTS_STORAGE_KEY = 'prospectionData';
   let prospects = [];
+  let currentProspectIndex = null;
 
   function saveProspects() {
     localStorage.setItem(PROSPECTS_STORAGE_KEY, JSON.stringify(prospects));
@@ -13,7 +14,31 @@
     }
   }
 
-  function renderTable(list = prospects) { // La correction se trouve ici: "list = prospects"
+  function openNotesModal(index) {
+    const modal = document.getElementById('notesModal');
+    const textarea = document.getElementById('notesTextarea');
+    currentProspectIndex = index;
+    textarea.value = prospects[index].notes || '';
+    modal.style.display = 'flex';
+  }
+
+  function closeNotesModal() {
+    const modal = document.getElementById('notesModal');
+    modal.style.display = 'none';
+    currentProspectIndex = null;
+  }
+
+  function saveNotes() {
+    const textarea = document.getElementById('notesTextarea');
+    if (currentProspectIndex !== null) {
+      prospects[currentProspectIndex].notes = textarea.value;
+      saveProspects();
+      filterAndSortProspects();
+      closeNotesModal();
+    }
+  }
+
+  function renderTable(list) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
     if (list.length === 0) {
@@ -29,8 +54,12 @@
         <td>${p.monthly} €</td>
         <td>${p.pp}</td>
         <td><span class="status-chip status-${p.status.toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status}</span></td>
-        <td>${p.notes || ''}</td>
         <td>${p.lastUpdate || ''}</td>
+        <td>
+          <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
+            <span class="icon">📝</span>
+          </button>
+        </td>
         <td>
           <button class="btn btn-status" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
           <button class="btn btn-status" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
@@ -40,7 +69,8 @@
       `;
       tbody.appendChild(tr);
     });
-
+    
+    // Gestion des événements de la table
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = e.target.dataset.index;
@@ -60,6 +90,13 @@
             filterAndSortProspects();
         });
     });
+
+    document.querySelectorAll('#prospectTableBody .btn-notes').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = e.target.closest('button').dataset.index;
+            openNotesModal(index);
+        });
+    });
   }
 
   function addProspect() {
@@ -74,9 +111,9 @@
             age: document.getElementById('prospectAge').value,
             phone,
             monthly: document.getElementById('prospectMonthly').value,
-            notes: document.getElementById('prospectNotes').value,
             status: 'A contacter',
-            lastUpdate: new Date().toLocaleDateString('fr-FR')
+            lastUpdate: new Date().toLocaleDateString('fr-FR'),
+            notes: '' // Ajout d'un champ notes vide par défaut
         });
         saveProspects();
         filterAndSortProspects();
@@ -86,7 +123,6 @@
         document.getElementById('prospectAge').value = '';
         document.getElementById('prospectPhone').value = '';
         document.getElementById('prospectMonthly').value = '';
-        document.getElementById('prospectNotes').value = '';
     }
   }
   
@@ -99,6 +135,7 @@
       filtered = prospects.filter(p => p.status === filterStatus);
     }
     
+    // Logic de tri
     switch (sortValue) {
       case 'name_asc': filtered.sort((a,b) => a.name.localeCompare(b.name)); break;
       case 'name_desc': filtered.sort((a,b) => b.name.localeCompare(a.name)); break;
@@ -115,5 +152,7 @@
     loadProspects();
     filterAndSortProspects();
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
+    document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
+    document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
   };
 })();
