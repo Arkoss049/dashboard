@@ -23,24 +23,52 @@
 
       <div class="bar"></div>
       
+      <h3>Statistiques des prospects</h3>
+      <div class="prospect-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total :</span>
+          <span class="stat-value" id="stat-total">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label status-a-contacter">À contacter :</span>
+          <span class="stat-value" id="stat-a-contacter">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label status-a-relancer">À relancer :</span>
+          <span class="stat-value" id="stat-a-relancer">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label status-rdv-pris">RDV pris :</span>
+          <span class="stat-value" id="stat-rdv-pris">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label status-rdv-refuse">RDV refusé :</span>
+          <span class="stat-value" id="stat-rdv-refuse">0</span>
+        </div>
+      </div>
+      <div class="bar"></div>
+      
       <div class="prospect-toolbar">
         <h3>Liste des prospects</h3>
-        <select id="statusFilter" onchange="filterAndSortProspects()">
-          <option value="all">Tous les statuts</option>
-          <option value="A contacter">A contacter</option>
-          <option value="A relancer">A relancer</option>
-          <option value="RDV Pris">RDV Pris</option>
-          <option value="RDV Refusé">RDV Refusé</option>
-          <option value="Message répondeur">Message répondeur</option>
-        </select>
-        <select id="sortFilter" onchange="filterAndSortProspects()">
-          <option value="name_asc">Nom (A-Z)</option>
-          <option value="name_desc">Nom (Z-A)</option>
-          <option value="age_asc">Âge (croissant)</option>
-          <option value="age_desc">Âge (décroissant)</option>
-          <option value="monthly_asc">Cotisation (croissante)</option>
-          <option value="monthly_desc">Cotisation (décroissante)</option>
-        </select>
+        <div>
+          <select id="statusFilter" onchange="filterAndSortProspects()">
+            <option value="all">Tous les statuts</option>
+            <option value="A contacter">A contacter</option>
+            <option value="A relancer">A relancer</option>
+            <option value="RDV Pris">RDV Pris</option>
+            <option value="RDV Refusé">RDV Refusé</option>
+            <option value="Message répondeur">Message répondeur</option>
+          </select>
+          <select id="sortFilter" onchange="filterAndSortProspects()">
+            <option value="name_asc">Nom (A-Z)</option>
+            <option value="name_desc">Nom (Z-A)</option>
+            <option value="age_asc">Âge (croissant)</option>
+            <option value="age_desc">Âge (décroissant)</option>
+            <option value="monthly_asc">Cotisation (croissante)</option>
+            <option value="monthly_desc">Cotisation (décroissante)</option>
+          </select>
+          <button id="exportCsvBtn" class="btn btn-ghost">Exporter en CSV</button>
+        </div>
       </div>
 
       <div id="prospectTableContainer">
