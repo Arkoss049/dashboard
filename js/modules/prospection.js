@@ -48,6 +48,8 @@
 
     list.forEach((p, index) => {
       const tr = document.createElement('tr');
+      const notesIcon = p.notes ? '<span class="icon-note-filled">📝</span>' : '<span class="icon-note-empty">🗒️</span>';
+      
       tr.innerHTML = `
         <td>${p.name}</td>
         <td>${p.phone}</td>
@@ -57,7 +59,7 @@
         <td>${p.lastUpdate || ''}</td>
         <td>
           <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
-            <span class="icon">📝</span>
+            ${notesIcon}
           </button>
         </td>
         <td>
@@ -73,7 +75,7 @@
     // Gestion des événements de la table
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const index = e.target.dataset.index;
+        const index = e.target.closest('button').dataset.index;
         prospects.splice(index, 1);
         saveProspects();
         filterAndSortProspects();
@@ -82,8 +84,8 @@
 
     document.querySelectorAll('#prospectTableBody .btn-status').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const index = e.target.dataset.index;
-            const newStatus = e.target.dataset.status;
+            const index = e.target.closest('button').dataset.index;
+            const newStatus = e.target.closest('button').dataset.status;
             prospects[index].status = newStatus;
             prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
             saveProspects();
