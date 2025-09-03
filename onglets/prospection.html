@@ -17,6 +17,13 @@
           <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
         </div>
         <div class="form-row">
+          <select id="prospectStatus">
+            <option value="A contacter">A contacter</option>
+            <option value="A relancer">A relancer</option>
+            <option value="RDV Pris">RDV Pris</option>
+            <option value="RDV Refusé">RDV Refusé</option>
+            <option value="Message répondeur">Message répondeur</option>
+          </select>
           <button id="addProspectBtn" class="btn btn-primary">Ajouter un prospect</button>
         </div>
       </div>
@@ -41,13 +48,15 @@
             <tr>
               <th>Nom/Prénom</th>
               <th>Téléphone</th>
+              <th>Cotisation mensuelle</th>
+              <th>Nbre PP</th>
               <th>Statut</th>
               <th>Date de statut</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="prospectTableBody">
-            <tr><td colspan="5" class="muted">Aucun prospect ajouté.</td></tr>
+            <tr><td colspan="7" class="muted">Aucun prospect ajouté.</td></tr>
           </tbody>
         </table>
       </div>
