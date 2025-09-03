@@ -5,90 +5,102 @@
       <div class="muted">Gérez et suivez vos prospects facilement.</div>
     </header>
     <div class="content">
-      <div class="prospect-form">
-        <div class="form-row">
-          <input type="text" id="prospectName" placeholder="Nom/Prénom" />
-          <input type="number" id="prospectNumber" placeholder="N° adhérent" />
-          <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+      <div class="form-section">
+        <div class="form-title">
+          <h3>Ajouter un nouveau prospect</h3>
         </div>
-        <div class="form-row">
-          <input type="number" id="prospectAge" placeholder="Âge" />
-          <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
-          <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
-        </div>
-        <div class="form-row">
-          <button id="addProspectBtn" class="btn btn-primary" style="flex:1">Ajouter un prospect</button>
+        <div class="prospect-form">
+          <div class="form-row">
+            <input type="text" id="prospectName" placeholder="Nom/Prénom" />
+            <input type="number" id="prospectNumber" placeholder="N° adhérent" />
+            <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+          </div>
+          <div class="form-row">
+            <input type="number" id="prospectAge" placeholder="Âge" />
+            <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
+            <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
+          </div>
+          <div class="form-row">
+            <button id="addProspectBtn" class="btn btn-primary">Ajouter le prospect</button>
+          </div>
         </div>
       </div>
 
       <div class="bar"></div>
       
-      <h3>Statistiques des prospects</h3>
-      <div class="prospect-stats">
-        <div class="stat-item">
-          <span class="stat-label">Total :</span>
-          <span class="stat-value" id="stat-total">0</span>
+      <div class="data-section">
+        <div class="data-header">
+          <h3>Statistiques des prospects</h3>
         </div>
-        <div class="stat-item">
-          <span class="stat-label status-a-contacter">À contacter :</span>
-          <span class="stat-value" id="stat-a-contacter">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label status-a-relancer">À relancer :</span>
-          <span class="stat-value" id="stat-a-relancer">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label status-rdv-pris">RDV pris :</span>
-          <span class="stat-value" id="stat-rdv-pris">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label status-rdv-refuse">RDV refusé :</span>
-          <span class="stat-value" id="stat-rdv-refuse">0</span>
-        </div>
-      </div>
-      <div class="bar"></div>
-      
-      <div class="prospect-toolbar">
-        <h3>Liste des prospects</h3>
-        <div>
-          <select id="statusFilter" onchange="filterAndSortProspects()">
-            <option value="all">Tous les statuts</option>
-            <option value="A contacter">A contacter</option>
-            <option value="A relancer">A relancer</option>
-            <option value="RDV Pris">RDV Pris</option>
-            <option value="RDV Refusé">RDV Refusé</option>
-            <option value="Message répondeur">Message répondeur</option>
-          </select>
-          <select id="sortFilter" onchange="filterAndSortProspects()">
-            <option value="name_asc">Nom (A-Z)</option>
-            <option value="name_desc">Nom (Z-A)</option>
-            <option value="age_asc">Âge (croissant)</option>
-            <option value="age_desc">Âge (décroissant)</option>
-            <option value="monthly_asc">Cotisation (croissante)</option>
-            <option value="monthly_desc">Cotisation (décroissante)</option>
-          </select>
-          <button id="exportCsvBtn" class="btn btn-ghost">Exporter en CSV</button>
+        <div class="prospect-stats">
+          <div class="stat-item">
+            <span class="stat-label">Total</span>
+            <span class="stat-value" id="stat-total">0</span>
+          </div>
+          <div class="stat-item status-a-contacter">
+            <span class="stat-label">À contacter</span>
+            <span class="stat-value" id="stat-a-contacter">0</span>
+          </div>
+          <div class="stat-item status-a-relancer">
+            <span class="stat-label">À relancer</span>
+            <span class="stat-value" id="stat-a-relancer">0</span>
+          </div>
+          <div class="stat-item status-rdv-pris">
+            <span class="stat-label">RDV pris</span>
+            <span class="stat-value" id="stat-rdv-pris">0</span>
+          </div>
+          <div class="stat-item status-rdv-refuse">
+            <span class="stat-label">RDV refusé</span>
+            <span class="stat-value" id="stat-rdv-refuse">0</span>
+          </div>
         </div>
       </div>
 
-      <div id="prospectTableContainer">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Nom/Prénom</th>
-              <th>Téléphone</th>
-              <th>Cotisation mensuelle</th>
-              <th>Nbre PP</th>
-              <th>Statut</th>
-              <th>Date de statut</th>
-              <th>Notes</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="prospectTableBody">
-            <tr><td colspan="8" class="muted">Aucun prospect ajouté.</td></tr>
-          </tbody>
-        </table>
+      <div class="bar"></div>
+      
+      <div class="data-section">
+        <div class="prospect-toolbar">
+          <h3>Liste des prospects</h3>
+          <div class="toolbar-actions">
+            <select id="statusFilter" onchange="filterAndSortProspects()">
+              <option value="all">Tous les statuts</option>
+              <option value="A contacter">A contacter</option>
+              <option value="A relancer">A relancer</option>
+              <option value="RDV Pris">RDV Pris</option>
+              <option value="RDV Refusé">RDV Refusé</option>
+              <option value="Message répondeur">Message répondeur</option>
+            </select>
+            <select id="sortFilter" onchange="filterAndSortProspects()">
+              <option value="name_asc">Nom (A-Z)</option>
+              <option value="name_desc">Nom (Z-A)</option>
+              <option value="age_asc">Âge (croissant)</option>
+              <option value="age_desc">Âge (décroissant)</option>
+              <option value="monthly_asc">Cotisation (croissante)</option>
+              <option value="monthly_desc">Cotisation (décroissante)</option>
+            </select>
+            <button id="exportCsvBtn" class="btn btn-ghost">Exporter</button>
+          </div>
+        </div>
+
+        <div id="prospectTableContainer" class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nom/Prénom</th>
+                <th>Téléphone</th>
+                <th>Cotisation mensuelle</th>
+                <th>Nbre PP</th>
+                <th>Statut</th>
+                <th>Date de statut</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prospectTableBody">
+              <tr><td colspan="8" class="muted">Aucun prospect ajouté.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
