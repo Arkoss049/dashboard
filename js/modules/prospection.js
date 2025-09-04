@@ -2,6 +2,7 @@
   const PROSPECTS_STORAGE_KEY = 'prospectionData';
   let prospects = [];
   let currentProspectIndex = null;
+  let debouncedSearchTimer = null;
 
   function saveProspects() {
     localStorage.setItem(PROSPECTS_STORAGE_KEY, JSON.stringify(prospects));
@@ -33,7 +34,7 @@
     if (currentProspectIndex !== null) {
       prospects[currentProspectIndex].notes = textarea.value;
       saveProspects();
-      filterAndSortProspects();
+      debouncedFilterAndSort();
       closeNotesModal();
     }
   }
@@ -64,7 +65,7 @@
     document.getElementById('stat-a-contacter').textContent = stats['A contacter'];
     document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
     document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
-    document.getElementById('stat-rdv-refusé').textContent = stats['RDV Refusé'];
+    document.getElementById('stat-rdv-refuse').textContent = stats['RDV Refusé'];
   }
 
   function exportToCsv(data, filename) {
@@ -117,7 +118,7 @@
 
       prospects = [...prospects, ...importedProspects];
       saveProspects();
-      filterAndSortProspects();
+      debouncedFilterAndSort();
       alert(`Importation réussie : ${importedProspects.length} contacts ajoutés.`);
       closeImportModal();
     };
@@ -138,11 +139,12 @@
       const notesIcon = p.notes ? '<span class="icon-note-filled">📝</span>' : '<span class="icon-note-empty">🗒️</span>';
       
       const statusButtons = `
-        <button class="btn btn-status ${p.status === 'A contacter' ? 'active' : ''}" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
-        <button class="btn btn-status ${p.status === 'A relancer' ? 'active' : ''}" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
-        <button class="btn btn-status ${p.status === 'RDV Pris' ? 'active' : ''}" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
-        <button class="btn btn-status ${p.status === 'RDV Refusé' ? 'active' : ''}" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
-        <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button>
+        <div class="status-buttons">
+          <button class="btn btn-status ${p.status === 'A contacter' ? 'active' : ''}" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
+          <button class="btn btn-status ${p.status === 'A relancer' ? 'active' : ''}" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
+          <button class="btn btn-status ${p.status === 'RDV Pris' ? 'active' : ''}" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
+          <button class="btn btn-status ${p.status === 'RDV Refusé' ? 'active' : ''}" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
+        </div>
       `;
 
       tr.innerHTML = `
@@ -158,7 +160,10 @@
             ${notesIcon}
           </button>
         </td>
-        <td>${statusButtons}</td>
+        <td>
+          ${statusButtons}
+          <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
@@ -168,7 +173,7 @@
         const index = e.target.closest('button').dataset.index;
         prospects.splice(index, 1);
         saveProspects();
-        filterAndSortProspects();
+        debouncedFilterAndSort();
       });
     });
 
@@ -179,7 +184,7 @@
             prospects[index].status = newStatus;
             prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
             saveProspects();
-            filterAndSortProspects();
+            debouncedFilterAndSort();
         });
     });
 
@@ -193,38 +198,61 @@
 
   function addProspect() {
     const name = document.getElementById('prospectName').value;
-    const phone = document.getElementById('prospectPhone').value;
+    const number = document.getElementById('prospectNumber').value;
     
-    if (name) {
-        prospects.push({
-            name,
-            number: document.getElementById('prospectNumber').value,
-            pp: document.getElementById('prospectPP').value,
-            age: document.getElementById('prospectAge').value,
-            phone,
-            monthly: document.getElementById('prospectMonthly').value,
-            status: 'A contacter',
-            lastUpdate: new Date().toLocaleDateString('fr-FR'),
-            notes: ''
-        });
-        saveProspects();
-        filterAndSortProspects();
-        document.getElementById('prospectName').value = '';
-        document.getElementById('prospectNumber').value = '';
-        document.getElementById('prospectPP').value = '';
-        document.getElementById('prospectAge').value = '';
-        document.getElementById('prospectPhone').value = '';
-        document.getElementById('prospectMonthly').value = '';
+    if (!name || !number) {
+        alert("Le nom et le numéro d'adhérent sont obligatoires.");
+        return;
     }
+    
+    const isDuplicate = prospects.some(p => p.number === number);
+    if (isDuplicate) {
+        alert("Ce numéro d'adhérent existe déjà.");
+        return;
+    }
+    
+    prospects.push({
+        name,
+        number,
+        pp: document.getElementById('prospectPP').value,
+        age: document.getElementById('prospectAge').value,
+        phone: document.getElementById('prospectPhone').value,
+        monthly: document.getElementById('prospectMonthly').value,
+        status: 'A contacter',
+        lastUpdate: new Date().toLocaleDateString('fr-FR'),
+        notes: ''
+    });
+    saveProspects();
+    debouncedFilterAndSort();
+    document.getElementById('prospectName').value = '';
+    document.getElementById('prospectNumber').value = '';
+    document.getElementById('prospectPP').value = '';
+    document.getElementById('prospectAge').value = '';
+    document.getElementById('prospectPhone').value = '';
+    document.getElementById('prospectMonthly').value = '';
+  }
+  
+  function normalize(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
   }
   
   window.filterAndSortProspects = function() {
+    const searchTerm = normalize(document.getElementById('searchFilter').value);
     const filterStatus = document.getElementById('statusFilter').value;
     const sortValue = document.getElementById('sortFilter').value;
     
     let filtered = prospects;
+    
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            normalize(p.name).includes(searchTerm) ||
+            normalize(p.number).includes(searchTerm) ||
+            normalize(p.phone).includes(searchTerm)
+        );
+    }
+    
     if (filterStatus !== 'all') {
-      filtered = prospects.filter(p => p.status === filterStatus);
+      filtered = filtered.filter(p => p.status === filterStatus);
     }
     
     switch (sortValue) {
@@ -240,9 +268,14 @@
     updateStats();
   };
 
+  window.debouncedFilterAndSort = function() {
+      if (debouncedSearchTimer) clearTimeout(debouncedSearchTimer);
+      debouncedSearchTimer = setTimeout(filterAndSortProspects, 200);
+  };
+
   window.initProspectionPanel = function() {
     loadProspects();
-    filterAndSortProspects();
+    debouncedFilterAndSort();
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
