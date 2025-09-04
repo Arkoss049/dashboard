@@ -38,6 +38,14 @@
     }
   }
 
+  function openImportModal() {
+    document.getElementById('importModal').style.display = 'flex';
+  }
+
+  function closeImportModal() {
+    document.getElementById('importModal').style.display = 'none';
+  }
+
   function updateStats() {
     const stats = {
       'total': prospects.length,
@@ -101,7 +109,6 @@
           obj[header] = values[i] || '';
         });
         
-        // Ajoute les champs manquants si nécessaire
         if (!obj.status) obj.status = 'A contacter';
         if (!obj.lastUpdate) obj.lastUpdate = new Date().toLocaleDateString('fr-FR');
         if (!obj.notes) obj.notes = '';
@@ -112,6 +119,7 @@
       saveProspects();
       filterAndSortProspects();
       alert(`Importation réussie : ${importedProspects.length} contacts ajoutés.`);
+      closeImportModal();
     };
 
     reader.readAsText(file);
@@ -237,9 +245,9 @@
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
-    document.getElementById('exportCsvBtn').addEventListener('click', () => {
-        exportToCsv(prospects, 'prospects.csv');
-    });
-    document.getElementById('importCsvBtn').addEventListener('click', importFromCsv);
+    document.getElementById('importCsvBtn').addEventListener('click', openImportModal);
+    document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
+    document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
+    
   };
 })();
