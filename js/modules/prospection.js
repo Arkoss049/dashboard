@@ -148,7 +148,7 @@
       `;
 
       tr.innerHTML = `
-        <td>${p.name}</td>
+        <td><a href="#" class="prospect-name-link" data-index="${prospects.indexOf(p)}">${p.name}</a></td>
         <td>${p.number}</td>
         <td>${p.phone}</td>
         <td>${p.monthly} €</td>
@@ -161,8 +161,10 @@
           </button>
         </td>
         <td>
-          ${statusButtons}
-          <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button>
+          <div class="action-buttons-cell">
+            ${statusButtons}
+            <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);
@@ -192,6 +194,14 @@
         btn.addEventListener('click', (e) => {
             const index = e.target.closest('button').dataset.index;
             openNotesModal(index);
+        });
+    });
+
+    document.querySelectorAll('#prospectTableBody .prospect-name-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const index = e.target.closest('a').dataset.index;
+            openDetailPanel(index);
         });
     });
   }
@@ -234,6 +244,32 @@
   
   function normalize(s) {
     return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  }
+
+  function openDetailPanel(index) {
+    const p = prospects[index];
+    const overlay = document.getElementById('detailPanelOverlay');
+    
+    document.getElementById('detailName').textContent = p.name;
+    document.getElementById('detailNumber').textContent = p.number;
+    document.getElementById('detailAge').textContent = p.age;
+    document.getElementById('detailPhone').textContent = p.phone;
+    document.getElementById('detailMonthly').textContent = `${p.monthly} €`;
+    document.getElementById('detailPP').textContent = p.pp;
+    document.getElementById('detailNotes').textContent = p.notes || 'Aucune note.';
+    
+    // Historique des statuts (à implémenter)
+    const historyList = document.getElementById('detailStatusHistory');
+    historyList.innerHTML = p.history.map(h => 
+      `<span class="status-chip status-${h.status.toLowerCase().replace(/ /g, '-')}" style="margin-right: 8px;">${h.status}</span>
+       <span class="muted">${h.date}</span>`
+    ).join('<br>');
+    
+    overlay.style.display = 'flex';
+  }
+
+  function closeDetailPanel() {
+    document.getElementById('detailPanelOverlay').style.display = 'none';
   }
   
   window.filterAndSortProspects = function() {
@@ -279,6 +315,7 @@
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
+    document.getElementById('closeDetailPanel').addEventListener('click', closeDetailPanel);
     document.getElementById('importCsvBtn').addEventListener('click', openImportModal);
     document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
     document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
