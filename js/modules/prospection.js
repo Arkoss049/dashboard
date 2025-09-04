@@ -65,7 +65,7 @@
     document.getElementById('stat-a-contacter').textContent = stats['A contacter'];
     document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
     document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
-    document.getElementById('stat-rdv-refuse').textContent = stats['RDV Refusé'];
+    document.getElementById('stat-rdv-refusé').textContent = stats['RDV Refusé'];
   }
 
   function exportToCsv(data, filename) {
