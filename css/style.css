@@ -152,15 +152,13 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 
 .stat-item .stat-label {
   font-size: 0.8rem;
-  font-weight: bold;
-  color: #ffffff;
+  color: var(--muted);
   text-transform: uppercase;
 }
 
 .stat-item .stat-value {
   font-size: 1.8rem;
   font-weight: bold;
-  text-align: center;
 }
 
 .prospect-toolbar {
@@ -218,6 +216,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   text-transform: capitalize;
   color: #fff;
 }
+
 .status-a-contacter { background-color: #3b82f6; }
 .status-a-relancer { background-color: #f59e0b; }
 .status-rdv-pris { background-color: #22c55e; }
@@ -238,6 +237,11 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 }
 
 /* Styles pour les boutons de statut actifs */
+.btn-status.active {
+    background-color: var(--elev);
+    border-color: transparent;
+    color: var(--text);
+}
 .btn-status.active[data-status="A contacter"] {
     background-color: var(--accent-blue);
     border-color: transparent;
@@ -319,22 +323,10 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     gap: 8px;
     margin-top: 8px;
 }
-/* ... autres styles ... */
 
-.prospect-toolbar {
+/* Ajout des styles pour la poubelle et les icônes de note */
+.action-buttons-cell {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.prospect-toolbar .toolbar-search {
-  flex: 1;
-}
-
-.prospect-toolbar .toolbar-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
