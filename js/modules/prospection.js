@@ -58,6 +58,7 @@
     document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
     document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
     document.getElementById('stat-rdv-refuse').textContent = stats['RDV Refusé'];
+    document.getElementById('stat-message-repondeur').textContent = stats['Message répondeur'];
   }
 
   function exportToCsv(data, filename) {
@@ -110,6 +111,8 @@
           <button class="btn btn-status" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
           <button class="btn btn-status" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
           <button class="btn btn-status" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
+          <button class="btn btn-status" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
+          <button class="btn btn-status" data-status="Message répondeur" data-index="${prospects.indexOf(p)}">Message répondeur</button>
           <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button>
         </td>
       `;
