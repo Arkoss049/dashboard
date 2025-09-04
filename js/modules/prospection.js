@@ -161,8 +161,10 @@
           </button>
         </td>
         <td>
-          ${statusButtons}
-          <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>
+          <div class="action-buttons-cell">
+            ${statusButtons}
+            <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);
