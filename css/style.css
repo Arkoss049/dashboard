@@ -99,7 +99,8 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 #plan-panel .mgoal { flex: 0 0 18ch; min-width: 180px; font-size: 1.1rem; padding: .55rem .75rem; text-align: right; border-radius: .75rem; }
 #plan-panel .mgoal:disabled { opacity: 1; background: var(--surface); border-style: dashed; }
 
-/* --- Styles du module de prospection --- */
+/* --- Prospection Module Styles --- */
+
 .form-section {
   background: var(--surface);
   border-radius: 12px;
@@ -190,7 +191,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .data-table td {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 12px; /* Réduction de la police ici */
 }
 
 .data-table thead th {
@@ -199,6 +200,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   background: var(--surface);
   z-index: 1;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .data-table tbody tr:hover {
@@ -224,10 +226,11 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     background-color: var(--elev);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 8px 12px;
+    padding: 4px 8px; /* Taille réduite */
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s;
+    font-size: 12px; /* Taille réduite */
 }
 
 .btn-status:hover {
@@ -286,4 +289,10 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   border: none;
   font-size: 1.5rem;
   color: var(--muted);
+}
+
+.toolbar-filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }
