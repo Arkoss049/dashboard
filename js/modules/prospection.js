@@ -153,7 +153,6 @@
       tbody.appendChild(tr);
     });
     
-    // Gestion des événements de la table
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = e.target.closest('button').dataset.index;
