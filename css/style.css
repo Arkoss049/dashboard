@@ -152,7 +152,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 
 .stat-item .stat-label {
   font-size: 0.8rem;
-  color: var(--muted);
+  color: #000000;
   text-transform: uppercase;
 }
 
