@@ -219,7 +219,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .status-a-contacter { background-color: #3b82f6; }
 .status-a-relancer { background-color: #f59e0b; }
 .status-rdv-pris { background-color: #22c55e; }
-.status-rdv-refuse { background-color: #ef4444; }
+.status-rdv-refusé { background-color: #ef4444; }
 
 .btn-status {
     background-color: var(--elev);
