@@ -44,8 +44,7 @@
       'A contacter': 0,
       'A relancer': 0,
       'RDV Pris': 0,
-      'RDV Refusé': 0,
-      'Message répondeur': 0
+      'RDV Refusé': 0
     };
     prospects.forEach(p => {
       if (stats[p.status] !== undefined) {
@@ -58,7 +57,6 @@
     document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
     document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
     document.getElementById('stat-rdv-refuse').textContent = stats['RDV Refusé'];
-    document.getElementById('stat-message-repondeur').textContent = stats['Message répondeur'];
   }
 
   function exportToCsv(data, filename) {
@@ -83,11 +81,47 @@
     document.body.removeChild(link);
   }
 
+  function importFromCsv() {
+    const fileInput = document.getElementById('csvFileInput');
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Veuillez sélectionner un fichier CSV.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const csvText = event.target.result;
+      const lines = csvText.split('\n').filter(line => line.trim() !== '');
+      const headers = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
+      const importedProspects = lines.slice(1).map(line => {
+        const values = line.split(';').map(v => v.trim().replace(/"/g, ''));
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[header] = values[i] || '';
+        });
+        
+        // Ajoute les champs manquants si nécessaire
+        if (!obj.status) obj.status = 'A contacter';
+        if (!obj.lastUpdate) obj.lastUpdate = new Date().toLocaleDateString('fr-FR');
+        if (!obj.notes) obj.notes = '';
+        return obj;
+      });
+
+      prospects = [...prospects, ...importedProspects];
+      saveProspects();
+      filterAndSortProspects();
+      alert(`Importation réussie : ${importedProspects.length} contacts ajoutés.`);
+    };
+
+    reader.readAsText(file);
+  }
+
   function renderTable(list) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="muted">Aucun prospect trouvé.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="muted">Aucun prospect trouvé.</td></tr>';
       return;
     }
 
@@ -97,6 +131,7 @@
       
       tr.innerHTML = `
         <td>${p.name}</td>
+        <td>${p.number}</td>
         <td>${p.phone}</td>
         <td>${p.monthly} €</td>
         <td>${p.pp}</td>
@@ -112,7 +147,6 @@
           <button class="btn btn-status" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
           <button class="btn btn-status" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
           <button class="btn btn-status" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
-          <button class="btn btn-status" data-status="Message répondeur" data-index="${prospects.indexOf(p)}">Message répondeur</button>
           <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">Supprimer</button>
         </td>
       `;
@@ -207,5 +241,6 @@
     document.getElementById('exportCsvBtn').addEventListener('click', () => {
         exportToCsv(prospects, 'prospects.csv');
     });
+    document.getElementById('importCsvBtn').addEventListener('click', importFromCsv);
   };
 })();
