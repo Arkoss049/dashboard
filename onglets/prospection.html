@@ -30,19 +30,6 @@
       
       <div class="data-section">
         <div class="data-header">
-          <h3>Importer des contacts (CSV)</h3>
-          <p class="muted">Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs. Les en-têtes doivent être (facultatifs) : "name;number;pp;age;phone;monthly".</p>
-        </div>
-        <div class="import-actions">
-            <input type="file" id="csvFileInput" accept=".csv" />
-            <button id="importCsvBtn" class="btn btn-primary">Importer</button>
-        </div>
-      </div>
-
-      <div class="bar"></div>
-      
-      <div class="data-section">
-        <div class="data-header">
           <h3>Statistiques des prospects</h3>
         </div>
         <div class="prospect-stats">
@@ -75,6 +62,11 @@
         <div class="prospect-toolbar">
           <h3>Liste des prospects</h3>
           <div class="toolbar-actions">
+            <button id="importCsvBtn" class="btn btn-primary">Importer</button>
+            <button id="exportCsvBtn" class="btn btn-ghost">Exporter</button>
+          </div>
+        </div>
+        <div class="toolbar-filters">
             <select id="statusFilter" onchange="filterAndSortProspects()">
               <option value="all">Tous les statuts</option>
               <option value="A contacter">A contacter</option>
@@ -90,8 +82,6 @@
               <option value="monthly_asc">Cotisation (croissante)</option>
               <option value="monthly_desc">Cotisation (décroissante)</option>
             </select>
-            <button id="exportCsvBtn" class="btn btn-ghost">Exporter</button>
-          </div>
         </div>
 
         <div id="prospectTableContainer" class="table-container">
@@ -130,6 +120,22 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" id="saveNotesBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4>Importer des contacts (CSV)</h4>
+      <button class="btn btn-close" id="closeImportModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted">Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs. Les en-têtes doivent être (facultatifs) : <b>name;number;pp;age;phone;monthly</b>.</p>
+      <input type="file" id="csvFileInput" accept=".csv" />
+    </div>
+    <div class="modal-footer">
+      <button id="executeImportBtn" class="btn btn-primary">Importer</button>
     </div>
   </div>
 </div>
