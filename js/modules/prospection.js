@@ -225,7 +225,6 @@
       filtered = prospects.filter(p => p.status === filterStatus);
     }
     
-    // Logic de tri
     switch (sortValue) {
       case 'name_asc': filtered.sort((a,b) => a.name.localeCompare(b.name)); break;
       case 'name_desc': filtered.sort((a,b) => b.name.localeCompare(a.name)); break;
