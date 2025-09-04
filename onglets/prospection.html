@@ -30,6 +30,19 @@
       
       <div class="data-section">
         <div class="data-header">
+          <h3>Importer des contacts (CSV)</h3>
+          <p class="muted">Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs. Les en-têtes doivent être (facultatifs) : "name;number;pp;age;phone;monthly".</p>
+        </div>
+        <div class="import-actions">
+            <input type="file" id="csvFileInput" accept=".csv" />
+            <button id="importCsvBtn" class="btn btn-primary">Importer</button>
+        </div>
+      </div>
+
+      <div class="bar"></div>
+      
+      <div class="data-section">
+        <div class="data-header">
           <h3>Statistiques des prospects</h3>
         </div>
         <div class="prospect-stats">
@@ -100,19 +113,6 @@
               <tr><td colspan="9" class="muted">Aucun prospect ajouté.</td></tr>
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <div class="bar"></div>
-
-      <div class="data-section">
-        <div class="data-header">
-          <h3>Importer des contacts (CSV)</h3>
-          <p class="muted">Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs. Les en-têtes doivent être (facultatifs) : "name;number;pp;age;phone;monthly".</p>
-        </div>
-        <div class="import-actions">
-            <input type="file" id="csvFileInput" accept=".csv" />
-            <button id="importCsvBtn" class="btn btn-ghost">Importer</button>
         </div>
       </div>
     </div>
