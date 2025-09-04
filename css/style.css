@@ -214,13 +214,15 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   font-weight: 500;
   text-transform: capitalize;
   color: #fff;
+  /* Correction pour que la couleur de fond s'applique */
+  background-color: transparent;
 }
 
-.status-a-contacter { background-color: #3b82f6; }
-.status-a-relancer { background-color: #f59e0b; }
-.status-rdv-pris { background-color: #22c55e; }
-.status-rdv-refusé { background-color: #ef4444; }
-.status-message-repondeur { background-color: #64748b; }
+.status-chip.status-a-contacter { background-color: #3b82f6; }
+.status-chip.status-a-relancer { background-color: #f59e0b; }
+.status-chip.status-rdv-pris { background-color: #22c55e; }
+.status-chip.status-rdv-refusé { background-color: #ef4444; }
+
 
 .btn-status {
     background-color: var(--elev);
@@ -263,6 +265,8 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     color: #fff;
 }
 
+
+/* --- Modal Styles --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -320,4 +324,93 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     display: flex;
     gap: 8px;
     margin-top: 8px;
+}
+
+.clickable-name {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.clickable-name:hover {
+  text-decoration: underline;
+}
+
+.detail-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: flex-end; /* Pour qu'il s'ouvre à droite */
+    z-index: 1000;
+    display: none;
+}
+.detail-panel {
+    background-color: var(--surface);
+    width: min(400px, 100%);
+    height: 100%;
+    box-shadow: -4px 0 15px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-panel-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+.detail-section {
+    margin-bottom: 24px;
+}
+.detail-section h4 {
+    margin: 0 0 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+.detail-grid {
+    display: grid;
+    gap: 8px;
+}
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+.detail-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+.detail-value {
+    font-size: 1rem;
+    font-weight: bold;
+}
+.history-list .history-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.detail-notes-content {
+    background-color: var(--elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    white-space: pre-wrap; /* Conserve les sauts de ligne */
+}
+.btn-close {
+    background-color: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 1.5rem;
+    cursor: pointer;
 }
