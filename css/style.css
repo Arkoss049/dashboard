@@ -319,24 +319,22 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     gap: 8px;
     margin-top: 8px;
 }
-/* ... other styles ... */
+/* ... autres styles ... */
 
 .prospect-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prospect-toolbar .toolbar-search {
+  flex: 1;
 }
 
 .prospect-toolbar .toolbar-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-#searchFilter {
-    flex-grow: 1;
-    min-width: 200px;
+    justify-content: flex-end;
 }
