@@ -53,10 +53,6 @@
             <span class="stat-label">RDV refusé</span>
             <span class="stat-value" id="stat-rdv-refuse">0</span>
           </div>
-          <div class="stat-item status-message-repondeur">
-            <span class="stat-label">Répondeur</span>
-            <span class="stat-value" id="stat-message-repondeur">0</span>
-          </div>
         </div>
       </div>
 
@@ -72,7 +68,6 @@
               <option value="A relancer">A relancer</option>
               <option value="RDV Pris">RDV Pris</option>
               <option value="RDV Refusé">RDV Refusé</option>
-              <option value="Message répondeur">Message répondeur</option>
             </select>
             <select id="sortFilter" onchange="filterAndSortProspects()">
               <option value="name_asc">Nom (A-Z)</option>
@@ -91,6 +86,7 @@
             <thead>
               <tr>
                 <th>Nom/Prénom</th>
+                <th>N° adhérent</th>
                 <th>Téléphone</th>
                 <th>Cotisation mensuelle</th>
                 <th>Nbre PP</th>
@@ -101,9 +97,22 @@
               </tr>
             </thead>
             <tbody id="prospectTableBody">
-              <tr><td colspan="8" class="muted">Aucun prospect ajouté.</td></tr>
+              <tr><td colspan="9" class="muted">Aucun prospect ajouté.</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="bar"></div>
+
+      <div class="data-section">
+        <div class="data-header">
+          <h3>Importer des contacts (CSV)</h3>
+          <p class="muted">Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs. Les en-têtes doivent être (facultatifs) : "name;number;pp;age;phone;monthly".</p>
+        </div>
+        <div class="import-actions">
+            <input type="file" id="csvFileInput" accept=".csv" />
+            <button id="importCsvBtn" class="btn btn-ghost">Importer</button>
         </div>
       </div>
     </div>
