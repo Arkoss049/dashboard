@@ -100,6 +100,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 #plan-panel .mgoal:disabled { opacity: 1; background: var(--surface); border-style: dashed; }
 
 /* --- Styles du module de prospection --- */
+
 .form-section {
   background: var(--surface);
   border-radius: 12px;
@@ -190,7 +191,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .data-table td {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px; /* Réduction de la police ici */
+  font-size: 12px;
 }
 
 .data-table thead th {
@@ -215,7 +216,6 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   text-transform: capitalize;
   color: #fff;
 }
-
 .status-a-contacter { background-color: #3b82f6; }
 .status-a-relancer { background-color: #f59e0b; }
 .status-rdv-pris { background-color: #22c55e; }
@@ -225,7 +225,7 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
     background-color: var(--elev);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 4px 8px; /* Taille réduite */
+    padding: 4px 8px;
     border-radius: 6px;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -310,4 +310,10 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   border: none;
   font-size: 1.5rem;
   color: var(--muted);
+}
+
+.toolbar-filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }
