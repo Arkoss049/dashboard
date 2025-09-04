@@ -151,13 +151,15 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 
 .stat-item .stat-label {
   font-size: 0.8rem;
-  color: var(--muted);
+  font-weight: bold;
+  color: #ffffff;
   text-transform: uppercase;
 }
 
 .stat-item .stat-value {
   font-size: 1.8rem;
   font-weight: bold;
+  text-align: center;
 }
 
 .prospect-toolbar {
