@@ -558,7 +558,7 @@ tr.recent.animate { animation: rowGlow 900ms ease; }
 }
 
 #activeStats .stat-card:nth-child(1) { /* Total */
-  background: #27F5D3;
+  background: #C29D9D;
 }
 #activeStats .stat-card:nth-child(2) { /* A contacter */
   background: #3b82f6; /* bleu */
@@ -578,7 +578,7 @@ tr.recent.animate { animation: rowGlow 900ms ease; }
   color: #fff;
 }
 #archiveStats .stat-card:nth-child(1) { /* Total archivés */
-  background: #27F5D3;
+  background: #C29D9D;
 }
 #archiveStats .stat-card:nth-child(2) { /* Signés */
   background: #22c55e;
