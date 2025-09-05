@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prospection</title>
-  <!-- Chemin absolu GitHub Pages (adapter si ton repo n’est pas "dashboard") -->
-  <link rel="stylesheet" href="/dashboard/css/style.css?v=2025-09-05-1"/>
+  <!-- Adapter le préfixe /dashboard si ton repo a un autre nom -->
+  <link rel="stylesheet" href="/dashboard/css/style.css?v=2025-09-05-2"/>
 </head>
 <body onload="initProspectionPanel()">
   <div class="app">
@@ -89,6 +89,15 @@
                 <option value="A relancer">A relancer</option>
                 <option value="RDV Pris">RDV Pris</option>
                 <option value="RDV Refusé">RDV Refusé</option>
+              </select>
+
+              <!-- Nouveau : filtre par période -->
+              <select id="dateFilter" onchange="debouncedFilterAndSort()">
+                <option value="all">Toutes les dates</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="week">Cette semaine</option>
+                <option value="month">Ce mois-ci</option>
+                <option value="year">Cette année</option>
               </select>
 
               <select id="sortFilter" onchange="debouncedFilterAndSort()">
@@ -235,6 +244,6 @@
   </div>
 
   <!-- JS -->
-  <script src="/dashboard/js/modules/prospection.js?v=2025-09-05-1"></script>
+  <script src="/dashboard/js/modules/prospection.js?v=2025-09-05-2"></script>
 </body>
 </html>
