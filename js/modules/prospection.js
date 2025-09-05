@@ -186,4 +186,177 @@
         <td>${p.name || ''}</td>
         <td>${p.number || ''}</td>
         <td>${p.phone || ''}</td>
-        <td>${p.monthly !== null && p.monthly !== undefined && p.monthly !==
+        <td>${p.monthly !== null && p.monthly !== undefined && p.monthly !== '' ? p.monthly + ' €' : ''}</td>
+        <td>${p.pp ?? ''}</td>
+        <td><span class="status-chip status-${(p.status || 'A contacter').toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status || 'A contacter'}</span></td>
+        <td>${p.lastUpdate || ''}</td>
+        <td>
+          <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
+            ${notesIcon}
+          </button>
+        </td>
+        <td>
+          ${statusButtons}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Actions
+    document.querySelectorAll('#prospectTableBody .btn-danger').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.closest('button').dataset.index;
+        prospects.splice(index, 1);
+        saveProspects();
+        debouncedFilterAndSort();
+      });
+    });
+
+    document.querySelectorAll('#prospectTableBody .btn-status').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.closest('button').dataset.index;
+        const newStatus = e.target.closest('button').dataset.status;
+        prospects[index].status = newStatus;
+        prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
+        saveProspects();
+        debouncedFilterAndSort();
+      });
+    });
+
+    document.querySelectorAll('#prospectTableBody .btn-notes').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.closest('button').dataset.index;
+        openNotesModal(index);
+      });
+    });
+  }
+
+  function addProspect() {
+    const name = document.getElementById('prospectName').value.trim();
+    const number = document.getElementById('prospectNumber').value.trim();
+
+    if (!name || !number) {
+      alert("Le nom et le numéro d'adhérent sont obligatoires.");
+      return;
+    }
+    const isDuplicate = prospects.some((p) => p.number === number);
+    if (isDuplicate) {
+      alert("Ce numéro d'adhérent existe déjà.");
+      return;
+    }
+
+    prospects.push({
+      name,
+      number,
+      pp: toNumberOrNull(document.getElementById('prospectPP').value) ?? '',
+      age: toNumberOrNull(document.getElementById('prospectAge').value) ?? '',
+      phone: document.getElementById('prospectPhone').value.trim(),
+      monthly: toNumberOrNull(document.getElementById('prospectMonthly').value) ?? '',
+      status: 'A contacter',
+      lastUpdate: new Date().toLocaleDateString('fr-FR'),
+      notes: '',
+    });
+    saveProspects();
+    debouncedFilterAndSort();
+
+    // reset form
+    ['prospectName', 'prospectNumber', 'prospectPP', 'prospectAge', 'prospectPhone', 'prospectMonthly'].forEach(
+      (id) => (document.getElementById(id).value = '')
+    );
+    document.getElementById('prospectName').focus();
+  }
+
+  function normalize(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  }
+
+  window.filterAndSortProspects = function () {
+    const searchTerm = normalize(document.getElementById('searchFilter').value);
+    const filterStatus = document.getElementById('statusFilter').value;
+    const sortValue = document.getElementById('sortFilter').value;
+
+    let filtered = prospects.slice();
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (p) =>
+          normalize(p.name).includes(searchTerm) ||
+          normalize(p.number).includes(searchTerm) ||
+          normalize(p.phone).includes(searchTerm)
+      );
+    }
+
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter((p) => (p.status || 'A contacter') === filterStatus);
+    }
+
+    switch (sortValue) {
+      case 'name_asc':
+        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        break;
+      case 'name_desc':
+        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        break;
+      case 'age_asc':
+        filtered.sort((a, b) => (a.age ?? 0) - (b.age ?? 0));
+        break;
+      case 'age_desc':
+        filtered.sort((a, b) => (b.age ?? 0) - (a.age ?? 0));
+        break;
+      case 'monthly_asc':
+        filtered.sort((a, b) => (a.monthly ?? 0) - (b.monthly ?? 0));
+        break;
+      case 'monthly_desc':
+        filtered.sort((a, b) => (b.monthly ?? 0) - (a.monthly ?? 0));
+        break;
+    }
+
+    renderTable(filtered);
+    updateStats();
+  };
+
+  window.debouncedFilterAndSort = function () {
+    if (debouncedSearchTimer) clearTimeout(debouncedSearchTimer);
+    debouncedSearchTimer = setTimeout(filterAndSortProspects, 200);
+  };
+
+  // 🔌 Init
+  window.initProspectionPanel = function () {
+    loadProspects();
+    debouncedFilterAndSort();
+
+    // Boutons principaux
+    document.getElementById('addProspectBtn').addEventListener('click', addProspect);
+    document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
+    document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
+    document.getElementById('importCsvBtn').addEventListener('click', openImportModal);
+    document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
+    document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
+
+    // ✅ Export branché
+    const exportBtn = document.getElementById('exportCsvBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        exportToCsv(prospects, `prospection_${new Date().toISOString().slice(0, 10)}.csv`);
+      });
+    }
+
+    // ↵ pour ajouter
+    const formInputs = [
+      'prospectName',
+      'prospectNumber',
+      'prospectPP',
+      'prospectAge',
+      'prospectPhone',
+      'prospectMonthly',
+    ].map((id) => document.getElementById(id));
+    formInputs.forEach((el) =>
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addProspect();
+        }
+      })
+    );
+  };
+})();
