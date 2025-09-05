@@ -83,13 +83,14 @@
             </div>
 
             <div class="toolbar-actions">
-              <select id="statusFilter" onchange="debouncedFilterAndSort()">
-                <option value="all">Tous les statuts</option>
-                <option value="A contacter">A contacter</option>
-                <option value="A relancer">A relancer</option>
-                <option value="RDV Pris">RDV Pris</option>
-                <option value="RDV Refusé">RDV Refusé</option>
-              </select>
+        <select id="statusFilter" onchange="debouncedFilterAndSort()">
+  <option value="all">Tous les statuts</option>
+  <option value="A contacter">🟦 A contacter</option>
+  <option value="A relancer">🟧 A relancer</option>
+  <option value="RDV Pris">🟩 RDV Pris</option>
+  <option value="RDV Refusé">🟥 RDV Refusé</option>
+</select>
+
 
               <!-- Nouveau : filtre par période -->
               <select id="dateFilter" onchange="debouncedFilterAndSort()">
