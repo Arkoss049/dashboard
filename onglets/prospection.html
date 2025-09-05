@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prospection</title>
-  <!-- Adapter le préfixe /dashboard si ton repo a un autre nom -->
-  <link rel="stylesheet" href="/dashboard/css/style.css?v=2025-09-05-2"/>
+  <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body onload="initProspectionPanel()">
   <div class="app">
@@ -16,134 +15,121 @@
       </header>
 
       <div class="content">
-        <!-- ===== Formulaire d'ajout ===== -->
-        <div class="form-section">
-          <div class="form-title">
-            <h3>Ajouter un nouveau prospect</h3>
-          </div>
-          <div class="prospect-form">
-            <div class="form-row">
-              <input type="text" id="prospectName" placeholder="Nom/Prénom" />
-              <input type="number" id="prospectNumber" placeholder="N° adhérent" />
-              <input type="number" id="prospectPP" placeholder="Nombre de PP" />
-            </div>
-            <div class="form-row">
-              <input type="number" id="prospectAge" placeholder="Âge" />
-              <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
-              <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
-            </div>
-            <div class="form-row">
-              <button id="addProspectBtn" class="btn btn-primary">Ajouter</button>
-            </div>
-          </div>
+        <!-- Formulaire ajout prospect -->
+        <div class="form-grid">
+          <input type="text" id="prospectName" placeholder="Nom/Prénom" />
+          <input type="number" id="prospectNumber" placeholder="N° adhérent" />
+          <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+          <input type="number" id="prospectAge" placeholder="Âge" />
+          <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
+          <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
+          <button class="btn btn-primary" id="addProspectBtn">Ajouter</button>
         </div>
 
-        <div class="bar"></div>
-
-        <!-- ===== Statistiques ===== -->
-        <div class="data-section">
-          <div class="data-header">
-            <h3>Statistiques des prospects</h3>
-          </div>
-          <div class="prospect-stats">
-            <div class="stat-item">
-              <span class="stat-label">Total</span>
-              <span class="stat-value" id="stat-total">0</span>
-            </div>
-            <div class="stat-item status-a-contacter">
-              <span class="stat-label">À contacter</span>
-              <span class="stat-value" id="stat-a-contacter">0</span>
-            </div>
-            <div class="stat-item status-a-relancer">
-              <span class="stat-label">À relancer</span>
-              <span class="stat-value" id="stat-a-relancer">0</span>
-            </div>
-            <div class="stat-item status-rdv-pris">
-              <span class="stat-label">RDV pris</span>
-              <span class="stat-value" id="stat-rdv-pris">0</span>
-            </div>
-            <div class="stat-item status-rdv-refusé">
-              <span class="stat-label">RDV refusé</span>
-              <span class="stat-value" id="stat-rdv-refusé">0</span>
-            </div>
-          </div>
+        <!-- Filtres -->
+        <div class="filters" id="activeFilters">
+          <input type="text" id="searchFilter" placeholder="Rechercher..." oninput="debouncedFilterAndSort()" />
+          <select id="statusFilter" onchange="filterAndSortProspects()">
+            <option value="all">Tous les statuts</option>
+            <option value="A contacter">A contacter</option>
+            <option value="A relancer">A relancer</option>
+            <option value="RDV Pris">RDV Pris</option>
+            <option value="RDV Refusé">RDV Refusé</option>
+          </select>
+          <select id="sortFilter" onchange="filterAndSortProspects()">
+            <option value="name_asc">Nom (A-Z)</option>
+            <option value="name_desc">Nom (Z-A)</option>
+            <option value="age_asc">Âge croissant</option>
+            <option value="age_desc">Âge décroissant</option>
+            <option value="monthly_asc">Cotisation croissante</option>
+            <option value="monthly_desc">Cotisation décroissante</option>
+            <option value="date_desc">Date récente</option>
+            <option value="date_asc">Date ancienne</option>
+          </select>
         </div>
 
-        <div class="bar"></div>
+        <!-- Stats Prospection active -->
+        <div class="stats-grid" id="activeStats">
+          <div class="stat-card">Total <span id="stat-total">0</span></div>
+          <div class="stat-card">A contacter <span id="stat-a-contacter">0</span></div>
+          <div class="stat-card">A relancer <span id="stat-a-relancer">0</span></div>
+          <div class="stat-card">RDV Pris <span id="stat-rdv-pris">0</span></div>
+          <div class="stat-card">RDV Refusé <span id="stat-rdv-refusé">0</span></div>
+        </div>
 
-        <!-- ===== Outils / Filtres ===== -->
-        <div class="data-section">
-          <div class="prospect-toolbar">
-            <div class="toolbar-search">
-              <input
-                type="text"
-                id="searchFilter"
-                placeholder="Rechercher par nom, n° adh. ou téléphone..."
-                oninput="debouncedFilterAndSort()" />
-            </div>
+        <!-- Actions -->
+        <div class="actions">
+          <button class="btn btn-primary" id="importCsvBtn">Importer</button>
+          <button class="btn btn-secondary" id="exportCsvBtn">Exporter</button>
+          <button class="btn btn-ghost" id="toggleArchivesBtn">📂 Archives</button>
+        </div>
 
-            <div class="toolbar-actions">
-        <select id="statusFilter" onchange="debouncedFilterAndSort()">
-  <option value="all">Tous les statuts</option>
-  <option value="A contacter">🟦 A contacter</option>
-  <option value="A relancer">🟧 A relancer</option>
-  <option value="RDV Pris">🟩 RDV Pris</option>
-  <option value="RDV Refusé">🟥 RDV Refusé</option>
-</select>
+        <!-- Tableau Prospection active -->
+        <div class="table-container" id="activeTable">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>N° adhérent</th>
+                <th>Téléphone</th>
+                <th>Cotisation</th>
+                <th>PP</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prospectTableBody">
+              <!-- JS insère les lignes -->
+            </tbody>
+          </table>
+        </div>
 
-
-              <!-- Nouveau : filtre par période -->
-              <select id="dateFilter" onchange="debouncedFilterAndSort()">
-                <option value="all">Toutes les dates</option>
-                <option value="today">Aujourd'hui</option>
-                <option value="week">Cette semaine</option>
-                <option value="month">Ce mois-ci</option>
-                <option value="year">Cette année</option>
-              </select>
-
-              <select id="sortFilter" onchange="debouncedFilterAndSort()">
-                <option value="name_asc">Nom (A-Z)</option>
-                <option value="name_desc">Nom (Z-A)</option>
-                <option value="age_asc">Âge (croissant)</option>
-                <option value="age_desc">Âge (décroissant)</option>
-                <option value="monthly_asc">Cotisation (croissante)</option>
-                <option value="monthly_desc">Cotisation (décroissante)</option>
-                <option value="date_desc">Date (plus récent)</option>
-                <option value="date_asc">Date (plus ancien)</option>
-              </select>
-
-              <button id="importCsvBtn" class="btn btn-primary">Importer</button>
-              <button id="exportCsvBtn" class="btn btn-ghost">Exporter</button>
-            </div>
+        <!-- ====== SECTION ARCHIVES ====== -->
+        <div id="archivesSection" style="display:none;">
+          <!-- Filtres Archives -->
+          <div class="filters">
+            <select id="archiveSortFilter" onchange="filterAndSortArchives()">
+              <option value="date_desc">Date récente</option>
+              <option value="date_asc">Date ancienne</option>
+              <option value="name_asc">Nom (A-Z)</option>
+              <option value="name_desc">Nom (Z-A)</option>
+            </select>
           </div>
 
-          <!-- ===== Tableau ===== -->
-          <div id="prospectTableContainer" class="table-container">
-            <table class="data-table">
+          <!-- Stats Archives -->
+          <div class="stats-grid" id="archiveStats">
+            <div class="stat-card">Total archivés <span id="stat-arch-total">0</span></div>
+            <div class="stat-card">Signés <span id="stat-arch-signed">0</span></div>
+            <div class="stat-card">Refusés <span id="stat-arch-refused">0</span></div>
+          </div>
+
+          <!-- Tableau Archives -->
+          <div class="table-container">
+            <table>
               <thead>
                 <tr>
-                  <th>Nom/Prénom</th>
-                  <th>N° adh.</th>
+                  <th>Nom</th>
                   <th>Téléphone</th>
-                  <th>Cotisation mens.</th>
-                  <th>Nbre PP</th>
+                  <th>Cotisation</th>
+                  <th>PP</th>
                   <th>Statut</th>
                   <th>Date</th>
                   <th>Notes</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="prospectTableBody">
-                <tr><td colspan="9" class="muted">Aucun prospect ajouté.</td></tr>
+              <tbody id="archiveTableBody">
+                <!-- JS insère les lignes -->
               </tbody>
             </table>
           </div>
         </div>
-      </div><!-- .content -->
-    </div><!-- .panel-full -->
-  </div><!-- .app -->
+      </div>
+    </div>
+  </div>
 
-  <!-- ===== Modal Notes ===== -->
+  <!-- Modal Notes -->
   <div class="modal-overlay" id="notesModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -151,7 +137,7 @@
         <button class="btn btn-close" id="closeNotesModal">✕</button>
       </div>
       <div class="modal-body">
-        <textarea id="notesTextarea" placeholder="Entrez vos notes ici..."></textarea>
+        <textarea id="notesTextarea" placeholder="Saisissez vos notes ici..."></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="saveNotesBtn">Enregistrer</button>
@@ -159,27 +145,23 @@
     </div>
   </div>
 
-  <!-- ===== Modal Import ===== -->
+  <!-- Modal Import -->
   <div class="modal-overlay" id="importModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h4>Importer des contacts (CSV)</h4>
+        <h4>Importer un fichier CSV</h4>
         <button class="btn btn-close" id="closeImportModal">✕</button>
       </div>
       <div class="modal-body">
-        <p class="muted">
-          Fichier CSV séparé par des points-virgules (;). En-têtes acceptés :
-          <b>name;number;pp;age;phone;monthly</b>.
-        </p>
         <input type="file" id="csvFileInput" accept=".csv" />
       </div>
       <div class="modal-footer">
-        <button id="executeImportBtn" class="btn btn-primary">Importer</button>
+        <button class="btn btn-primary" id="executeImportBtn">Importer</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== Modal Édition Prospect ===== -->
+  <!-- Modal Édition Prospect -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -244,7 +226,6 @@
     </div>
   </div>
 
-  <!-- JS -->
-  <script src="/dashboard/js/modules/prospection.js?v=2025-09-05-2"></script>
+  <script src="../js/modules/prospection.js"></script>
 </body>
 </html>
