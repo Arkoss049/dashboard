@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tableau de prospection</title>
-  <!-- Chemin vers ta feuille de style -->
-  <link rel="stylesheet" href="../css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prospection</title>
+  <link rel="stylesheet" href="../css/style.css"/>
 </head>
-<body>
+<body onload="initProspectionPanel()">
   <div class="app">
     <div class="panel-full">
       <header>
@@ -16,119 +15,76 @@
       </header>
 
       <div class="content">
-        <!-- Formulaire d'ajout -->
-        <div class="form-section">
-          <div class="form-title">
-            <h3>Ajouter un nouveau prospect</h3>
-          </div>
-          <div class="prospect-form">
-            <div class="form-row">
-              <input type="text" id="prospectName" placeholder="Nom/Prénom" />
-              <input type="number" id="prospectNumber" placeholder="N° adhérent" />
-              <input type="number" id="prospectPP" placeholder="Nombre de PP" />
-            </div>
-            <div class="form-row">
-              <input type="number" id="prospectAge" placeholder="Âge" />
-              <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
-              <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
-            </div>
-            <div class="form-row">
-              <button id="addProspectBtn" class="btn btn-primary">Ajouter le prospect</button>
-            </div>
-          </div>
+        <!-- Formulaire ajout prospect -->
+        <div class="form-grid">
+          <input type="text" id="prospectName" placeholder="Nom/Prénom" />
+          <input type="number" id="prospectNumber" placeholder="N° adhérent" />
+          <input type="number" id="prospectPP" placeholder="Nombre de PP" />
+          <input type="number" id="prospectAge" placeholder="Âge" />
+          <input type="text" id="prospectPhone" placeholder="Numéro de téléphone" />
+          <input type="number" id="prospectMonthly" placeholder="Cotisation mensuelle" />
+          <button class="btn btn-primary" id="addProspectBtn">Ajouter</button>
         </div>
 
-        <div class="bar"></div>
-
-        <!-- Statistiques -->
-        <div class="data-section">
-          <div class="data-header">
-            <h3>Statistiques des prospects</h3>
-          </div>
-          <div class="prospect-stats">
-            <div class="stat-item">
-              <span class="stat-label">Total</span>
-              <span class="stat-value" id="stat-total">0</span>
-            </div>
-            <div class="stat-item status-a-contacter">
-              <span class="stat-label">À contacter</span>
-              <span class="stat-value" id="stat-a-contacter">0</span>
-            </div>
-            <div class="stat-item status-a-relancer">
-              <span class="stat-label">À relancer</span>
-              <span class="stat-value" id="stat-a-relancer">0</span>
-            </div>
-            <div class="stat-item status-rdv-pris">
-              <span class="stat-label">RDV pris</span>
-              <span class="stat-value" id="stat-rdv-pris">0</span>
-            </div>
-            <div class="stat-item status-rdv-refusé">
-              <span class="stat-label">RDV refusé</span>
-              <span class="stat-value" id="stat-rdv-refusé">0</span>
-            </div>
-          </div>
+        <!-- Filtres -->
+        <div class="filters">
+          <input type="text" id="searchFilter" placeholder="Rechercher..." oninput="debouncedFilterAndSort()" />
+          <select id="statusFilter" onchange="filterAndSortProspects()">
+            <option value="all">Tous</option>
+            <option value="A contacter">A contacter</option>
+            <option value="A relancer">A relancer</option>
+            <option value="RDV Pris">RDV Pris</option>
+            <option value="RDV Refusé">RDV Refusé</option>
+          </select>
+          <select id="sortFilter" onchange="filterAndSortProspects()">
+            <option value="name_asc">Nom (A-Z)</option>
+            <option value="name_desc">Nom (Z-A)</option>
+            <option value="age_asc">Âge croissant</option>
+            <option value="age_desc">Âge décroissant</option>
+            <option value="monthly_asc">Cotisation croissante</option>
+            <option value="monthly_desc">Cotisation décroissante</option>
+          </select>
         </div>
 
-        <div class="bar"></div>
-
-        <!-- Tableau + outils -->
-        <div class="data-section">
-          <div class="prospect-toolbar">
-            <div class="toolbar-search">
-              <input
-                type="text"
-                id="searchFilter"
-                placeholder="Rechercher par nom, n° adh. ou téléphone..."
-                oninput="debouncedFilterAndSort()" />
-            </div>
-
-            <div class="toolbar-actions">
-              <select id="statusFilter" onchange="debouncedFilterAndSort()">
-                <option value="all">Tous les statuts</option>
-                <option value="A contacter">A contacter</option>
-                <option value="A relancer">A relancer</option>
-                <option value="RDV Pris">RDV Pris</option>
-                <option value="RDV Refusé">RDV Refusé</option>
-              </select>
-
-              <select id="sortFilter" onchange="debouncedFilterAndSort()">
-                <option value="name_asc">Nom (A-Z)</option>
-                <option value="name_desc">Nom (Z-A)</option>
-                <option value="age_asc">Âge (croissant)</option>
-                <option value="age_desc">Âge (décroissant)</option>
-                <option value="monthly_asc">Cotisation (croissante)</option>
-                <option value="monthly_desc">Cotisation (décroissante)</option>
-              </select>
-
-              <button id="importCsvBtn" class="btn btn-primary">Importer</button>
-              <button id="exportCsvBtn" class="btn btn-ghost">Exporter</button>
-            </div>
-          </div>
-
-          <div id="prospectTableContainer" class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Nom/Prénom</th>
-                  <th>N° adh.</th>
-                  <th>Téléphone</th>
-                  <th>Cotisation mens.</th>
-                  <th>Nbre PP</th>
-                  <th>Statut</th>
-                  <th>Date</th>
-                  <th>Notes</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="prospectTableBody">
-                <tr><td colspan="9" class="muted">Aucun prospect ajouté.</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">Total <span id="stat-total">0</span></div>
+          <div class="stat-card">A contacter <span id="stat-a-contacter">0</span></div>
+          <div class="stat-card">A relancer <span id="stat-a-relancer">0</span></div>
+          <div class="stat-card">RDV Pris <span id="stat-rdv-pris">0</span></div>
+          <div class="stat-card">RDV Refusé <span id="stat-rdv-refusé">0</span></div>
         </div>
-      </div><!-- .content -->
-    </div><!-- .panel-full -->
-  </div><!-- .app -->
+
+        <!-- Actions -->
+        <div class="actions">
+          <button class="btn btn-primary" id="importCsvBtn">Importer</button>
+          <button class="btn btn-secondary" id="exportCsvBtn">Exporter</button>
+        </div>
+
+        <!-- Tableau -->
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>N° adhérent</th>
+                <th>Téléphone</th>
+                <th>Cotisation</th>
+                <th>PP</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prospectTableBody">
+              <!-- JS insère les lignes -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal Notes -->
   <div class="modal-overlay" id="notesModal">
@@ -138,7 +94,7 @@
         <button class="btn btn-close" id="closeNotesModal">✕</button>
       </div>
       <div class="modal-body">
-        <textarea id="notesTextarea" placeholder="Entrez vos notes ici..."></textarea>
+        <textarea id="notesTextarea" placeholder="Saisissez vos notes ici..."></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="saveNotesBtn">Enregistrer</button>
@@ -150,19 +106,14 @@
   <div class="modal-overlay" id="importModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h4>Importer des contacts (CSV)</h4>
+        <h4>Importer un fichier CSV</h4>
         <button class="btn btn-close" id="closeImportModal">✕</button>
       </div>
       <div class="modal-body">
-        <p class="muted">
-          Le fichier doit être au format CSV avec des points-virgules (;) comme séparateurs.
-          Les en-têtes (facultatifs) sont :
-          <b>name;number;pp;age;phone;monthly</b>.
-        </p>
         <input type="file" id="csvFileInput" accept=".csv" />
       </div>
       <div class="modal-footer">
-        <button id="executeImportBtn" class="btn btn-primary">Importer</button>
+        <button class="btn btn-primary" id="executeImportBtn">Importer</button>
       </div>
     </div>
   </div>
@@ -175,27 +126,54 @@
         <button class="btn btn-close" id="closeEditModal">✕</button>
       </div>
       <div class="modal-body">
-        <div class="prospect-form">
+        <div class="prospect-form edit-form">
           <div class="form-row">
-            <input type="text" id="editName" placeholder="Nom/Prénom" />
-            <input type="text" id="editNumber" placeholder="N° adhérent" />
+            <div class="field">
+              <label for="editName" class="input-label">Nom/Prénom</label>
+              <input type="text" id="editName" placeholder="Nom/Prénom" />
+            </div>
+            <div class="field">
+              <label for="editNumber" class="input-label">N° adhérent</label>
+              <input type="text" id="editNumber" placeholder="N° adhérent" />
+            </div>
           </div>
+
           <div class="form-row">
-            <input type="number" id="editAge" placeholder="Âge" />
-            <input type="text" id="editPhone" placeholder="Téléphone" />
-            <input type="number" id="editMonthly" placeholder="Cotisation mensuelle" />
+            <div class="field">
+              <label for="editAge" class="input-label">Âge</label>
+              <input type="number" id="editAge" placeholder="Âge" />
+            </div>
+            <div class="field">
+              <label for="editPhone" class="input-label">Téléphone</label>
+              <input type="text" id="editPhone" placeholder="Téléphone" />
+            </div>
+            <div class="field">
+              <label for="editMonthly" class="input-label">Cotisation mensuelle (€)</label>
+              <input type="number" id="editMonthly" placeholder="Cotisation mensuelle" />
+            </div>
           </div>
+
           <div class="form-row">
-            <input type="number" id="editPP" placeholder="Nombre de PP" />
-            <select id="editStatus">
-              <option>A contacter</option>
-              <option>A relancer</option>
-              <option>RDV Pris</option>
-              <option>RDV Refusé</option>
-            </select>
+            <div class="field">
+              <label for="editPP" class="input-label">Nombre de PP</label>
+              <input type="number" id="editPP" placeholder="Nombre de PP" />
+            </div>
+            <div class="field">
+              <label for="editStatus" class="input-label">Statut</label>
+              <select id="editStatus">
+                <option>A contacter</option>
+                <option>A relancer</option>
+                <option>RDV Pris</option>
+                <option>RDV Refusé</option>
+              </select>
+            </div>
           </div>
+
           <div class="form-row">
-            <textarea id="editNotes" placeholder="Notes..."></textarea>
+            <div class="field" style="flex:1">
+              <label for="editNotes" class="input-label">Notes</label>
+              <textarea id="editNotes" placeholder="Notes..."></textarea>
+            </div>
           </div>
         </div>
       </div>
@@ -205,16 +183,6 @@
     </div>
   </div>
 
-  <!-- Scripts -->
-  <!-- Chemin vers ton module JS -->
   <script src="../js/modules/prospection.js"></script>
-  <script>
-    // Initialisation automatique quand la page est prête
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof initProspectionPanel === 'function') {
-        initProspectionPanel();
-      }
-    });
-  </script>
 </body>
 </html>
