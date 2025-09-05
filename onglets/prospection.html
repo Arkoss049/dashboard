@@ -31,10 +31,10 @@
           <input type="text" id="searchFilter" placeholder="Rechercher..." oninput="debouncedFilterAndSort()" />
           <select id="statusFilter" onchange="filterAndSortProspects()">
             <option value="all">Tous les statuts</option>
-            <option value="A contacter">A contacter</option>
-            <option value="A relancer">A relancer</option>
-            <option value="RDV Pris">RDV Pris</option>
-            <option value="RDV Refusé">RDV Refusé</option>
+            <option value="A contacter">🟦 A contacter</option>
+            <option value="A relancer">🟧 A relancer</option>
+            <option value="RDV Pris">🟩 RDV Pris</option>
+            <option value="RDV Refusé">🟥 RDV Refusé</option>
           </select>
           <select id="sortFilter" onchange="filterAndSortProspects()">
             <option value="name_asc">Nom (A-Z)</option>
@@ -117,6 +117,7 @@
                   <th>Statut</th>
                   <th>Date</th>
                   <th>Notes</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="archiveTableBody">
