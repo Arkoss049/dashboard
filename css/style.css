@@ -397,4 +397,44 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   min-width: 180px;
   display: flex;
   flex-direction: column;
+}/* Pastilles colorées dans le select Statut */
+.status-select option {
+  padding-left: 20px;
+  position: relative;
+}
+
+/* Styles pour chaque statut */
+.status-select option[value="A contacter"] {
+  background: var(--surface);
+  color: var(--text);
+}
+.status-select option[value="A relancer"] {
+  background: var(--surface);
+  color: var(--text);
+}
+.status-select option[value="RDV Pris"] {
+  background: var(--surface);
+  color: var(--text);
+}
+.status-select option[value="RDV Refusé"] {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Ajout d'une pastille via pseudo-élément */
+.status-select option[value="A contacter"]::before {
+  content: "● ";
+  color: #3b82f6;
+}
+.status-select option[value="A relancer"]::before {
+  content: "● ";
+  color: #f59e0b;
+}
+.status-select option[value="RDV Pris"]::before {
+  content: "● ";
+  color: #22c55e;
+}
+.status-select option[value="RDV Refusé"]::before {
+  content: "● ";
+  color: #ef4444;
 }
