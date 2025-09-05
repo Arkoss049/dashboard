@@ -552,3 +552,37 @@ tr.recent.animate { animation: rowGlow 900ms ease; }
   0% { background: color-mix(in srgb, var(--accent-blue) 25%, transparent); }
   100% { background: transparent; }
 }
+/* === Couleurs de fond spécifiques pour les stats de prospection active === */
+#activeStats .stat-card {
+  color: #fff;
+}
+
+#activeStats .stat-card:nth-child(1) { /* Total */
+  background: var(--accent-blue);
+}
+#activeStats .stat-card:nth-child(2) { /* A contacter */
+  background: #3b82f6; /* bleu */
+}
+#activeStats .stat-card:nth-child(3) { /* A relancer */
+  background: #f59e0b; /* orange */
+}
+#activeStats .stat-card:nth-child(4) { /* RDV Pris */
+  background: #22c55e; /* vert */
+}
+#activeStats .stat-card:nth-child(5) { /* RDV Refusé */
+  background: #ef4444; /* rouge */
+}
+
+/* Stats Archives (Signés / Refusés) */
+#archiveStats .stat-card {
+  color: #fff;
+}
+#archiveStats .stat-card:nth-child(1) { /* Total archivés */
+  background: var(--accent-blue);
+}
+#archiveStats .stat-card:nth-child(2) { /* Signés */
+  background: #22c55e;
+}
+#archiveStats .stat-card:nth-child(3) { /* Refusés */
+  background: #ef4444;
+}
