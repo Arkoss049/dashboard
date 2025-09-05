@@ -49,8 +49,11 @@
     document.getElementById('importModal').style.display = 'none';
   }
 
+  // ✅ version robuste : vide => null, non numérique => null
   function toNumberOrNull(v) {
-    const n = Number(String(v).replace(',', '.'));
+    const s = String(v ?? '').replace(',', '.').trim();
+    if (s === '') return null;
+    const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
 
@@ -94,7 +97,8 @@
     for (const row of data) {
       const values = headers.map((h) => {
         const value = row[h] ?? '';
-        const escaped = String(value).replace(/"/g, '\\"');
+        // ✅ CSV standard : " devient ""
+        const escaped = String(value).replace(/"/g, '""');
         return `"${escaped}"`;
       });
       csvRows.push(values.join(';'));
@@ -147,7 +151,7 @@
         return obj;
       });
 
-      // ✅ Correction du bug de fusion
+      // ✅ Fusion corrigée
       prospects = [...prospects, ...importedProspects];
       saveProspects();
       debouncedFilterAndSort();
