@@ -438,3 +438,8 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   content: "● ";
   color: #ef4444;
 }
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
