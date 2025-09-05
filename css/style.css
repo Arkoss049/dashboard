@@ -382,3 +382,19 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
 .status-select.status-a-relancer { background-color: #f59e0b; }
 .status-select.status-rdv-pris { background-color: #22c55e; }
 .status-select.status-rdv-refusé { background-color: #ef4444; }
+
+/* Labels et wrappers pour la modale d'édition */
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0 6px 6px;
+}
+
+.edit-form .field {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
