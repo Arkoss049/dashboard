@@ -355,3 +355,30 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   font-size: 12px;
 }
 .status-select:focus { outline: none; }
+
+/* === Correction affichage du select Statut === */
+
+/* Base du select */
+.status-select {
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #fff;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+/* Options : fond neutre pour éviter que le menu entier hérite de la couleur */
+.status-select option {
+  background-color: var(--surface); /* couleur neutre de ton thème */
+  color: var(--text);
+}
+
+/* Couleurs appliquées uniquement au select fermé */
+.status-select.status-a-contacter { background-color: #3b82f6; }
+.status-select.status-a-relancer { background-color: #f59e0b; }
+.status-select.status-rdv-pris { background-color: #22c55e; }
+.status-select.status-rdv-refusé { background-color: #ef4444; }
