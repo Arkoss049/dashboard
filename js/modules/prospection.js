@@ -35,17 +35,28 @@
     return new Date().toLocaleDateString('fr-FR');
   }
 
+  // --- Stats (avec flash visuel optionnel si CSS ajouté) ---
+  function setStat(id, newVal) {
+    const el = document.getElementById(id);
+    const prev = el.textContent;
+    if (String(prev) !== String(newVal)) {
+      el.textContent = newVal;
+      el.classList?.remove('flash');
+      void el.offsetWidth;
+      el.classList?.add('flash');
+    }
+  }
   function updateStats() {
     const stats = { total: prospects.length, 'A contacter': 0, 'A relancer': 0, 'RDV Pris': 0, 'RDV Refusé': 0 };
     prospects.forEach(p => { if (stats[p.status] !== undefined) stats[p.status]++; });
-
-    document.getElementById('stat-total').textContent = stats.total;
-    document.getElementById('stat-a-contacter').textContent = stats['A contacter'];
-    document.getElementById('stat-a-relancer').textContent = stats['A relancer'];
-    document.getElementById('stat-rdv-pris').textContent = stats['RDV Pris'];
-    document.getElementById('stat-rdv-refusé').textContent = stats['RDV Refusé'];
+    setStat('stat-total', stats.total);
+    setStat('stat-a-contacter', stats['A contacter']);
+    setStat('stat-a-relancer', stats['A relancer']);
+    setStat('stat-rdv-pris', stats['RDV Pris']);
+    setStat('stat-rdv-refusé', stats['RDV Refusé']);
   }
 
+  // --- CSV ---
   function exportToCsv(data, filename) {
     if (!data || data.length === 0) { alert('Aucune donnée à exporter.'); return; }
     const headers = ['name','number','phone','monthly','pp','age','status','lastUpdate','notes'];
@@ -100,6 +111,7 @@
     reader.readAsText(file);
   }
 
+  // --- Rendu tableau ---
   function renderTable(list) {
     const tbody = document.getElementById('prospectTableBody');
     tbody.innerHTML = '';
@@ -111,15 +123,15 @@
     list.forEach((p) => {
       const tr = document.createElement('tr');
       const idx = prospects.indexOf(p);
-      const notesIcon = p.notes ? '📝' : '🗒️';
 
+      // statut select avec pastille "●"
       const statusCls = (p.status || 'A contacter').toLowerCase().replace(/ /g, '-');
       const statusSelect = `
         <select class="status-select status-${statusCls}" data-index="${idx}">
-          <option ${p.status === 'A contacter' ? 'selected' : ''}>A contacter</option>
-          <option ${p.status === 'A relancer' ? 'selected' : ''}>A relancer</option>
-          <option ${p.status === 'RDV Pris' ? 'selected' : ''}>RDV Pris</option>
-          <option ${p.status === 'RDV Refusé' ? 'selected' : ''}>RDV Refusé</option>
+          <option value="A contacter" ${p.status === 'A contacter' ? 'selected' : ''}>● A contacter</option>
+          <option value="A relancer" ${p.status === 'A relancer' ? 'selected' : ''}>● A relancer</option>
+          <option value="RDV Pris" ${p.status === 'RDV Pris' ? 'selected' : ''}>● RDV Pris</option>
+          <option value="RDV Refusé" ${p.status === 'RDV Refusé' ? 'selected' : ''}>● RDV Refusé</option>
         </select>
       `;
 
@@ -132,13 +144,26 @@
         <td>${statusSelect}</td>
         <td>${p.lastUpdate || ''}</td>
         <td>
-          <button class="btn btn-ghost btn-notes" data-index="${idx}" title="Notes">${notesIcon}</button>
+          <button class="btn btn-ghost btn-notes icon-btn" data-index="${idx}" title="Notes">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5zm9-1v4h4"/></svg>
+          </button>
         </td>
         <td>
-          <button class="btn btn-ghost btn-edit" data-index="${idx}" title="Modifier">✏️</button>
-          <button class="btn btn-danger btn-small" data-index="${idx}" title="Supprimer">🗑️</button>
+          <button class="btn btn-ghost btn-edit icon-btn" data-index="${idx}" title="Modifier">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm14.71-9.04 1.34-1.34a1 1 0 0 0 0-1.41L17.2 3.71a1 1 0 0 0-1.41 0l-1.34 1.34 3.75 3.75z"/></svg>
+          </button>
+          <button class="btn btn-danger btn-small icon-btn" data-index="${idx}" title="Supprimer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3v1H4v2h1v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm2 5v10H9V8h2zm4 0v10h-2V8h2z"/></svg>
+          </button>
         </td>
       `;
+
+      // Glow doux si mis à jour aujourd’hui (optionnel si CSS ajouté)
+      if (p.lastUpdate === formatTodayFR()) {
+        tr.classList.add('recent', 'animate');
+        setTimeout(() => tr.classList.remove('animate'), 1000);
+      }
+
       tbody.appendChild(tr);
     });
 
@@ -166,16 +191,16 @@
     document.querySelectorAll('#prospectTableBody .status-select').forEach((sel) => {
       sel.addEventListener('change', (e) => {
         const index = Number(e.currentTarget.dataset.index);
-        const newStatus = e.currentTarget.value;
+        const newStatus = e.currentTarget.value.replace('● ', '');
         prospects[index].status = newStatus;
         prospects[index].lastUpdate = formatTodayFR();
         saveProspects();
-        filterAndSortProspects(); // ⚡ pas de debounce
+        filterAndSortProspects();
       });
     });
   }
 
-  // === Ajout ===
+  // --- Ajout ---
   function addProspect() {
     const name = document.getElementById('prospectName').value.trim();
     const number = document.getElementById('prospectNumber').value.trim();
@@ -201,7 +226,7 @@
     document.getElementById('prospectName').focus();
   }
 
-  // === Modales Notes ===
+  // --- Modales Notes ---
   function openNotesModal(index) {
     currentProspectIndex = index;
     document.getElementById('notesTextarea').value = prospects[index].notes || '';
@@ -220,7 +245,7 @@
     }
   }
 
-  // === Modale Édition ===
+  // --- Modale Édition ---
   function openEditModal(index) {
     currentProspectIndex = index;
     const p = prospects[index];
@@ -265,7 +290,7 @@
     closeEditModal();
   }
 
-  // === Filtres & Tri ===
+  // --- Filtres & Tri ---
   function normalize(s) {
     return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
   }
@@ -290,6 +315,7 @@
       filtered = filtered.filter(p => (p.status || 'A contacter') === filterStatus);
     }
 
+    // Filtre par période
     if (filterDate !== 'all') {
       const now = new Date(); now.setHours(0,0,0,0);
       const day = now.getDay();
@@ -313,6 +339,7 @@
       });
     }
 
+    // Tri
     switch (sortValue) {
       case 'name_asc':     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
       case 'name_desc':    filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); break;
@@ -333,16 +360,19 @@
     debouncedSearchTimer = setTimeout(filterAndSortProspects, 200);
   };
 
-  // === Init ===
+  // --- Init ---
   window.initProspectionPanel = function () {
     loadProspects();
     debouncedFilterAndSort();
 
+    // Boutons principaux
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
 
+    // Notes
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
 
+    // Import
     document.getElementById('importCsvBtn').addEventListener('click', () => {
       document.getElementById('importModal').style.display = 'flex';
     });
@@ -351,9 +381,11 @@
     });
     document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
 
+    // Édition
     document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
     document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
+    // Export
     const exportBtn = document.getElementById('exportCsvBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
@@ -361,6 +393,16 @@
       });
     }
 
+    // Effet d’ombre sur thead en scroll (optionnel si CSS ajouté)
+    const container = document.getElementById('prospectTableContainer');
+    if (container) {
+      container.addEventListener('scroll', () => {
+        const thead = container.querySelector('.data-table thead');
+        if (thead) thead.classList.toggle('scrolled', container.scrollTop > 0);
+      }, { passive: true });
+    }
+
+    // Entrée ↵ pour ajouter
     ['prospectName','prospectNumber','prospectPP','prospectAge','prospectPhone','prospectMonthly']
       .map(id => document.getElementById(id))
       .forEach(el => el.addEventListener('keydown', (e) => {
