@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tableau de prospection</title>
-  <!-- chemin corrigé vers le CSS -->
+  <!-- Chemin vers ta feuille de style -->
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
@@ -167,8 +167,46 @@
     </div>
   </div>
 
+  <!-- Modal Édition Prospect -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Modifier le prospect</h4>
+        <button class="btn btn-close" id="closeEditModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="prospect-form">
+          <div class="form-row">
+            <input type="text" id="editName" placeholder="Nom/Prénom" />
+            <input type="text" id="editNumber" placeholder="N° adhérent" />
+          </div>
+          <div class="form-row">
+            <input type="number" id="editAge" placeholder="Âge" />
+            <input type="text" id="editPhone" placeholder="Téléphone" />
+            <input type="number" id="editMonthly" placeholder="Cotisation mensuelle" />
+          </div>
+          <div class="form-row">
+            <input type="number" id="editPP" placeholder="Nombre de PP" />
+            <select id="editStatus">
+              <option>A contacter</option>
+              <option>A relancer</option>
+              <option>RDV Pris</option>
+              <option>RDV Refusé</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <textarea id="editNotes" placeholder="Notes..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="saveEditBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <!-- chemin corrigé vers le JS -->
+  <!-- Chemin vers ton module JS -->
   <script src="../js/modules/prospection.js"></script>
   <script>
     // Initialisation automatique quand la page est prête
