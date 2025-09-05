@@ -35,7 +35,7 @@
     return new Date().toLocaleDateString('fr-FR');
   }
 
-  // --- Stats (avec flash visuel optionnel si CSS ajouté) ---
+  // --- Stats (avec flash si CSS présent) ---
   function setStat(id, newVal) {
     const el = document.getElementById(id);
     const prev = el.textContent;
@@ -124,10 +124,10 @@
       const tr = document.createElement('tr');
       const idx = prospects.indexOf(p);
 
-      // statut select avec pastille "●"
       const statusCls = (p.status || 'A contacter').toLowerCase().replace(/ /g, '-');
+      // IMPORTANT : value propre, pastille uniquement dans le libellé
       const statusSelect = `
-        <select class="status-select status-${statusCls}" data-index="${idx}">
+        <select class="status-select status-${statusCls} row-status-select" data-index="${idx}">
           <option value="A contacter" ${p.status === 'A contacter' ? 'selected' : ''}>● A contacter</option>
           <option value="A relancer" ${p.status === 'A relancer' ? 'selected' : ''}>● A relancer</option>
           <option value="RDV Pris" ${p.status === 'RDV Pris' ? 'selected' : ''}>● RDV Pris</option>
@@ -158,7 +158,7 @@
         </td>
       `;
 
-      // Glow doux si mis à jour aujourd’hui (optionnel si CSS ajouté)
+      // Glow doux si mis à jour aujourd’hui (optionnel)
       if (p.lastUpdate === formatTodayFR()) {
         tr.classList.add('recent', 'animate');
         setTimeout(() => tr.classList.remove('animate'), 1000);
@@ -187,14 +187,25 @@
       btn.addEventListener('click', (e) => openEditModal(Number(e.currentTarget.dataset.index)));
     });
 
-    // ⚡ Changement de statut (rafraîchissement immédiat)
-    document.querySelectorAll('#prospectTableBody .status-select').forEach((sel) => {
+    // ⚡ Changement de statut : mise à jour immédiate valeur + couleur + re-render
+    document.querySelectorAll('#prospectTableBody .row-status-select').forEach((sel) => {
       sel.addEventListener('change', (e) => {
         const index = Number(e.currentTarget.dataset.index);
-        const newStatus = e.currentTarget.value.replace('● ', '');
+        const newStatus = e.currentTarget.value; // value propre (pas de pastille)
+        // 1) mise à jour des données
         prospects[index].status = newStatus;
         prospects[index].lastUpdate = formatTodayFR();
         saveProspects();
+
+        // 2) mise à jour immédiate de la couleur du select sans attendre le re-render
+        //    on retire l'ancienne classe status-* et on ajoute la nouvelle
+        e.currentTarget.classList.forEach((c) => {
+          if (c.startsWith('status-')) e.currentTarget.classList.remove(c);
+        });
+        const newCls = 'status-' + newStatus.toLowerCase().replace(/ /g, '-');
+        e.currentTarget.classList.add(newCls);
+
+        // 3) re-render pour remettre à jour le tableau/les stats/les filtres
         filterAndSortProspects();
       });
     });
@@ -297,7 +308,7 @@
 
   window.filterAndSortProspects = function () {
     const searchTerm   = normalize(document.getElementById('searchFilter').value);
-    const filterStatus = document.getElementById('statusFilter').value;
+    const filterStatus = document.getElementById('statusFilter').value; // <- le filtre de la toolbar (id unique)
     const filterDate   = document.getElementById('dateFilter').value;
     const sortValue    = document.getElementById('sortFilter').value;
 
@@ -315,7 +326,6 @@
       filtered = filtered.filter(p => (p.status || 'A contacter') === filterStatus);
     }
 
-    // Filtre par période
     if (filterDate !== 'all') {
       const now = new Date(); now.setHours(0,0,0,0);
       const day = now.getDay();
@@ -339,7 +349,6 @@
       });
     }
 
-    // Tri
     switch (sortValue) {
       case 'name_asc':     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
       case 'name_desc':    filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); break;
@@ -393,7 +402,7 @@
       });
     }
 
-    // Effet d’ombre sur thead en scroll (optionnel si CSS ajouté)
+    // Ombre du thead en scroll (optionnel)
     const container = document.getElementById('prospectTableContainer');
     if (container) {
       container.addEventListener('scroll', () => {
