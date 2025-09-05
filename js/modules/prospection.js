@@ -169,24 +169,6 @@ tr.innerHTML = `
     </div>
   </td>
 `;
-
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td>${p.number}</td>
-        <td>${p.phone}</td>
-        <td>${p.monthly} €</td>
-        <td>${p.pp}</td>
-        <td><span class="status-chip status-${p.status.toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status}</span></td>
-        <td>${p.lastUpdate || ''}</td>
-        <td>
-          <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
-            ${notesIcon}
-          </button>
-        </td>
-        <td>
-          ${statusButtons}
-        </td>
-      `;
       tbody.appendChild(tr);
     });
     
