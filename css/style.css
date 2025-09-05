@@ -452,3 +452,103 @@ tr.recent { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-green) 4
 tr.recent.animate { animation: rowGlow 900ms ease; }
 @keyframes rowGlow { 0%{ background: color-mix(in srgb, var(--accent-green) 18%, transparent);} 100%{ background: transparent;} }
 .data-table thead.scrolled th { box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+
+/* === PATCH UI PROSPECTION (bridge des nouvelles classes) === */
+
+/* Grille du formulaire d’ajout */
+.form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 14px;
+}
+.form-grid > .btn {
+  grid-column: span 1;
+}
+
+/* Barre de filtres active */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+.filters > * {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+/* Cartes de stats (actives + archives) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 10px 0 16px;
+}
+.stat-card {
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+.stat-card span {
+  font-size: 1.2rem;
+}
+
+/* Container tableau (assure le scroll horizontal si besoin) */
+.table-container {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+/* Bouton secondaire (utilisé pour Exporter) */
+.btn-secondary, a.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text) !important;
+}
+
+/* Bouton icône (notes / edit / archive / delete) */
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Sélecteur de statut en ligne */
+.status-select {
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #fff;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+.status-select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+.status-select.status-a-contacter { background-color: #3b82f6; }
+.status-select.status-a-relancer  { background-color: #f59e0b; }
+.status-select.status-rdv-pris    { background-color: #22c55e; }
+.status-select.status-rdv-refusé  { background-color: #ef4444; }
+
+/* Effet “flash” optionnel sur les stats si déjà inclus dans le JS */
+.stat-value.flash {
+  animation: statFlash 700ms ease;
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+@keyframes statFlash {
+  0% { background: color-mix(in srgb, var(--accent-blue) 25%, transparent); }
+  100% { background: transparent; }
+}
