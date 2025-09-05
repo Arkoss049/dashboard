@@ -22,7 +22,7 @@
     return Number.isFinite(n) ? n : null;
   }
 
-  // Parse "dd/mm/yyyy" -> Date (safe)
+  // Parse "dd/mm/yyyy" -> Date
   function parseFRDate(s) {
     if (!s) return null;
     const parts = String(s).split('/');
@@ -109,13 +109,14 @@
       return;
     }
 
-    list.forEach((p, index) => {
+    list.forEach((p) => {
       const tr = document.createElement('tr');
+      const idx = prospects.indexOf(p); // <-- index réel dans la source
       const notesIcon = p.notes ? '📝' : '🗒️';
 
       const statusCls = (p.status || 'A contacter').toLowerCase().replace(/ /g, '-');
       const statusSelect = `
-        <select class="status-select status-${statusCls}" data-index="${index}">
+        <select class="status-select status-${statusCls}" data-index="${idx}">
           <option ${p.status === 'A contacter' ? 'selected' : ''}>A contacter</option>
           <option ${p.status === 'A relancer' ? 'selected' : ''}>A relancer</option>
           <option ${p.status === 'RDV Pris' ? 'selected' : ''}>RDV Pris</option>
@@ -132,20 +133,20 @@
         <td>${statusSelect}</td>
         <td>${p.lastUpdate || ''}</td>
         <td>
-          <button class="btn btn-ghost btn-notes" data-index="${index}" title="Notes">${notesIcon}</button>
+          <button class="btn btn-ghost btn-notes" data-index="${idx}" title="Notes">${notesIcon}</button>
         </td>
         <td>
-          <button class="btn btn-ghost btn-edit" data-index="${index}" title="Modifier">✏️</button>
-          <button class="btn btn-danger btn-small" data-index="${index}" title="Supprimer">🗑️</button>
+          <button class="btn btn-ghost btn-edit" data-index="${idx}" title="Modifier">✏️</button>
+          <button class="btn btn-danger btn-small" data-index="${idx}" title="Supprimer">🗑️</button>
         </td>
       `;
       tbody.appendChild(tr);
     });
 
     // Suppression
-    document.querySelectorAll('#prospectTableBody .btn-danger').forEach(btn => {
+    document.querySelectorAll('#prospectTableBody .btn-danger').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        const index = e.currentTarget.dataset.index;
+        const index = Number(e.currentTarget.dataset.index);
         prospects.splice(index, 1);
         saveProspects();
         debouncedFilterAndSort();
@@ -153,24 +154,24 @@
     });
 
     // Notes
-    document.querySelectorAll('#prospectTableBody .btn-notes').forEach(btn => {
+    document.querySelectorAll('#prospectTableBody .btn-notes').forEach((btn) => {
       btn.addEventListener('click', (e) => openNotesModal(Number(e.currentTarget.dataset.index)));
     });
 
-    // Edition
-    document.querySelectorAll('#prospectTableBody .btn-edit').forEach(btn => {
+    // Édition
+    document.querySelectorAll('#prospectTableBody .btn-edit').forEach((btn) => {
       btn.addEventListener('click', (e) => openEditModal(Number(e.currentTarget.dataset.index)));
     });
 
-    // Changement du statut via select
-    document.querySelectorAll('#prospectTableBody .status-select').forEach(sel => {
+    // Changement de statut
+    document.querySelectorAll('#prospectTableBody .status-select').forEach((sel) => {
       sel.addEventListener('change', (e) => {
         const index = Number(e.currentTarget.dataset.index);
         const newStatus = e.currentTarget.value;
         prospects[index].status = newStatus;
         prospects[index].lastUpdate = formatTodayFR();
         saveProspects();
-        debouncedFilterAndSort();
+        debouncedFilterAndSort(); // re-render pour rafraîchir la couleur du select
       });
     });
   }
@@ -201,7 +202,7 @@
     document.getElementById('prospectName').focus();
   }
 
-  // === Modales ===
+  // === Modales Notes ===
   function openNotesModal(index) {
     currentProspectIndex = index;
     document.getElementById('notesTextarea').value = prospects[index].notes || '';
@@ -220,6 +221,7 @@
     }
   }
 
+  // === Modale Édition ===
   function openEditModal(index) {
     currentProspectIndex = index;
     const p = prospects[index];
@@ -270,10 +272,10 @@
   }
 
   window.filterAndSortProspects = function () {
-    const searchTerm  = normalize(document.getElementById('searchFilter').value);
+    const searchTerm   = normalize(document.getElementById('searchFilter').value);
     const filterStatus = document.getElementById('statusFilter').value;
     const filterDate   = document.getElementById('dateFilter').value;
-    const sortValue   = document.getElementById('sortFilter').value;
+    const sortValue    = document.getElementById('sortFilter').value;
 
     let filtered = prospects.slice();
 
@@ -289,16 +291,14 @@
       filtered = filtered.filter(p => (p.status || 'A contacter') === filterStatus);
     }
 
-    // ---- Nouveau : filtre par période ----
+    // Filtre par période
     if (filterDate !== 'all') {
-      const now = new Date();
-      now.setHours(0,0,0,0);
+      const now = new Date(); now.setHours(0,0,0,0);
 
-      // Lundi comme début de semaine (Europe)
-      const day = now.getDay(); // 0=Dim,…,6=Sam
-      const deltaToMonday = (day + 6) % 7; // Lundi=0
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - deltaToMonday);
+      // Lundi = début de semaine
+      const day = now.getDay();
+      const deltaToMonday = (day + 6) % 7;
+      const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - deltaToMonday);
 
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const startOfYear  = new Date(now.getFullYear(), 0, 1);
@@ -318,7 +318,7 @@
       });
     }
 
-    // ---- Tri ----
+    // Tri
     switch (sortValue) {
       case 'name_asc':
         filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
@@ -356,10 +356,7 @@
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
 
     // Notes
-    document.getElementById('closeNotesModal').addEventListener('click', () => {
-      document.getElementById('notesModal').style.display = 'none';
-      currentProspectIndex = null;
-    });
+    document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
 
     // Import
