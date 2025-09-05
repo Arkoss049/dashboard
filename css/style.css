@@ -443,3 +443,12 @@ footer{ color:var(--muted); padding:16px; text-align:center; font-size:12px; }
   height: 16px;
   fill: currentColor;
 }
+.icon-btn svg { width:16px; height:16px; fill: currentColor; }
+
+/* (optionnels) Flash stats + glow lignes récentes + ombre thead, si tu veux les effets */
+.stat-value.flash { animation: statFlash 700ms ease; border-radius:8px; padding:2px 6px; }
+@keyframes statFlash { 0%{ background: color-mix(in srgb, var(--accent-blue) 25%, transparent);} 100%{ background: transparent;} }
+tr.recent { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-green) 45%, transparent); }
+tr.recent.animate { animation: rowGlow 900ms ease; }
+@keyframes rowGlow { 0%{ background: color-mix(in srgb, var(--accent-green) 18%, transparent);} 100%{ background: transparent;} }
+.data-table thead.scrolled th { box-shadow: 0 2px 8px rgba(0,0,0,.25); }
