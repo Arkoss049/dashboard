@@ -22,7 +22,6 @@
     return Number.isFinite(n) ? n : null;
   }
 
-  // Parse "dd/mm/yyyy" -> Date
   function parseFRDate(s) {
     if (!s) return null;
     const parts = String(s).split('/');
@@ -111,7 +110,7 @@
 
     list.forEach((p) => {
       const tr = document.createElement('tr');
-      const idx = prospects.indexOf(p); // <-- index réel dans la source
+      const idx = prospects.indexOf(p);
       const notesIcon = p.notes ? '📝' : '🗒️';
 
       const statusCls = (p.status || 'A contacter').toLowerCase().replace(/ /g, '-');
@@ -163,7 +162,7 @@
       btn.addEventListener('click', (e) => openEditModal(Number(e.currentTarget.dataset.index)));
     });
 
-    // Changement de statut
+    // ⚡ Changement de statut (rafraîchissement immédiat)
     document.querySelectorAll('#prospectTableBody .status-select').forEach((sel) => {
       sel.addEventListener('change', (e) => {
         const index = Number(e.currentTarget.dataset.index);
@@ -171,7 +170,7 @@
         prospects[index].status = newStatus;
         prospects[index].lastUpdate = formatTodayFR();
         saveProspects();
-        debouncedFilterAndSort(); // re-render pour rafraîchir la couleur du select
+        filterAndSortProspects(); // ⚡ pas de debounce
       });
     });
   }
@@ -291,15 +290,11 @@
       filtered = filtered.filter(p => (p.status || 'A contacter') === filterStatus);
     }
 
-    // Filtre par période
     if (filterDate !== 'all') {
       const now = new Date(); now.setHours(0,0,0,0);
-
-      // Lundi = début de semaine
       const day = now.getDay();
       const deltaToMonday = (day + 6) % 7;
       const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - deltaToMonday);
-
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const startOfYear  = new Date(now.getFullYear(), 0, 1);
 
@@ -318,24 +313,15 @@
       });
     }
 
-    // Tri
     switch (sortValue) {
-      case 'name_asc':
-        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
-      case 'name_desc':
-        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); break;
-      case 'age_asc':
-        filtered.sort((a, b) => (a.age ?? 0) - (b.age ?? 0)); break;
-      case 'age_desc':
-        filtered.sort((a, b) => (b.age ?? 0) - (a.age ?? 0)); break;
-      case 'monthly_asc':
-        filtered.sort((a, b) => (a.monthly ?? 0) - (b.monthly ?? 0)); break;
-      case 'monthly_desc':
-        filtered.sort((a, b) => (b.monthly ?? 0) - (a.monthly ?? 0)); break;
-      case 'date_asc':
-        filtered.sort((a, b) => (parseFRDate(a.lastUpdate) || 0) - (parseFRDate(b.lastUpdate) || 0)); break;
-      case 'date_desc':
-        filtered.sort((a, b) => (parseFRDate(b.lastUpdate) || 0) - (parseFRDate(a.lastUpdate) || 0)); break;
+      case 'name_asc':     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
+      case 'name_desc':    filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); break;
+      case 'age_asc':      filtered.sort((a, b) => (a.age ?? 0) - (b.age ?? 0)); break;
+      case 'age_desc':     filtered.sort((a, b) => (b.age ?? 0) - (a.age ?? 0)); break;
+      case 'monthly_asc':  filtered.sort((a, b) => (a.monthly ?? 0) - (b.monthly ?? 0)); break;
+      case 'monthly_desc': filtered.sort((a, b) => (b.monthly ?? 0) - (a.monthly ?? 0)); break;
+      case 'date_asc':     filtered.sort((a, b) => (parseFRDate(a.lastUpdate) || 0) - (parseFRDate(b.lastUpdate) || 0)); break;
+      case 'date_desc':    filtered.sort((a, b) => (parseFRDate(b.lastUpdate) || 0) - (parseFRDate(a.lastUpdate) || 0)); break;
     }
 
     renderTable(filtered);
@@ -352,14 +338,11 @@
     loadProspects();
     debouncedFilterAndSort();
 
-    // Boutons principaux
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
 
-    // Notes
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
 
-    // Import
     document.getElementById('importCsvBtn').addEventListener('click', () => {
       document.getElementById('importModal').style.display = 'flex';
     });
@@ -368,11 +351,9 @@
     });
     document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
 
-    // Edit
     document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
     document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
-    // Export
     const exportBtn = document.getElementById('exportCsvBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
@@ -380,7 +361,6 @@
       });
     }
 
-    // Entrée ↵ pour ajouter
     ['prospectName','prospectNumber','prospectPP','prospectAge','prospectPhone','prospectMonthly']
       .map(id => document.getElementById(id))
       .forEach(el => el.addEventListener('keydown', (e) => {
