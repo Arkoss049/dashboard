@@ -138,15 +138,37 @@
       const tr = document.createElement('tr');
       const notesIcon = p.notes ? '<span class="icon-note-filled">📝</span>' : '<span class="icon-note-empty">🗒️</span>';
       
-const statusButtons = `
-        <div class="status-buttons">
-          <button class="btn btn-status ${p.status === 'A contacter' ? 'active' : ''}" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
-          <button class="btn btn-status ${p.status === 'A relancer' ? 'active' : ''}" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
-          <button class="btn btn-status ${p.status === 'RDV Pris' ? 'active' : ''}" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
-          <button class="btn btn-status ${p.status === 'RDV Refusé' ? 'active' : ''}" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
-          <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>
-        </div>
-      `;
+const statusSelect = `
+  <select class="status-select" data-index="${prospects.indexOf(p)}">
+    <option value="A contacter" ${p.status === 'A contacter' ? 'selected' : ''}>A contacter</option>
+    <option value="A relancer" ${p.status === 'A relancer' ? 'selected' : ''}>A relancer</option>
+    <option value="RDV Pris" ${p.status === 'RDV Pris' ? 'selected' : ''}>RDV Pris</option>
+    <option value="RDV Refusé" ${p.status === 'RDV Refusé' ? 'selected' : ''}>RDV Refusé</option>
+  </select>
+`;
+
+// Le bouton de suppression reste le même
+const deleteButton = `<button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>`;
+
+tr.innerHTML = `
+  <td>${p.name}</td>
+  <td>${p.number}</td>
+  <td>${p.phone}</td>
+  <td>${p.monthly} €</td>
+  <td>${p.pp}</td>
+  <td>
+    <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
+      ${notesIcon}
+    </button>
+  </td>
+  <td>${p.lastUpdate || ''}</td>
+  <td>
+    <div class="actions-group">
+      ${statusSelect}
+      ${deleteButton}
+    </div>
+  </td>
+`;
 
       tr.innerHTML = `
         <td>${p.name}</td>
@@ -194,6 +216,16 @@ const statusButtons = `
             openNotesModal(index);
         });
     });
+    document.querySelectorAll('#prospectTableBody .status-select').forEach(select => {
+  select.addEventListener('change', (e) => {
+    const index = e.target.dataset.index;
+    const newStatus = e.target.value;
+    prospects[index].status = newStatus;
+    prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
+    saveProspects();
+    debouncedFilterAndSort();
+  });
+});
   }
 
   function addProspect() {
