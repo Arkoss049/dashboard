@@ -4,6 +4,8 @@
   let currentProspectIndex = null;
   let debouncedSearchTimer = null;
 
+  const STATUS_LIST = ['A contacter', 'A relancer', 'RDV Pris', 'RDV Refusé'];
+
   function saveProspects() {
     localStorage.setItem(PROSPECTS_STORAGE_KEY, JSON.stringify(prospects));
   }
@@ -11,14 +13,11 @@
   function loadProspects() {
     const stored = localStorage.getItem(PROSPECTS_STORAGE_KEY);
     if (stored) {
-      try {
-        prospects = JSON.parse(stored);
-      } catch {
-        prospects = [];
-      }
+      try { prospects = JSON.parse(stored); } catch { prospects = []; }
     }
   }
 
+  // ---------- Notes ----------
   function openNotesModal(index) {
     const modal = document.getElementById('notesModal');
     const textarea = document.getElementById('notesTextarea');
@@ -26,22 +25,22 @@
     textarea.value = prospects[index].notes || '';
     modal.style.display = 'flex';
   }
-
   function closeNotesModal() {
     document.getElementById('notesModal').style.display = 'none';
     currentProspectIndex = null;
   }
-
   function saveNotes() {
     const textarea = document.getElementById('notesTextarea');
     if (currentProspectIndex !== null) {
       prospects[currentProspectIndex].notes = textarea.value;
+      prospects[currentProspectIndex].lastUpdate = new Date().toLocaleDateString('fr-FR');
       saveProspects();
       debouncedFilterAndSort();
       closeNotesModal();
     }
   }
 
+  // ---------- Import ----------
   function openImportModal() {
     document.getElementById('importModal').style.display = 'flex';
   }
@@ -49,7 +48,28 @@
     document.getElementById('importModal').style.display = 'none';
   }
 
-  // ✅ version robuste : vide => null, non numérique => null
+  // ---------- Edit ----------
+  function openEditModal(index) {
+    currentProspectIndex = index;
+    const p = prospects[index];
+
+    document.getElementById('editName').value    = p.name || '';
+    document.getElementById('editNumber').value  = p.number || '';
+    document.getElementById('editPhone').value   = p.phone || '';
+    document.getElementById('editMonthly').value = (p.monthly ?? '') === '' ? '' : p.monthly;
+    document.getElementById('editPP').value      = (p.pp ?? '') === '' ? '' : p.pp;
+    document.getElementById('editAge').value     = (p.age ?? '') === '' ? '' : p.age;
+    document.getElementById('editStatus').value  = p.status || 'A contacter';
+    document.getElementById('editNotes').value   = p.notes || '';
+
+    document.getElementById('editModal').style.display = 'flex';
+  }
+  function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    currentProspectIndex = null;
+  }
+
+  // conversion robuste
   function toNumberOrNull(v) {
     const s = String(v ?? '').replace(',', '.').trim();
     if (s === '') return null;
@@ -58,16 +78,8 @@
   }
 
   function updateStats() {
-    const stats = {
-      total: prospects.length,
-      'A contacter': 0,
-      'A relancer': 0,
-      'RDV Pris': 0,
-      'RDV Refusé': 0,
-    };
-    prospects.forEach((p) => {
-      if (stats[p.status] !== undefined) stats[p.status]++;
-    });
+    const stats = { total: prospects.length, 'A contacter':0, 'A relancer':0, 'RDV Pris':0, 'RDV Refusé':0 };
+    prospects.forEach((p) => { if (stats[p.status] !== undefined) stats[p.status]++; });
 
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-a-contacter').textContent = stats['A contacter'];
@@ -77,28 +89,13 @@
   }
 
   function exportToCsv(data, filename) {
-    if (!data || data.length === 0) {
-      alert('Aucune donnée à exporter.');
-      return;
-    }
-    const headers = [
-      'name',
-      'number',
-      'phone',
-      'monthly',
-      'pp',
-      'age',
-      'status',
-      'lastUpdate',
-      'notes',
-    ];
-    const csvRows = [];
-    csvRows.push(headers.join(';'));
+    if (!data || data.length === 0) { alert('Aucune donnée à exporter.'); return; }
+    const headers = ['name','number','phone','monthly','pp','age','status','lastUpdate','notes'];
+    const csvRows = [headers.join(';')];
     for (const row of data) {
       const values = headers.map((h) => {
         const value = row[h] ?? '';
-        // ✅ CSV standard : " devient ""
-        const escaped = String(value).replace(/"/g, '""');
+        const escaped = String(value).replace(/"/g, '""'); // CSV standard
         return `"${escaped}"`;
       });
       csvRows.push(values.join(';'));
@@ -115,10 +112,7 @@
   function importFromCsv() {
     const fileInput = document.getElementById('csvFileInput');
     const file = fileInput.files[0];
-    if (!file) {
-      alert('Veuillez sélectionner un fichier CSV.');
-      return;
-    }
+    if (!file) { alert('Veuillez sélectionner un fichier CSV.'); return; }
 
     const reader = new FileReader();
     reader.onload = function (event) {
@@ -126,40 +120,35 @@
       const lines = csvText.split('\n').filter((line) => line.trim() !== '');
       if (lines.length === 0) return;
 
-      const headers = lines[0]
-        .split(';')
-        .map((h) => h.trim().replace(/"/g, ''));
-
+      const headers = lines[0].split(';').map((h) => h.trim().replace(/"/g, ''));
       const importedProspects = lines.slice(1).map((line) => {
         const values = line.split(';').map((v) => v.trim().replace(/"/g, ''));
         const obj = {};
-        headers.forEach((header, i) => {
-          obj[header] = values[i] || '';
-        });
+        headers.forEach((header, i) => { obj[header] = values[i] || ''; });
 
-        // Normalisation
         obj.name = obj.name || '';
         obj.number = obj.number || '';
         obj.phone = obj.phone || '';
         obj.monthly = toNumberOrNull(obj.monthly) ?? '';
         obj.pp = toNumberOrNull(obj.pp) ?? '';
         obj.age = toNumberOrNull(obj.age) ?? '';
-
         if (!obj.status) obj.status = 'A contacter';
         if (!obj.lastUpdate) obj.lastUpdate = new Date().toLocaleDateString('fr-FR');
         if (!obj.notes) obj.notes = '';
         return obj;
       });
 
-      // ✅ Fusion corrigée
       prospects = [...prospects, ...importedProspects];
       saveProspects();
       debouncedFilterAndSort();
       alert(`Importation réussie : ${importedProspects.length} contacts ajoutés.`);
       closeImportModal();
     };
-
     reader.readAsText(file);
+  }
+
+  function statusClassFromValue(v) {
+    return (v || 'A contacter').toLowerCase().replace(/ /g, '-'); // ex: "a-relancer"
   }
 
   function renderTable(list) {
@@ -172,17 +161,28 @@
 
     list.forEach((p) => {
       const tr = document.createElement('tr');
-      const notesIcon = p.notes
-        ? '<span class="icon-note-filled">📝</span>'
-        : '<span class="icon-note-empty">🗒️</span>';
+      const idx = prospects.indexOf(p);
 
-      const statusButtons = `
-        <div class="status-buttons">
-          <button class="btn btn-status ${p.status === 'A contacter' ? 'active' : ''}" data-status="A contacter" data-index="${prospects.indexOf(p)}">A contacter</button>
-          <button class="btn btn-status ${p.status === 'A relancer' ? 'active' : ''}" data-status="A relancer" data-index="${prospects.indexOf(p)}">A relancer</button>
-          <button class="btn btn-status ${p.status === 'RDV Pris' ? 'active' : ''}" data-status="RDV Pris" data-index="${prospects.indexOf(p)}">RDV Pris</button>
-          <button class="btn btn-status ${p.status === 'RDV Refusé' ? 'active' : ''}" data-status="RDV Refusé" data-index="${prospects.indexOf(p)}">RDV Refusé</button>
-          <button class="btn btn-danger btn-small" data-index="${prospects.indexOf(p)}">🗑️</button>
+      // Notes icône
+      const notesIcon = p.notes ? '📝' : '🗒️';
+
+      // --- STATUT: dropdown conservant les couleurs ---
+      const st = p.status || 'A contacter';
+      const stClass = statusClassFromValue(st);
+      const options = STATUS_LIST.map((s) =>
+        `<option value="${s}" ${s === st ? 'selected' : ''}>${s}</option>`
+      ).join('');
+      const statusSelect = `
+        <select class="status-select status-${stClass}" data-index="${idx}">
+          ${options}
+        </select>
+      `;
+
+      // --- ACTIONS: crayon (édition) + poubelle ---
+      const actions = `
+        <div class="actions">
+          <button class="btn btn-ghost btn-edit" data-index="${idx}" title="Modifier">✏️</button>
+          <button class="btn btn-danger btn-small" data-index="${idx}" title="Supprimer">🗑️</button>
         </div>
       `;
 
@@ -192,45 +192,48 @@
         <td>${p.phone || ''}</td>
         <td>${p.monthly !== null && p.monthly !== undefined && p.monthly !== '' ? p.monthly + ' €' : ''}</td>
         <td>${p.pp ?? ''}</td>
-        <td><span class="status-chip status-${(p.status || 'A contacter').toLowerCase().replace(/ /g, '-') || 'a-contacter'}">${p.status || 'A contacter'}</span></td>
+        <td>${statusSelect}</td>
         <td>${p.lastUpdate || ''}</td>
         <td>
-          <button class="btn btn-ghost btn-notes" data-index="${prospects.indexOf(p)}">
-            ${notesIcon}
-          </button>
+          <button class="btn btn-ghost btn-notes" data-index="${idx}" title="Notes">${notesIcon}</button>
         </td>
-        <td>
-          ${statusButtons}
-        </td>
+        <td>${actions}</td>
       `;
       tbody.appendChild(tr);
     });
 
-    // Actions
+    // Suppression
     document.querySelectorAll('#prospectTableBody .btn-danger').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        const index = e.target.closest('button').dataset.index;
+        const index = e.currentTarget.dataset.index;
         prospects.splice(index, 1);
         saveProspects();
         debouncedFilterAndSort();
       });
     });
 
-    document.querySelectorAll('#prospectTableBody .btn-status').forEach((btn) => {
+    // Edition (crayon)
+    document.querySelectorAll('#prospectTableBody .btn-edit').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        const index = e.target.closest('button').dataset.index;
-        const newStatus = e.target.closest('button').dataset.status;
-        prospects[index].status = newStatus;
-        prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
-        saveProspects();
-        debouncedFilterAndSort();
+        const index = e.currentTarget.dataset.index;
+        openEditModal(Number(index));
       });
     });
 
+    // Notes
     document.querySelectorAll('#prospectTableBody .btn-notes').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        const index = e.target.closest('button').dataset.index;
-        openNotesModal(index);
+      btn.addEventListener('click', (e) => openNotesModal(Number(e.currentTarget.dataset.index)));
+    });
+
+    // Changement du statut via <select>
+    document.querySelectorAll('#prospectTableBody .status-select').forEach((sel) => {
+      sel.addEventListener('change', (e) => {
+        const index = Number(e.currentTarget.dataset.index);
+        const newStatus = e.currentTarget.value;
+        prospects[index].status = newStatus;
+        prospects[index].lastUpdate = new Date().toLocaleDateString('fr-FR');
+        saveProspects();
+        debouncedFilterAndSort(); // re-render pour actualiser la couleur du select
       });
     });
   }
@@ -238,16 +241,9 @@
   function addProspect() {
     const name = document.getElementById('prospectName').value.trim();
     const number = document.getElementById('prospectNumber').value.trim();
-
-    if (!name || !number) {
-      alert("Le nom et le numéro d'adhérent sont obligatoires.");
-      return;
-    }
+    if (!name || !number) { alert("Le nom et le numéro d'adhérent sont obligatoires."); return; }
     const isDuplicate = prospects.some((p) => p.number === number);
-    if (isDuplicate) {
-      alert("Ce numéro d'adhérent existe déjà.");
-      return;
-    }
+    if (isDuplicate) { alert("Ce numéro d'adhérent existe déjà."); return; }
 
     prospects.push({
       name,
@@ -263,10 +259,8 @@
     saveProspects();
     debouncedFilterAndSort();
 
-    // reset form
-    ['prospectName', 'prospectNumber', 'prospectPP', 'prospectAge', 'prospectPhone', 'prospectMonthly'].forEach(
-      (id) => (document.getElementById(id).value = '')
-    );
+    ['prospectName','prospectNumber','prospectPP','prospectAge','prospectPhone','prospectMonthly']
+      .forEach((id) => (document.getElementById(id).value = ''));
     document.getElementById('prospectName').focus();
   }
 
@@ -295,24 +289,12 @@
     }
 
     switch (sortValue) {
-      case 'name_asc':
-        filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        break;
-      case 'name_desc':
-        filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-        break;
-      case 'age_asc':
-        filtered.sort((a, b) => (a.age ?? 0) - (b.age ?? 0));
-        break;
-      case 'age_desc':
-        filtered.sort((a, b) => (b.age ?? 0) - (a.age ?? 0));
-        break;
-      case 'monthly_asc':
-        filtered.sort((a, b) => (a.monthly ?? 0) - (b.monthly ?? 0));
-        break;
-      case 'monthly_desc':
-        filtered.sort((a, b) => (b.monthly ?? 0) - (a.monthly ?? 0));
-        break;
+      case 'name_asc':     filtered.sort((a,b) => (a.name || '').localeCompare(b.name || '')); break;
+      case 'name_desc':    filtered.sort((a,b) => (b.name || '').localeCompare(a.name || '')); break;
+      case 'age_asc':      filtered.sort((a,b) => (a.age ?? 0) - (b.age ?? 0)); break;
+      case 'age_desc':     filtered.sort((a,b) => (b.age ?? 0) - (a.age ?? 0)); break;
+      case 'monthly_asc':  filtered.sort((a,b) => (a.monthly ?? 0) - (b.monthly ?? 0)); break;
+      case 'monthly_desc': filtered.sort((a,b) => (b.monthly ?? 0) - (a.monthly ?? 0)); break;
     }
 
     renderTable(filtered);
@@ -324,20 +306,63 @@
     debouncedSearchTimer = setTimeout(filterAndSortProspects, 200);
   };
 
-  // 🔌 Init
+  // ---------- Save from Edit Modal ----------
+  function saveEditFromModal() {
+    if (currentProspectIndex === null) return;
+    const idx = currentProspectIndex;
+    const p = prospects[idx];
+
+    const newName    = document.getElementById('editName').value.trim();
+    const newNumber  = document.getElementById('editNumber').value.trim();
+    const newPhone   = document.getElementById('editPhone').value.trim();
+    const newMonthly = toNumberOrNull(document.getElementById('editMonthly').value) ?? '';
+    const newPP      = toNumberOrNull(document.getElementById('editPP').value) ?? '';
+    const newAge     = toNumberOrNull(document.getElementById('editAge').value) ?? '';
+    const newStatus  = document.getElementById('editStatus').value;
+    const newNotes   = document.getElementById('editNotes').value;
+
+    if (!newName || !newNumber) {
+      alert("Le nom et le numéro d'adhérent sont obligatoires.");
+      return;
+    }
+    const duplicate = prospects.some((x, i) => i !== idx && x.number === newNumber);
+    if (duplicate) {
+      alert("Ce numéro d'adhérent existe déjà.");
+      return;
+    }
+
+    p.name = newName;
+    p.number = newNumber;
+    p.phone = newPhone;
+    p.monthly = newMonthly;
+    p.pp = newPP;
+    p.age = newAge;
+    p.status = newStatus;
+    p.notes = newNotes;
+    p.lastUpdate = new Date().toLocaleDateString('fr-FR');
+
+    saveProspects();
+    debouncedFilterAndSort();
+    closeEditModal();
+  }
+
+  // ---------- Init ----------
   window.initProspectionPanel = function () {
     loadProspects();
     debouncedFilterAndSort();
 
-    // Boutons principaux
     document.getElementById('addProspectBtn').addEventListener('click', addProspect);
+
+    // Notes
     document.getElementById('closeNotesModal').addEventListener('click', closeNotesModal);
     document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
+
+    // Import
     document.getElementById('importCsvBtn').addEventListener('click', openImportModal);
     document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
     document.getElementById('executeImportBtn').addEventListener('click', importFromCsv);
 
-    // ✅ Export branché
+    // Export
     const exportBtn = document.getElementById('exportCsvBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
@@ -345,22 +370,15 @@
       });
     }
 
-    // ↵ pour ajouter
-    const formInputs = [
-      'prospectName',
-      'prospectNumber',
-      'prospectPP',
-      'prospectAge',
-      'prospectPhone',
-      'prospectMonthly',
-    ].map((id) => document.getElementById(id));
-    formInputs.forEach((el) =>
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          addProspect();
-        }
-      })
-    );
+    // Edit Modal
+    document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+    document.getElementById('saveEditBtn').addEventListener('click', saveEditFromModal);
+
+    // Entrée pour ajouter
+    ['prospectName','prospectNumber','prospectPP','prospectAge','prospectPhone','prospectMonthly']
+      .map((id) => document.getElementById(id))
+      .forEach((el) => el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); addProspect(); }
+      }));
   };
 })();
