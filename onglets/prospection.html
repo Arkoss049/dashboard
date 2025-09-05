@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tableau de prospection</title>
-  <!-- Chemin absolu GitHub Pages (adapté au repo "dashboard") -->
-  <link rel="stylesheet" href="/dashboard/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prospection</title>
+  <!-- Chemin absolu GitHub Pages (adapter si ton repo n’est pas "dashboard") -->
+  <link rel="stylesheet" href="/dashboard/css/style.css?v=2025-09-05-1"/>
 </head>
 <body onload="initProspectionPanel()">
   <div class="app">
@@ -98,6 +98,8 @@
                 <option value="age_desc">Âge (décroissant)</option>
                 <option value="monthly_asc">Cotisation (croissante)</option>
                 <option value="monthly_desc">Cotisation (décroissante)</option>
+                <option value="date_desc">Date (plus récent)</option>
+                <option value="date_asc">Date (plus ancien)</option>
               </select>
 
               <button id="importCsvBtn" class="btn btn-primary">Importer</button>
@@ -232,7 +234,7 @@
     </div>
   </div>
 
-  <!-- Chemin absolu GitHub Pages (adapté au repo "dashboard") -->
-  <script src="/dashboard/js/modules/prospection.js"></script>
+  <!-- JS -->
+  <script src="/dashboard/js/modules/prospection.js?v=2025-09-05-1"></script>
 </body>
 </html>
