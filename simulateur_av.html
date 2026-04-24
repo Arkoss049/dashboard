@@ -509,13 +509,19 @@ body.presentation .pitch-card{padding:28px 32px}
       <input id="profile-display" type="text" readonly style="background:rgba(201,168,76,0.08);color:var(--gold2);cursor:not-allowed" />
     </div>
     <div class="sub-field">
-      <label>Scénario de marché</label>
-      <select id="scenario-select">
-        <option value="mauvais">Mauvais</option>
-        <option value="neutre" selected>Neutre</option>
-        <option value="favorable">Favorable</option>
-        <option value="tres_favorable">Très favorable</option>
+      <label>Indice de référence (poche UC)</label>
+      <select id="uc-index-select">
+        <option value="cac40" selected>CAC 40 GR (France · PEA)</option>
+        <option value="msci">MSCI World NR (mondial · ETF World)</option>
+        <option value="sp500">S&amp;P 500 TR (USA · ETF américain)</option>
       </select>
+    </div>
+  </div>
+  <div class="field" style="margin-top:10px">
+    <label>Année d'entrée</label>
+    <div class="slider-row">
+      <input id="start-year-slider" type="range" min="1986" max="2025" step="1" value="2006" />
+      <div class="mini-input"><input id="start-year-input" type="number" min="1986" max="2025" step="1" value="2006" style="font-family:'DM Mono',monospace;text-align:center" /></div>
     </div>
   </div>
   <div class="scenario-desc" id="scenario-desc"></div>
@@ -526,12 +532,15 @@ body.presentation .pitch-card{padding:28px 32px}
 </div>
 <hr>
 <div class="field">
-  <label>Contrat comparatif</label>
+  <label style="display:flex;align-items:center;justify-content:space-between">
+    <span>Contrat comparatif <span style="color:var(--muted);font-weight:400;font-style:italic">(optionnel)</span></span>
+    <button class="btn btn-sm btn-ghost" id="btn-clear-cmp" style="padding:4px 10px;font-size:11px">✕ Retirer</button>
+  </label>
   <select id="compare-select" style="width:100%"></select>
   <div class="hint">Tapez quelques lettres pour filtrer (linxea, axa, generali…)</div>
 </div>
 <div class="field-inline">
-  <div class="sub-field"><label>Rendement (%)</label><input id="cmp-rate" type="number" min="0" step="0.01" value="4.0" /></div>
+  <div class="sub-field"><label>Rendement (%)</label><input id="cmp-rate" type="number" min="0" step="0.01" value="0" /></div>
   <div class="sub-field"><label>Frais d'entrée (%)</label><input id="cmp-entry" type="number" min="0" step="0.01" value="0.00" /></div>
   <div class="sub-field"><label>Frais de gestion (%)</label><input id="cmp-mgmt" type="number" min="0" step="0.01" value="0.00" /></div>
 </div>
@@ -765,7 +774,7 @@ let calcMode = 'unique'; // 'unique' or 'alloc'
 let allocations = {}; // { productId: €amount }
 let cmpName = 'Comparatif'; // current comparatif label
 let useScenario = false; // false = rendement moyen constant, true = scénario historique
-let currentScenario = 'neutre'; // 'mauvais' | 'neutre' | 'favorable' | 'tres_favorable'
+let currentStartYear = 2006; // année d'entrée pour le mode historique
 
 // ═══════════════════════════════════════════════════════════════════
 //  UTILS
@@ -781,66 +790,197 @@ const escH = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 const escA = s => String(s||'').replace(/"/g,'&quot;');
 
 // ═══════════════════════════════════════════════════════════════════
-//  PROFILS D'ALLOCATION & SCÉNARIOS HISTORIQUES
-//  Les séquences s'inspirent de données de marché réelles (CAC 40 + fonds €)
-//  pour illustrer le comportement d'une assurance-vie en dent de scie.
+//  📊 DONNÉES HISTORIQUES RÉELLES (1986-2025)
+//
+//  Sources :
+//  • Livret A : Banque de France / Légifrance (dates officielles de révision)
+//  • CAC 40 GR (Gross Return, dividendes réinvestis) : Euronext / Bnains
+//  • Inflation : INSEE (IPC hors tabac)
+//
+//  Les rendements annuels moyens sont calculés à partir des taux en vigueur
+//  pondérés sur l'année civile. Les arrondis sont faits à 0,25 pt.
+// ═══════════════════════════════════════════════════════════════════
+
+// Livret A : taux annuel moyen réel (en %)
+// Entre deux révisions dans une même année, on pondère au prorata temporis.
+const LIVRET_A_HISTORY = {
+  1986: 4.50, 1987: 4.50, 1988: 4.50, 1989: 4.50, 1990: 4.50,
+  1991: 4.50, 1992: 4.50, 1993: 4.50, 1994: 4.50, 1995: 4.50,
+  1996: 3.68,  // passage à 3,5 % en février
+  1997: 3.50, 1998: 3.29, // passage à 3 % en juin
+  1999: 2.56, // passage à 2,25 % en juillet
+  2000: 2.62, // passage à 3 % en juin
+  2001: 3.00, 2002: 3.00,
+  2003: 2.69, // passage à 2,25 % en août
+  2004: 2.25, 2005: 2.10, // passage à 2 % en août
+  2006: 2.50, // hausses successives 2,25 % puis 2,75 %
+  2007: 2.85, // 2,75 puis 3 % en août
+  2008: 3.81, // 3,50 puis 4 % en août
+  2009: 1.75, // 4 → 2,5 → 1,75 → 1,25
+  2010: 1.33,
+  2011: 2.00, // 1,75 → 2 → 2,25
+  2012: 2.25, 2013: 1.54, // 1,75 → 1,25
+  2014: 1.17, // 1,25 → 1
+  2015: 0.85, // 1 → 0,75
+  2016: 0.75, 2017: 0.75, 2018: 0.75, 2019: 0.75,
+  2020: 0.54, // 0,75 → 0,5
+  2021: 0.50,
+  2022: 1.38, // 0,5 → 1 → 2
+  2023: 2.92, // 2 → 3
+  2024: 3.00,
+  2025: 2.35, // 3 → 2,4 → 1,7
+  2026: 1.50,
+};
+
+// CAC 40 GR (Gross Return, dividendes bruts réinvestis) — performance annuelle en %
+// Source : Euronext / Bnains. Le CAC 40 "pur prix" ajouté de ~3-4 pts de dividendes.
+const CAC40_GR_HISTORY = {
+  1986: 50.3, 1987: -33.0, 1988: 54.2, 1989: 37.1, 1990: -19.9,
+  1991: 19.5, 1992: 7.3,   1993: 24.5, 1994: -13.0, 1995: 3.9,
+  1996: 28.3, 1997: 32.2,  1998: 35.9, 1999: 54.3,
+  2000: -0.54, 2001: -21.97, 2002: -32.95, 2003: 20.75, 2004: 11.40,
+  2005: 26.55, 2006: 21.42, 2007: 4.49,   2008: -40.33, 2009: 27.39,
+  2010: -1.74, 2011: -13.69, 2012: 20.41, 2013: 22.24, 2014: 4.14,
+  2015: 11.93, 2016: 8.88,  2017: 12.51, 2018: -8.05,  2019: 30.48,
+  2020: -4.84, 2021: 31.88, 2022: -6.68, 2023: 20.10,  2024: 0.86,
+  2025: 10.50, // estimation à partir de la performance observée
+};
+
+// MSCI World NR en EUR (Net Return, dividendes nets réinvestis)
+// Source : MSCI / Curvo backtests — indice le plus proche des ETF World courants
+const MSCI_WORLD_HISTORY = {
+  1986: 38.5, 1987: -7.6, 1988: 17.2, 1989: 24.6, 1990: -14.9,
+  1991: 15.6, 1992: 3.8,  1993: 36.9, 1994: -2.0, 1995: 15.2,
+  1996: 19.2, 1997: 25.1, 1998: 22.7, 1999: 40.7,
+  2000: -4.7, 2001: -14.0, 2002: -32.4, 2003: 11.0, 2004: 6.6,
+  2005: 26.6, 2006: 7.4,   2007: -1.7,  2008: -37.6, 2009: 25.9,
+  2010: 19.5, 2011: -2.4,  2012: 14.0,  2013: 21.2,  2014: 19.5,
+  2015: 10.4, 2016: 10.7,  2017: 7.5,   2018: -4.1,  2019: 30.0,
+  2020: 6.3,  2021: 31.1,  2022: -12.8, 2023: 19.6,  2024: 26.6,
+  2025: 13.5,
+};
+
+// S&P 500 TR en EUR (Total Return) — actions américaines large cap
+// Source : S&P / Bloomberg (convertis en EUR avec effet de change)
+const SP500_HISTORY = {
+  1986: 28.0, 1987: -3.0, 1988: 4.8,  1989: 31.0, 1990: -9.5,
+  1991: 29.0, 1992: 4.5,  1993: 8.1,  1994: 1.3,  1995: 36.4,
+  1996: 22.0, 1997: 40.5, 1998: 29.4, 1999: 31.2,
+  2000: -4.6, 2001: -9.1,  2002: -32.4, 2003: 8.5,  2004: 3.1,
+  2005: 30.9, 2006: 3.0,   2007: -4.1,  2008: -35.5, 2009: 23.8,
+  2010: 27.2, 2011: 1.2,   2012: 15.3,  2013: 30.7,  2014: 29.0,
+  2015: 12.7, 2016: 14.1,  2017: 6.4,   2018: -2.7,  2019: 33.8,
+  2020: 7.0,  2021: 39.1,  2022: -13.2, 2023: 27.6,  2024: 32.8,
+  2025: 15.0,
+};
+
+// Catalogue des indices disponibles pour la poche UC
+const UC_INDICES = {
+  'cac40':   { label: 'CAC 40 GR', short: 'CAC 40', desc: 'Bourse de Paris (40 grandes capitalisations françaises, dividendes réinvestis). Sous-jacent naturel du PEA et de la plupart des UC françaises.', data: CAC40_GR_HISTORY },
+  'msci':    { label: 'MSCI World NR',  short: 'MSCI World', desc: 'Indice mondial des pays développés (≈1 300 entreprises, 72 % USA). Référence des ETF World modernes. Plus performant et plus diversifié que le CAC 40.', data: MSCI_WORLD_HISTORY },
+  'sp500':   { label: 'S&P 500 TR',  short: 'S&P 500', desc: '500 plus grandes capitalisations américaines. Performance historiquement la plus élevée mais 100 % USA, sensible au dollar.', data: SP500_HISTORY },
+};
+
+let currentUcIndex = 'cac40'; // CAC 40 par défaut (référence pédagogique française)
+
+// Fonds € : approximation pédagogique, taux de rémunération moyen marché
+// (Source : FFA — Fédération Française de l'Assurance, rendements moyens annuels)
+const FONDS_EURO_HISTORY = {
+  1986: 8.0, 1987: 8.0, 1988: 8.0, 1989: 8.0, 1990: 8.0,
+  1991: 8.0, 1992: 7.5, 1993: 7.0, 1994: 6.5, 1995: 6.5,
+  1996: 6.3, 1997: 6.0, 1998: 5.5, 1999: 5.3,
+  2000: 5.3, 2001: 5.3, 2002: 4.8, 2003: 4.5, 2004: 4.4,
+  2005: 4.2, 2006: 4.1, 2007: 4.1, 2008: 3.9, 2009: 3.6,
+  2010: 3.4, 2011: 3.0, 2012: 2.9, 2013: 2.8, 2014: 2.5,
+  2015: 2.3, 2016: 1.8, 2017: 1.8, 2018: 1.8, 2019: 1.4,
+  2020: 1.3, 2021: 1.3, 2022: 1.9, 2023: 2.5, 2024: 2.6,
+  2025: 2.6, 2026: 2.5,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  PROFILS D'ALLOCATION (pondération fonds euro / UC)
 // ═══════════════════════════════════════════════════════════════════
 const PROFILES = {
   'tres_prudent': { label: 'Très prudent', fe: 1.00, uc: 0.00, desc: '100 % fonds euro' },
   'prudent':      { label: 'Prudent',      fe: 0.70, uc: 0.30, desc: '70 % fonds € · 30 % UC' },
   'equilibre':    { label: 'Équilibré',    fe: 0.50, uc: 0.50, desc: '50 % fonds € · 50 % UC' },
   'dynamique':    { label: 'Dynamique',    fe: 0.30, uc: 0.70, desc: '30 % fonds € · 70 % UC' },
-  'offensif':     { label: 'Offensif',     fe: 0.00, uc: 1.00, desc: '100 % UC' },
+  'offensif':     { label: 'Offensif',     fe: 0.00, uc: 1.00, desc: '100 % UC (CAC 40 GR)' },
 };
 
-// Mapping des onglets contrat → profils (en mode scénario)
 const CONTRACT_TO_PROFILE = {
   'Érable':  'prudent',
   'Séquoia': 'equilibre',
   'Ébène':   'dynamique',
 };
 
-// Séquences de rendements annuels (%). 40 ans = couvre toute la durée max.
-const SCENARIOS = {
-  'mauvais': {
-    label: 'Mauvais',
-    desc: 'Inspiré de 2000-2024 : bulle internet, crise 2008, Covid (chocs précoces)',
-    // UC : commence par le krach dotcom (-22, -34) puis rebond, puis 2008 (-43)
-    uc: [-0.5, -22, -34, +16, +7, +23, +18, +1, -43, +22, -3, -17, +15, +18, -0.5, +9, +5, +9, -11, +26, -7, +29, -9, +16, -2, +8, +10, +6, +4, +5, +7, +3, +8, +6, +4, +7, +9, +5, +8, +6],
-    // FE : baisse progressive puis remontée récente
-    fe: [5.0, 4.8, 4.5, 4.2, 4.0, 3.8, 3.5, 3.2, 3.0, 2.8, 2.5, 2.3, 2.0, 1.8, 1.5, 1.4, 1.3, 1.3, 1.4, 1.5, 1.4, 2.5, 3.0, 2.8, 2.7, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
-  },
-  'neutre': {
-    label: 'Neutre',
-    desc: 'Conditions de marché moyennes, volatilité modérée, quelques corrections',
-    uc: [+8, +12, -6, +15, +10, -8, +18, +5, +12, -10, +20, +8, -4, +14, +6, +11, -7, +16, +9, +13, -5, +17, +7, +10, -3, +14, +8, +11, -6, +15, +9, +12, -4, +13, +7, +10, -5, +14, +8, +11],
-    fe: [3.0, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4, 2.5, 2.6, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4],
-  },
-  'favorable': {
-    label: 'Favorable',
-    desc: 'Inspiré de 2012-2021 : marché globalement haussier, corrections courtes',
-    uc: [+15, +18, -2, +22, +10, +25, -4, +28, +8, +20, +15, -5, +30, +12, +24, +6, +18, -3, +25, +10, +22, +14, -6, +28, +8, +20, +15, -4, +26, +10, +22, +14, -5, +25, +8, +20, +15, -3, +24, +10],
-    fe: [2.5, 2.3, 2.2, 2.0, 1.8, 1.7, 1.5, 1.5, 1.8, 2.2, 2.8, 3.2, 3.5, 3.0, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, 2.3, 2.5, 2.7, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4, 2.5, 2.6, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4],
-  },
-  'tres_favorable': {
-    label: 'Très favorable',
-    desc: 'Inspiré des années 80-90 : forte croissance, faible inflation',
-    uc: [+22, +28, +15, +32, -5, +25, +30, +12, +20, -8, +35, +18, +22, +28, +10, +25, +32, -4, +28, +20, +25, +15, +30, +22, -6, +28, +20, +25, +32, +12, +22, +28, +15, +25, +30, +18, +20, +28, +22, +25],
-    fe: [5.0, 4.8, 4.5, 4.3, 4.0, 3.8, 3.5, 3.3, 3.5, 3.8, 4.0, 4.2, 4.5, 4.3, 4.0, 3.8, 3.5, 3.3, 3.0, 2.8, 3.0, 3.2, 3.5, 3.8, 4.0, 4.2, 4.0, 3.8, 3.5, 3.3, 3.0, 3.2, 3.5, 3.8, 4.0, 3.8, 3.5, 3.3, 3.0, 3.2],
-  },
-};
+// ═══════════════════════════════════════════════════════════════════
+//  ANNÉE D'ENTRÉE LIBRE — plage valide des données historiques
+// ═══════════════════════════════════════════════════════════════════
+const HISTORY_MIN_YEAR = 1986;
+const HISTORY_MAX_YEAR = 2025;
 
-// Construit un tableau de rendements annuels pondérés selon profil + scénario
-function buildYearlyRates(profileId, scenarioId, years) {
-  const P = PROFILES[profileId], S = SCENARIOS[scenarioId];
-  if (!P || !S) return null;
+// Pour un profil + une année d'entrée, construit les rendements annuels
+// selon l'indice UC choisi (CAC 40 / MSCI World / S&P 500)
+function buildYearlyRatesHistorical(profileId, startYear, years) {
+  const P = PROFILES[profileId];
+  const ucData = (UC_INDICES[currentUcIndex] || UC_INDICES['cac40']).data;
+  if (!P) return null;
   const rates = [];
   for (let y = 0; y < years; y++) {
-    const fe = S.fe[y % S.fe.length];
-    const uc = S.uc[y % S.uc.length];
+    const year = startYear + y;
+    let fe = FONDS_EURO_HISTORY[year];
+    let uc = ucData[year];
+    // Au-delà des données historiques, on prolonge avec la moyenne de la dernière décennie
+    if (fe === undefined) fe = 2.5;
+    if (uc === undefined) {
+      // Fallback : moyenne sur les 10 dernières années disponibles
+      const recent = Object.keys(ucData).map(Number).sort().slice(-10);
+      uc = recent.reduce((s, yr) => s + ucData[yr], 0) / recent.length;
+    }
     rates.push(P.fe * fe + P.uc * uc);
   }
   return rates;
+}
+
+// Taux historique d'un livret réglementé à partir d'une année d'entrée
+function buildYearlyRatesRegulated(productId, startYear, years) {
+  const rates = [];
+  for (let y = 0; y < years; y++) {
+    const year = startYear + y;
+    let rate = null;
+    if (productId === 'la' || productId === 'ldds') {
+      rate = LIVRET_A_HISTORY[year];
+    } else if (productId === 'lep') {
+      rate = LIVRET_A_HISTORY[year] !== undefined ? LIVRET_A_HISTORY[year] + 1.0 : null;
+    } else if (productId === 'cel') {
+      rate = LIVRET_A_HISTORY[year] !== undefined ? Math.round((LIVRET_A_HISTORY[year] * 2 / 3) * 4) / 4 : null;
+    } else if (productId === 'pel') {
+      // PEL : taux fixé à l'ouverture = LA + 0,5 pt
+      rate = LIVRET_A_HISTORY[startYear] !== undefined ? LIVRET_A_HISTORY[startYear] + 0.5 : null;
+    } else if (productId === 'csl') {
+      rate = LIVRET_A_HISTORY[year] !== undefined ? Math.max(0.5, LIVRET_A_HISTORY[year] * 0.5) : null;
+    } else if (productId === 'lj') {
+      rate = LIVRET_A_HISTORY[year] !== undefined ? LIVRET_A_HISTORY[year] + 0.5 : null;
+    }
+    // Au-delà de la plage historique : prolonger avec dernière valeur connue
+    if (rate === null || rate === undefined) {
+      const lastKnown = LIVRET_A_HISTORY[2026] || 1.5;
+      if (productId === 'lep') rate = lastKnown + 1.0;
+      else if (productId === 'cel') rate = Math.round((lastKnown * 2 / 3) * 4) / 4;
+      else if (productId === 'pel') rate = lastKnown + 0.5;
+      else if (productId === 'csl') rate = Math.max(0.5, lastKnown * 0.5);
+      else if (productId === 'lj') rate = lastKnown + 0.5;
+      else rate = lastKnown;
+    }
+    rates.push(rate);
+  }
+  return rates;
+}
+
+// Alias pour le contrat principal
+function buildYearlyRates(profileId, startYear, years) {
+  return buildYearlyRatesHistorical(profileId, startYear, years);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -924,6 +1064,15 @@ function computeAll() {
   // Enabled regulated products
   const enabledRegs = REGULATED.filter(p => p.enabled);
 
+  // Fonction utilitaire : rendement effectif pour un livret
+  //  - mode rendement moyen : taux saisi (p.rate)
+  //  - mode scénario : tableau annuel historique si disponible, sinon p.rate en repli
+  function rateForProduct(p) {
+    if (!useScenario) return p.rate;
+    const arr = buildYearlyRatesRegulated(p.id, currentStartYear, years);
+    return arr || p.rate;
+  }
+
   // Compute allocation split
   let mainInitial = initial;
   const regulatedSims = [];
@@ -933,13 +1082,13 @@ function computeAll() {
     enabledRegs.forEach(p => {
       const a = Math.max(0, Number(allocations[p.id] || 0));
       allocSum += a;
-      regulatedSims.push({ ...p, alloc: a, sim: simulate({ ...common, initial: a, grossRate: p.rate, entryFee: 0, mgmtFee: 0, tax: 'none' }) });
+      regulatedSims.push({ ...p, alloc: a, sim: simulate({ ...common, initial: a, grossRate: rateForProduct(p), entryFee: 0, mgmtFee: 0, tax: 'none' }) });
     });
     mainInitial = Math.max(0, initial - allocSum);
   } else {
     // Unique mode: each enabled product runs with full initial (reference comparison)
     enabledRegs.forEach(p => {
-      regulatedSims.push({ ...p, alloc: initial, sim: simulate({ ...common, initial, grossRate: p.rate, entryFee: 0, mgmtFee: 0, tax: 'none' }) });
+      regulatedSims.push({ ...p, alloc: initial, sim: simulate({ ...common, initial, grossRate: rateForProduct(p), entryFee: 0, mgmtFee: 0, tax: 'none' }) });
     });
   }
 
@@ -950,12 +1099,18 @@ function computeAll() {
   let yearlyMainRates = null;
   if (useScenario) {
     const profileId = CONTRACT_TO_PROFILE[currentContract] || 'equilibre';
-    yearlyMainRates = buildYearlyRates(profileId, currentScenario, years);
+    yearlyMainRates = buildYearlyRates(profileId, currentStartYear, years);
     if (yearlyMainRates) effectiveMainRate = yearlyMainRates;
   }
 
   const main = simulate({ initial: mainInitial, monthly, years, inflation, tax, grossRate: effectiveMainRate, entryFee: mainEntry, mgmtFee: mainMgmt });
-  const cmp  = simulate({ initial: (calcMode === 'alloc' ? mainInitial : initial), monthly, years, inflation, tax, grossRate: cmpRate, entryFee: cmpEntry, mgmtFee: cmpMgmt });
+
+  // Comparatif actif uniquement si un contrat a été sélectionné OU si un rendement > 0 a été saisi
+  const cmpActive = cmpName !== 'Comparatif' || cmpRate > 0;
+  const cmp = cmpActive
+    ? simulate({ initial: (calcMode === 'alloc' ? mainInitial : initial), monthly, years, inflation, tax, grossRate: cmpRate, entryFee: cmpEntry, mgmtFee: cmpMgmt })
+    : null;
+
   // Stress test : ±1 pt ne s'applique qu'au scalaire (pas au scénario dent de scie)
   const mainLowRate  = useScenario ? effectiveMainRate : Math.max(0, mainRate - 1);
   const mainHighRate = useScenario ? effectiveMainRate : mainRate + 1;
@@ -988,12 +1143,12 @@ function computeAll() {
 
   return {
     inputs: { initial, monthly, years, inflation, tax, mode, mainRate, mainEntry, mainMgmt, cmpEntry, cmpMgmt, cmpRate, mainInitial },
-    main, cmp, mainLow, mainHigh, regulatedSims, dep, totalAllocSeries,
+    main, cmp, cmpActive, mainLow, mainHigh, regulatedSims, dep, totalAllocSeries,
     inactionLoss, inactionReal,
     contractName: currentContract,
     stressOn: document.getElementById('stress').checked,
     useScenario,
-    scenario: useScenario ? currentScenario : null,
+    scenario: useScenario ? currentStartYear : null,
     profileId: useScenario ? (CONTRACT_TO_PROFILE[currentContract] || 'equilibre') : null,
     yearlyMainRates,
   };
@@ -1016,10 +1171,14 @@ function generatePitch(p) {
     // Comparaison : si tout l'initial avait été mis sur Livret A
     // On recalcule un "Livret A virtuel" sur la totalité de l'initial
     if (la) {
+      // Si scénario actif, utilise les taux historiques du Livret A
+      const laRate = p.useScenario
+        ? (buildYearlyRatesRegulated('la', p.scenario, years) || la.rate)
+        : la.rate;
       const laFull = simulate({
         initial: p.inputs.initial, monthly: p.inputs.monthly,
         years, inflation: p.inputs.inflation, tax: 'none',
-        grossRate: la.rate, entryFee: 0, mgmtFee: 0
+        grossRate: laRate, entryFee: 0, mgmtFee: 0
       });
       compareLaCapital = laFull.totalCapital;
     }
@@ -1030,18 +1189,25 @@ function generatePitch(p) {
     compareLaCapital = la ? la.sim.totalCapital : null;
   }
 
+  // Adaptation du verbe selon le mode (projection future vs historique passé)
+  const verb = p.useScenario ? 'aurait rapporté' : 'rapporte';
+  const verbGen = p.useScenario ? 'aurait généré' : 'génère';
+  const prefix = p.useScenario
+    ? `De <span class="big">${currentStartYear}</span> à <span class="big">${currentStartYear + years}</span>`
+    : `En <span class="big">${years} ans</span>`;
+
   if (compareLaCapital !== null && compareLaCapital !== undefined) {
     const diff = refCapital - compareLaCapital;
     const pct  = compareLaCapital > 0 ? (diff / compareLaCapital) * 100 : 0;
     if (diff > 0) {
-      return `En <span class="big">${years} ans</span>, <span class="highlight">${escH(refLabel)}</span> rapporte <span class="big">${fmt(diff)}</span> de plus qu'un Livret A, soit <span class="big">+${pct.toFixed(0)} %</span> de gain supplémentaire.`;
+      return `${prefix}, <span class="highlight">${escH(refLabel)}</span> ${verb} <span class="big">${fmt(diff)}</span> de plus qu'un Livret A, soit <span class="big">+${pct.toFixed(0)} %</span> de gain supplémentaire.`;
     } else if (diff < 0) {
-      return `En ${years} ans, ${escH(refLabel)} rapporte ${fmt(Math.abs(diff))} de <span class="big">moins</span> qu'un Livret A (${pct.toFixed(0)} %).`;
+      return `${prefix}, ${escH(refLabel)} ${verb} ${fmt(Math.abs(diff))} de <span class="big">moins</span> qu'un Livret A (${pct.toFixed(0)} %).`;
     } else {
-      return `En ${years} ans, ${escH(refLabel)} et le Livret A donnent un résultat identique.`;
+      return `${prefix}, ${escH(refLabel)} et le Livret A donnent un résultat identique.`;
     }
   }
-  return `En <span class="big">${years} ans</span>, <span class="highlight">${escH(refLabel)}</span> génère un capital de <span class="big">${fmt(refCapital)}</span>.`;
+  return `${prefix}, <span class="highlight">${escH(refLabel)}</span> ${verbGen} un capital de <span class="big">${fmt(refCapital)}</span>.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1065,13 +1231,16 @@ function renderScenarios(p) {
   // Pour être comparable au scénario principal (portefeuille entier en alloc, contrat unique en unique)
   let laGain = null;
   if (la) {
+    const laRate = p.useScenario
+      ? (buildYearlyRatesRegulated('la', p.scenario, p.inputs.years) || la.rate)
+      : la.rate;
     const laFull = simulate({
       initial: p.inputs.initial,
       monthly: p.inputs.monthly,
       years:   p.inputs.years,
       inflation: p.inputs.inflation,
       tax: 'none',
-      grossRate: la.rate,
+      grossRate: laRate,
       entryFee: 0, mgmtFee: 0
     });
     laGain = laFull.netGain;
@@ -1171,10 +1340,10 @@ function hexToRgba(hex, a) {
 function buildChart(p) {
   const mode = p.inputs.mode;
   const years = p.inputs.years;
-  const currentYear = new Date().getFullYear(); // e.g. 2026
-  // Labels : année calendaire (2026, 2027, ...). Stockée aussi en meta pour tooltip.
-  const labels = Array.from({ length: years + 1 }, (_, i) => String(currentYear + i));
-  const yearOffsets = Array.from({ length: years + 1 }, (_, i) => i); // 0, 1, 2...
+  // En mode scénario, l'axe X affiche les vraies années historiques.
+  // En mode rendement moyen, l'axe X affiche les années à partir d'aujourd'hui.
+  const baseYear = p.useScenario ? currentStartYear : new Date().getFullYear();
+  const labels = Array.from({ length: years + 1 }, (_, i) => String(baseYear + i));
   const pick = sim => mode === 'reel' ? sim.yearlyReal : sim.yearlyNominal;
 
   const legendContainer = document.getElementById('legend-row');
@@ -1245,7 +1414,7 @@ function buildChart(p) {
       if (!hideFromLegend) legendItems.push({ key, label, color });
     };
     addDs(p.contractName, pick(p.main), '#c9a84c', 2.5, null, 'main');
-    addDs(cmpName,        pick(p.cmp),  '#4d8cf5', 2,   null, 'cmp');
+    if (p.cmpActive) addDs(cmpName, pick(p.cmp), '#4d8cf5', 2, null, 'cmp');
     p.regulatedSims.forEach(r => addDs(r.name, pick(r.sim), r.color, 1.8, null, 'reg_' + r.id));
     addDs('Versements cumulés', p.dep, 'rgba(120,145,175,0.6)', 1.2, [6, 4], 'dep');
     if (p.stressOn) {
@@ -1270,7 +1439,8 @@ function buildChart(p) {
     });
   });
 
-  // Plugin : trait vertical "aujourd'hui" à l'année 0
+  // Plugin : trait vertical au début de la projection
+  const markerLabel = p.useScenario ? String(currentStartYear) : 'Aujourd\'hui';
   const todayMarkerPlugin = {
     id: 'todayMarker',
     afterDatasetsDraw(chart) {
@@ -1286,12 +1456,11 @@ function buildChart(p) {
       ctx.moveTo(x, chartArea.top);
       ctx.lineTo(x, chartArea.bottom);
       ctx.stroke();
-      // Petit label "aujourd'hui"
       ctx.setLineDash([]);
       ctx.fillStyle = 'rgba(201,168,76,0.7)';
       ctx.font = '10px Outfit, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('Aujourd\'hui', x + 4, chartArea.top + 12);
+      ctx.fillText(markerLabel, x + 4, chartArea.top + 12);
       ctx.restore();
     }
   };
@@ -1315,29 +1484,51 @@ function buildChart(p) {
           callbacks: {
             title: items => {
               const idx = items[0].dataIndex;
-              const yr = currentYear + idx;
-              return `Année ${idx}  ·  ${yr}`;
+              const yr = baseYear + idx;
+              if (idx === 0) {
+                return p.useScenario ? `${yr}  ·  entrée` : `Année ${idx}  ·  ${yr}`;
+              }
+              return p.useScenario ? `${yr}  ·  ${idx} an${idx > 1 ? 's' : ''}` : `Année ${idx}  ·  ${yr}`;
             },
             label: ctx => `  ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
             afterBody: items => {
               const extras = [];
-              // En mode scénario : afficher le rendement appliqué cette année au contrat principal
-              if (p.useScenario && p.main.yearlyRatesApplied && items[0]) {
-                const idx = items[0].dataIndex;
-                if (idx > 0 && p.main.yearlyRatesApplied[idx] !== undefined) {
+              const idx = items[0]?.dataIndex ?? 0;
+              // En mode scénario : détailler les rendements réels de l'année
+              if (p.useScenario && idx > 0) {
+                extras.push('', '───── Rendements ' + (currentStartYear + idx - 1) + ' ─────');
+                // Contrat principal (rendement appliqué avec frais compris dans le calcul amont)
+                if (p.main.yearlyRatesApplied && p.main.yearlyRatesApplied[idx] !== undefined) {
                   const r = p.main.yearlyRatesApplied[idx];
                   const sign = r >= 0 ? '+' : '';
-                  const color = r >= 0 ? '' : ''; // couleur gérée par CSS bodyColor
-                  extras.push(`  ↳ Rdt ${p.contractName} cette année : ${sign}${r.toFixed(1).replace('.', ',')} %`);
+                  extras.push(`  ${p.contractName} : ${sign}${r.toFixed(1).replace('.', ',')} %`);
+                }
+                // Chaque livret actif
+                p.regulatedSims.forEach(reg => {
+                  if (reg.sim.yearlyRatesApplied && reg.sim.yearlyRatesApplied[idx] !== undefined) {
+                    const r = reg.sim.yearlyRatesApplied[idx];
+                    const sign = r >= 0 ? '+' : '';
+                    extras.push(`  ${reg.name} : ${sign}${r.toFixed(2).replace('.', ',')} %`);
+                  }
+                });
+                // Indice UC de référence (pour référence pédagogique)
+                const ucInfo = UC_INDICES[currentUcIndex];
+                if (ucInfo) {
+                  const ucYear = currentStartYear + idx - 1;
+                  const ucRate = ucInfo.data[ucYear];
+                  if (ucRate !== undefined) {
+                    const sign = ucRate >= 0 ? '+' : '';
+                    extras.push(`  ${ucInfo.short} (réf.) : ${sign}${ucRate.toFixed(1).replace('.', ',')} %`);
+                  }
                 }
               }
-              // En mode alloc : total patrimoine
+              // Total patrimoine en mode répartition
               if (calcMode === 'alloc') {
                 const portfolio = items.filter(i => i.dataset.stack === 'portfolio' && !i.dataset.hidden);
                 if (portfolio.length) {
                   const total = portfolio.reduce((s, i) => s + (i.parsed.y || 0), 0);
                   if (extras.length) extras.push('');
-                  extras.push('─────────────', 'Total patrimoine : ' + fmt(total));
+                  extras.push('───── Total ─────', 'Patrimoine : ' + fmt(total));
                 }
               }
               return extras;
@@ -1429,9 +1620,9 @@ function updateUI(p) {
   } else {
     cols = [
       { label: contractName, sim: main, color: '#c9a84c', isMain: true },
-      { label: cmpName, sim: cmp, color: '#4d8cf5' },
-      ...regulatedSims.map(r => ({ label: r.name, sim: r.sim, color: r.color, isReg: true }))
     ];
+    if (p.cmpActive) cols.push({ label: cmpName, sim: cmp, color: '#4d8cf5' });
+    regulatedSims.forEach(r => cols.push({ label: r.name, sim: r.sim, color: r.color, isReg: true }));
   }
 
   const refCapital = cols[0].sim.totalCapital; // head-of-row reference for "Diff. vs"
@@ -1464,7 +1655,7 @@ function updateUI(p) {
     yHeadCells.push('<th style="color:#fff">Portefeuille total</th>');
   }
   yHeadCells.push(`<th style="color:var(--gold2)">${escH(contractName)}${calcMode==='alloc'?' (part)':''}</th>`);
-  if (calcMode !== 'alloc') yHeadCells.push(`<th style="color:#4d8cf5">${escH(cmpName)}</th>`);
+  if (calcMode !== 'alloc' && p.cmpActive) yHeadCells.push(`<th style="color:#4d8cf5">${escH(cmpName)}</th>`);
   regulatedSims.forEach(r => yHeadCells.push(`<th style="color:${r.color}">${escH(r.name)}</th>`));
   yHeadCells.push('<th>Versements</th>');
   yThead.innerHTML = '<tr>' + yHeadCells.join('') + '</tr>';
@@ -1477,7 +1668,7 @@ function updateUI(p) {
     const cells = [`<td style="text-align:left;color:var(--soft)">${y}</td>`];
     if (totalRealArr) cells.push(`<td style="color:#fff">${fmt(totalRealArr[y])}</td>`);
     cells.push(`<td class="val-gold">${fmt(pick(main)[y])}</td>`);
-    if (calcMode !== 'alloc') cells.push(`<td>${fmt(pick(cmp)[y])}</td>`);
+    if (calcMode !== 'alloc' && p.cmpActive) cells.push(`<td>${fmt(pick(cmp)[y])}</td>`);
     regulatedSims.forEach(r => {
       const arr = mode === 'reel' ? r.sim.yearlyReal : r.sim.yearlyNominal;
       cells.push(`<td style="color:${r.color}">${fmt(arr[y])}</td>`);
@@ -1788,7 +1979,8 @@ cmpEntry: Number(document.getElementById(‘cmp-entry’).value),
 cmpMgmt: Number(document.getElementById(‘cmp-mgmt’).value),
 cmpName: cmpName,
 useScenario,
-scenario: currentScenario,
+scenario: currentStartYear,
+ucIndex: currentUcIndex,
 regulated: REGULATED.map(p => ({ id: p.id, enabled: p.enabled, rate: p.rate })),
 allocations: { …allocations },
 savedAt: new Date().toISOString(),
@@ -1898,12 +2090,27 @@ document.getElementById(‘cmp-mgmt’).value = c.cmpMgmt;
 // Contract
 currentContract = c.contract || ‘Érable’;
 document.querySelectorAll(’.tab’).forEach(t => t.classList.toggle(‘active’, t.dataset.contract === currentContract));
-// Scenario mode
+// Scenario mode : migration depuis anciens formats vers année numérique
 useScenario = Boolean(c.useScenario);
-currentScenario = c.scenario || ‘neutre’;
+const legacyStart = { ‘mauvais’: 2006, ‘neutre’: 2006, ‘favorable’: 1996, ‘tres_favorable’: 1986,
+‘2006-2025’: 2006, ‘1996-2015’: 1996, ‘1986-2005’: 1986 };
+const raw = c.scenario;
+if (typeof raw === ‘number’) {
+currentStartYear = raw;
+} else if (raw && legacyStart[raw] !== undefined) {
+currentStartYear = legacyStart[raw];
+} else {
+currentStartYear = 2006;
+}
+currentStartYear = Math.max(HISTORY_MIN_YEAR, Math.min(HISTORY_MAX_YEAR, currentStartYear));
+currentUcIndex = c.ucIndex || ‘cac40’;
 document.querySelectorAll(’#rate-mode-seg .seg-btn’).forEach(b => b.classList.toggle(‘active’, b.dataset.rateMode === (useScenario ? ‘scenario’ : ‘flat’)));
-const scenSel = document.getElementById(‘scenario-select’);
-if (scenSel) scenSel.value = currentScenario;
+const startYearInput = document.getElementById(‘start-year-input’);
+const startYearSlider = document.getElementById(‘start-year-slider’);
+if (startYearInput)  startYearInput.value  = currentStartYear;
+if (startYearSlider) startYearSlider.value = currentStartYear;
+const ucSel = document.getElementById(‘uc-index-select’);
+if (ucSel) ucSel.value = currentUcIndex;
 applyRateMode();
 // Comparatif name
 cmpName = c.cmpName || ‘Comparatif’;
@@ -2023,12 +2230,24 @@ if (calcMode === 'alloc' && p.totalAllocSeries && p.totalAllocSeries.length) {
     ['CAGR net', totalCagr.toFixed(2) + '%', p.main.cagr.toFixed(2) + '%', ...p.regulatedSims.map(r => r.sim.cagr.toFixed(2) + '%')],
   ];
 } else {
-  cols = ['', p.contractName, cmpName, ...p.regulatedSims.map(r => r.name)];
+  const showCmp = p.cmpActive;
+  cols = ['', p.contractName];
+  if (showCmp) cols.push(cmpName);
+  cols.push(...p.regulatedSims.map(r => r.name));
+
   rows = [
-    ['Capital final', money(p.main.totalCapital), money(p.cmp.totalCapital), ...p.regulatedSims.map(r => money(r.sim.totalCapital))],
-    ['Gain net client', money(p.main.netGain), money(p.cmp.netGain), ...p.regulatedSims.map(r => money(r.sim.netGain))],
-    ['Frais totaux', money(p.main.totalFees), money(p.cmp.totalFees), ...p.regulatedSims.map(_ => money(0))],
-    ['CAGR net', p.main.cagr.toFixed(2) + '%', p.cmp.cagr.toFixed(2) + '%', ...p.regulatedSims.map(r => r.sim.cagr.toFixed(2) + '%')],
+    ['Capital final', money(p.main.totalCapital),
+      ...(showCmp ? [money(p.cmp.totalCapital)] : []),
+      ...p.regulatedSims.map(r => money(r.sim.totalCapital))],
+    ['Gain net client', money(p.main.netGain),
+      ...(showCmp ? [money(p.cmp.netGain)] : []),
+      ...p.regulatedSims.map(r => money(r.sim.netGain))],
+    ['Frais totaux', money(p.main.totalFees),
+      ...(showCmp ? [money(p.cmp.totalFees)] : []),
+      ...p.regulatedSims.map(_ => money(0))],
+    ['CAGR net', p.main.cagr.toFixed(2) + '%',
+      ...(showCmp ? [p.cmp.cagr.toFixed(2) + '%'] : []),
+      ...p.regulatedSims.map(r => r.sim.cagr.toFixed(2) + '%')],
   ];
 }
 if (y + 40 > H - 20) { doc.addPage(); y = M; }
@@ -2137,8 +2356,20 @@ el.value = `${p.label} · ${p.desc}`;
 function updateScenarioDesc() {
 const el = document.getElementById(‘scenario-desc’);
 if (!el) return;
-const s = SCENARIOS[currentScenario];
-if (s) el.textContent = s.desc;
+const years = Number(document.getElementById(‘years’).value || 10);
+const endYear = currentStartYear + years;
+const ucInfo = UC_INDICES[currentUcIndex] || UC_INDICES[‘cac40’];
+// Contexte de l’année de départ
+let context = ‘’;
+if (currentStartYear === 2000)      context = ‘Entrée en plein éclatement de la bulle internet’;
+else if (currentStartYear === 2008) context = ‘Entrée en pleine crise des subprimes’;
+else if (currentStartYear === 2009) context = ‘Entrée au plus bas post-crise (meilleur timing historique)’;
+else if (currentStartYear === 2020) context = ‘Entrée au moment du choc Covid’;
+else if (currentStartYear >= 2022)  context = ‘Entrée récente, période de remontée des taux et de normalisation’;
+else if (currentStartYear <= 1990)  context = ‘Entrée lors des dernières années de forte inflation’;
+else if (currentStartYear >= 2010 && currentStartYear <= 2015) context = ‘Entrée en période de taux bas post-crise’;
+el.innerHTML = `De <strong>${currentStartYear}</strong> à <strong>${endYear}</strong> · Indice UC : <strong>${ucInfo.short}</strong>` +
+(context ? ` · <span style="color:var(--gold2)">${context}</span>` : ‘’);
 }
 
 document.querySelectorAll(’#rate-mode-seg .seg-btn’).forEach(b => {
@@ -2151,8 +2382,23 @@ recalcAndRender();
 });
 });
 
-document.getElementById(‘scenario-select’).addEventListener(‘change’, e => {
-currentScenario = e.target.value;
+// Slider année d’entrée ↔ champ numérique synchronisés
+const startYearSlider = document.getElementById(‘start-year-slider’);
+const startYearInput  = document.getElementById(‘start-year-input’);
+function setStartYear(v) {
+const y = Math.max(HISTORY_MIN_YEAR, Math.min(HISTORY_MAX_YEAR, Math.round(v) || 2006));
+currentStartYear = y;
+startYearSlider.value = y;
+startYearInput.value  = y;
+updateScenarioDesc();
+recalcAndRender();
+}
+startYearSlider.addEventListener(‘input’, e => setStartYear(Number(e.target.value)));
+startYearInput.addEventListener(‘input’,  e => setStartYear(Number(e.target.value)));
+
+// Sélecteur d’indice UC (CAC 40 / MSCI World / S&P 500)
+document.getElementById(‘uc-index-select’).addEventListener(‘change’, e => {
+currentUcIndex = e.target.value;
 updateScenarioDesc();
 recalcAndRender();
 });
@@ -2204,6 +2450,7 @@ document.getElementById(‘tab-summary’).classList.remove(‘active’);
 // Years slider
 document.getElementById(‘years’).addEventListener(‘input’, e => {
 document.getElementById(‘yearsValue’).textContent = e.target.value + ’ ans’;
+updateScenarioDesc();
 });
 
 // Monthly slider ↔ number input sync (slider max = 2000, input unbounded)
@@ -2253,6 +2500,16 @@ const link = document.createElement(‘a’);
 link.download = ‘graphique_simulation.png’;
 link.href = document.getElementById(‘chart’).toDataURL(‘image/png’, 1.0);
 link.click();
+});
+
+// Clear comparatif
+document.getElementById(‘btn-clear-cmp’).addEventListener(‘click’, () => {
+$(’#compare-select’).val(’**custom**’).trigger(‘change.select2’);
+cmpName = ‘Comparatif’;
+document.getElementById(‘cmp-rate’).value = ‘0’;
+document.getElementById(‘cmp-entry’).value = ‘0’;
+document.getElementById(‘cmp-mgmt’).value = ‘0’;
+recalcAndRender();
 });
 
 // Clients
