@@ -1,976 +1,2296 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Simulateur d'Épargne — Pro+</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulateur d'Épargne — Conseil Patrimonial</title>
 
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
-  <!-- jQuery & Select2 -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-  <!-- jsPDF & html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <style>
-    :root {
-      --bg: #0b1020;
-      --surface: #10162b;
-      --muted: #475569;
-      --text: #e8edf7;
-      --brand: #2dd4bf; /* teal-400 */
-      --brand-2: #fbbf24; /* amber-400 */
-      --ok: #22c55e;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-      --grid: rgba(255,255,255,0.06);
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0; padding: 24px;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 80% -20%, rgba(45,212,191,0.06), transparent 60%),
-                  radial-gradient(800px 500px at -10% 100%, rgba(251,191,36,0.08), transparent 60%),
-                  var(--bg);
-      color: var(--text);
-    }
-    .shell {
-      max-width: 1080px; margin: 0 auto;
-    }
-    header {
-      display:flex; align-items:center; justify-content:space-between; gap: 16px;
-      margin-bottom: 18px;
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(20px, 2.6vw, 30px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      display:flex; gap:10px; align-items:center;
-    }
-    .badge {
-      font-size: 12px; padding: 4px 8px; border-radius: 999px;
-      background: rgba(45,212,191,0.12); color: var(--brand);
-      border: 1px solid rgba(45,212,191,0.35);
-    }
-    .toolbar {
-      display:flex; gap:8px; flex-wrap: wrap;
-    }
-    button, .btn {
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-      border:1px solid rgba(255,255,255,0.16);
-      color: var(--text); padding: 10px 14px; border-radius: 12px;
-      font-weight: 600; cursor:pointer; transition: .15s transform ease, .2s background;
-    }
-    button:hover, .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.10); }
-    button:disabled { opacity:.5; cursor: not-allowed; transform:none; }
-
-    .grid {
-      display:grid; gap:14px;
-      grid-template-columns: repeat(12, 1fr);
-    }
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius: 16px; padding: 16px;
-      backdrop-filter: blur(6px);
-    }
-    .card h3 { margin: 0 0 10px; font-size: 16px; font-weight: 700; color: #dbeafe; }
-
-    .inputs { grid-column: span 5; }
-    .compare { grid-column: span 7; }
-    @media (max-width: 980px) {
-      .inputs, .compare { grid-column: 1 / -1; }
-    }
-
-    .row { display:flex; align-items:center; gap:10px; margin: 10px 0; flex-wrap: wrap; }
-    label { font-size: 13px; color: #cbd5e1; width: 200px; max-width: 100%; }
-    input[type="number"], select, .select2-selection--single {
-      background: #0f152a; color: var(--text);
-      border:1px solid rgba(255,255,255,0.16);
-      border-radius: 12px; padding: 10px 12px; min-width: 130px;
-    }
-    input[type="range"]{ width:200px; }
-    .muted { color: #93a4bb; font-size: 12px; }
-    .kpi {
-      display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:8px;
-    }
-    .kpi .item {
-      padding: 10px; border-radius: 12px;
-      border:1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-    }
-    .kpi .item .label { font-size: 12px; color:#9fb0c6; }
-    .kpi .item .value { font-size: 18px; font-weight:800; margin-top:6px; letter-spacing: -0.01em; }
-    @media (max-width:700px){ .kpi{ grid-template-columns:1fr 1fr; } }
-
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 10px;
-      border:1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;
-    }
-    th, td { padding: 10px; text-align: center; font-size: 13px; }
-    thead th {
-      background: rgba(2,6,23,0.75); border-bottom:1px solid rgba(255,255,255,0.10);
-      color:#cbd5e1;
-    }
-    tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
-    tbody tr:nth-child(even) { background: rgba(255,255,255,0.05); }
-    .tag { padding:2px 6px; border-radius: 8px; background: rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); font-size: 11px; color:#bfdbfe; }
-
-    .chart-card { position: relative; }
-    .legend { display:flex; gap:8px; flex-wrap: wrap; margin-top:10px; }
-    .legend label { width:auto; display:flex; align-items:center; gap:6px; }
-    .legend input[type="checkbox"]{ transform: translateY(1px); }
-
-    .footer {
-      margin-top: 20px; font-size: 12px; color:#9fb0c6; display:flex;
-      justify-content: space-between; gap: 12px; flex-wrap: wrap;
-    }
-
-    .ok { color: var(--ok); }
-    .warn { color: var(--warn); }
-    .danger { color: var(--danger); }
-    .pill { border:1px dashed rgba(255,255,255,0.2); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
-  
-/* Select2 dark theme overrides */
-.select2-container--default .select2-selection--single {
-  background: #0f152a !important;
-  border: 1px solid rgba(255,255,255,0.16) !important;
-  height: 42px !important;
+<style>
+:root {
+  --ink:#070c18; --deep:#0d1326; --card:#111827; --card2:#141c2e;
+  --rim:rgba(255,255,255,0.07); --rim2:rgba(255,255,255,0.12);
+  --muted:#3d4f66; --soft:#7a8fa8; --text:#dde4ef;
+  --gold:#c9a84c; --gold2:#e8c96a;
+  --green:#43c78a; --amber:#fbbf24; --red:#e55b5b; --blue:#4d8cf5;
 }
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-  color: var(--text) !important;
-  line-height: 42px !important;
-  padding-left: 12px !important;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{
+  min-height:100vh;background:var(--ink);
+  background-image:
+    radial-gradient(ellipse 1000px 450px at 80% -10%,rgba(201,168,76,0.06) 0%,transparent 60%),
+    radial-gradient(ellipse 700px 500px at 0% 95%,rgba(77,140,245,0.05) 0%,transparent 55%),
+    repeating-linear-gradient(0deg,transparent,transparent 80px,rgba(255,255,255,0.012) 80px,rgba(255,255,255,0.012) 81px),
+    repeating-linear-gradient(90deg,transparent,transparent 80px,rgba(255,255,255,0.012) 80px,rgba(255,255,255,0.012) 81px);
+  color:var(--text);font-family:'Outfit',sans-serif;padding:24px 20px 60px;
 }
-.select2-container--default .select2-selection--single .select2-selection__arrow b {
-  border-color: var(--text) transparent transparent transparent !important;
+.shell{max-width:1180px;margin:0 auto}
+
+/* ══ HEADER ══ */
+header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:16px;flex-wrap:wrap}
+.brand h1{font-family:'DM Serif Display',serif;font-size:clamp(20px,2.6vw,30px);font-weight:400;color:#f0e8d4;letter-spacing:-0.01em}
+.brand h1 em{font-style:italic;color:var(--gold)}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:3px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ══ CLIENT BAR ══ */
+.client-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;margin-bottom:18px;
+  background:rgba(255,255,255,0.025);border:1px solid var(--rim);border-radius:12px;
 }
-.select2-dropdown {
-  background: #0b1020 !important;
-  border: 1px solid rgba(255,255,255,0.16) !important;
+.client-bar-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600}
+.client-bar input[type="text"]{
+  background:rgba(255,255,255,0.04);border:1px solid var(--rim2);border-radius:8px;
+  padding:7px 12px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;min-width:180px;
 }
-.select2-results__options {
-  background: #0b1020 !important;
-  color: var(--text) !important;
-}
-.select2-results__option--highlighted.select2-results__option--selectable {
-  background: rgba(45,212,191,0.18) !important;
-  color: var(--text) !important;
-}
-.select2-search--dropdown .select2-search__field {
-  background: #10162b !important;
-  border: 1px solid rgba(255,255,255,0.16) !important;
-  color: var(--text) !important;
-  border-radius: 8px !important;
+.client-bar input[type="text"]:focus{outline:none;border-color:var(--gold)}
+.client-bar select{
+  background:rgba(255,255,255,0.04);border:1px solid var(--rim2);border-radius:8px;
+  padding:7px 10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;
 }
 
-  
-/* Fix chart canvas height on dark layout to avoid huge scroll */
-#chart {
-  display: block;
-  width: 100% !important;
-  height: 420px !important;   /* fixed visual height */
-  max-height: 75vh !important;
+/* ══ BUTTONS ══ */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;
+  border:1px solid var(--rim);background:rgba(255,255,255,0.04);color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .1s;white-space:nowrap;
 }
-.chart-card {
-  overflow: hidden; /* avoid accidental growth */
-}
+.btn:hover:not(:disabled){background:rgba(255,255,255,0.08);border-color:var(--rim2);transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--gold);color:#0d1326;border-color:var(--gold);font-weight:700}
+.btn-primary:hover{background:var(--gold2);border-color:var(--gold2)}
+.btn-ghost{background:transparent}
+.btn-sm{padding:6px 10px;font-size:12px}
+.btn-present{background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.1));border-color:rgba(201,168,76,0.4);color:var(--gold2)}
+body.presentation .btn-present{background:var(--gold);color:#0d1326}
 
-  
-/* Center text vertically in Select2 single selection */
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-  display: flex !important;
-  align-items: center !important;
-  height: 100% !important;
-  line-height: normal !important;
-}
+/* ══ GRID ══ */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.col-12{grid-column:1/-1}.col-5{grid-column:span 5}.col-7{grid-column:span 7}.col-6{grid-column:span 6}
+@media (max-width:900px){.col-5,.col-7,.col-6{grid-column:1/-1}}
 
-  </style>
+/* ══ CARDS ══ */
+.card{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px;position:relative}
+.card::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,0.022) 0%,transparent 50%);pointer-events:none}
+.card-title{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title::after{content:'';flex:1;height:1px;background:var(--rim)}
+
+/* ══ PITCH CARD (always on top) ══ */
+.pitch-card{
+  background:linear-gradient(135deg,rgba(201,168,76,0.12) 0%,rgba(201,168,76,0.04) 50%,transparent 100%);
+  border:1px solid rgba(201,168,76,0.25);border-radius:16px;padding:22px 26px;position:relative;
+}
+.pitch-label{font-size:11px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.pitch-text{font-family:'DM Serif Display',serif;font-size:clamp(18px,2.2vw,26px);line-height:1.35;color:#f0e8d4}
+.pitch-text .highlight{color:var(--gold2);font-style:italic}
+.pitch-text .big{font-weight:700;color:#fff}
+body.presentation .pitch-text{font-size:clamp(22px,3vw,34px)}
+
+/* ══ SCENARIO COMPARE (Ne rien faire vs Agir) ══ */
+.scenario-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:700px){.scenario-strip{grid-template-columns:1fr}}
+.scenario-tile{
+  background:rgba(255,255,255,0.025);border:1px solid var(--rim);border-radius:12px;padding:14px 16px;
+  position:relative;transition:border-color .2s;
+}
+.scenario-tile.danger{border-color:rgba(229,91,91,0.3);background:rgba(229,91,91,0.05)}
+.scenario-tile.neutral{border-color:rgba(67,199,138,0.25);background:rgba(67,199,138,0.04)}
+.scenario-tile.winner{border-color:rgba(201,168,76,0.45);background:rgba(201,168,76,0.08);box-shadow:0 0 0 1px rgba(201,168,76,0.12)}
+.scenario-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.scenario-icon{font-size:16px}
+.scenario-title{font-size:12px;font-weight:600;color:var(--soft);letter-spacing:0.02em}
+.scenario-tile.winner .scenario-title{color:var(--gold2)}
+.scenario-amount{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;letter-spacing:-0.02em}
+.scenario-tile.danger .scenario-amount{color:var(--red)}
+.scenario-tile.neutral .scenario-amount{color:var(--green)}
+.scenario-tile.winner .scenario-amount{color:var(--gold2)}
+.scenario-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ══ ALERTS ══ */
+.alerts-box{display:flex;flex-direction:column;gap:6px}
+.alert{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:10px;
+  font-size:13px;line-height:1.45;border:1px solid;
+}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.alert.info{background:rgba(77,140,245,0.08);border-color:rgba(77,140,245,0.25);color:#bfd8ff}
+.alert.warn{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.25);color:#fde4a0}
+.alert.error{background:rgba(229,91,91,0.08);border-color:rgba(229,91,91,0.3);color:#f4b2b2}
+
+/* ══ FIELDS ══ */
+.field{margin-bottom:13px}
+.field>label{display:block;font-size:12px;font-weight:500;color:var(--soft);margin-bottom:5px;letter-spacing:0.02em}
+.field-inline{display:flex;gap:8px;flex-wrap:wrap}
+.sub-field{flex:1;min-width:95px}
+.sub-field>label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+input[type="number"],input[type="text"]{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:9px;
+  padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;width:100%;
+  transition:border-color .15s;
+}
+input[type="number"]:focus,input[type="text"]:focus{outline:none;border-color:var(--gold)}
+select{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:9px;
+  padding:9px 12px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;width:100%;cursor:pointer;
+}
+select:focus{outline:none;border-color:var(--gold)}
+
+/* Slider */
+.slider-row{display:flex;gap:10px;align-items:center}
+.slider-row input[type="range"]{flex:1}
+input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:99px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(201,168,76,.5)}
+input[type="range"]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:none;box-shadow:0 0 8px rgba(201,168,76,.5)}
+.range-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold2);font-weight:500;white-space:nowrap;min-width:68px;text-align:right}
+.slider-row .mini-input{width:78px;flex-shrink:0}
+.slider-row .mini-input input{padding:6px 8px;font-size:12px;text-align:right}
+
+hr{border:none;border-top:1px solid var(--rim);margin:14px 0}
+.hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Contract tabs */
+.contract-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:7px 18px;border-radius:10px;border:1px solid var(--rim);background:transparent;color:var(--soft);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-style:italic}
+.tab:hover{border-color:rgba(201,168,76,.3);color:var(--gold)}
+.tab.active{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.45);color:var(--gold2)}
+
+/* Segmented toggle */
+.seg{display:inline-flex;background:rgba(255,255,255,0.04);border:1px solid var(--rim);border-radius:9px;padding:3px;gap:2px}
+.seg-btn{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--soft);font-size:12px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s}
+.seg-btn.active{background:rgba(201,168,76,0.2);color:var(--gold2)}
+
+/* Scenario description chip */
+.scenario-desc{font-size:11px;color:var(--soft);font-style:italic;padding:8px 12px;background:rgba(201,168,76,0.06);border-left:2px solid rgba(201,168,76,0.35);border-radius:0 6px 6px 0;margin-top:8px}
+.scenario-desc::before{content:'◆ ';color:var(--gold);font-style:normal}
+
+/* KPIs */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+@media (max-width:600px){.kpi-strip{grid-template-columns:1fr 1fr}}
+.kpi-item{background:rgba(255,255,255,0.03);border:1px solid var(--rim);border-radius:12px;padding:12px 14px}
+.kpi-item .k-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0.03em}
+.kpi-item .k-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--gold2);margin-top:6px;letter-spacing:-0.02em}
+.kpi-item .k-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Products grid */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px}
+.product-row{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:rgba(255,255,255,0.025);border:1px solid var(--rim);border-radius:12px;transition:border-color .15s,background .15s;
+  flex-wrap:wrap;
+}
+.product-row.active{border-color:var(--rim2);background:rgba(255,255,255,0.04)}
+.product-row.over-plafond{border-color:rgba(251,191,36,0.4)}
+
+.toggle-switch{position:relative;width:34px;height:18px;flex-shrink:0;cursor:pointer}
+.toggle-switch input{display:none}
+.toggle-track{position:absolute;inset:0;border-radius:99px;background:rgba(255,255,255,0.1);transition:background .2s}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--soft);transition:transform .2s,background .2s}
+.toggle-switch input:checked~.toggle-track{background:rgba(201,168,76,0.3)}
+.toggle-switch input:checked~.toggle-thumb{transform:translateX(16px);background:var(--gold2)}
+
+.product-color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.product-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0}
+.product-name .badge-warn{font-size:10px;color:var(--amber);margin-left:4px}
+
+.info-btn{
+  width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+  color:var(--soft);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:all .15s;
+}
+.info-btn:hover{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4);color:var(--gold2)}
+
+.product-rate-wrap{display:flex;align-items:center;gap:4px}
+.product-rate-wrap input{width:70px;font-size:12px;padding:5px 8px;border-radius:8px}
+.product-rate-wrap .pct-label{font-size:11px;color:var(--muted)}
+
+/* Allocation input (répartition mode) */
+.alloc-wrap{display:none;align-items:center;gap:4px;width:100%;padding-top:8px;border-top:1px dashed var(--rim);margin-top:4px}
+body.allocation-mode .alloc-wrap{display:flex}
+.alloc-wrap label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+.alloc-wrap input{width:100px;font-size:12px;padding:5px 8px;border-radius:8px;font-family:'DM Mono',monospace}
+
+/* Allocation summary bar */
+.alloc-summary{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:14px;padding:10px 14px;
+  background:rgba(255,255,255,0.025);border:1px solid var(--rim2);border-radius:10px;
+}
+.alloc-chip{display:flex;flex-direction:column;gap:2px;padding-right:14px;border-right:1px solid var(--rim)}
+.alloc-chip:last-of-type{border-right:none}
+.alloc-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+.alloc-val{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);font-weight:500}
+.alloc-status{margin-left:auto;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600}
+.alloc-status.alloc-ok{background:rgba(67,199,138,0.12);color:var(--green);border:1px solid rgba(67,199,138,0.3)}
+.alloc-status.alloc-neutral{background:rgba(77,140,245,0.1);color:#9bc2ff;border:1px solid rgba(77,140,245,0.25)}
+.alloc-status.alloc-danger{background:rgba(229,91,91,0.12);color:var(--red);border:1px solid rgba(229,91,91,0.35)}
+
+/* ══ POPOVER ══ */
+.popover-overlay{display:none;position:fixed;inset:0;z-index:90}
+.popover-overlay.open{display:block}
+.info-popover{
+  display:none;position:fixed;z-index:100;width:310px;background:#0d1326;
+  border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:0;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(201,168,76,0.08);overflow:hidden;
+}
+.info-popover.open{display:block;animation:popIn .15s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+.pop-header{position:relative;padding:14px 16px 10px;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border-bottom:1px solid rgba(255,255,255,0.07)}
+.pop-name{font-family:'DM Serif Display',serif;font-size:17px;color:#f0e8d4}
+.pop-full{font-size:11px;color:var(--muted);margin-top:2px}
+.pop-edit-btn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--soft);font-size:11px;padding:4px 10px;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif}
+.pop-edit-btn:hover{background:rgba(201,168,76,0.15);color:var(--gold2)}
+
+.pop-body{padding:12px 16px 14px;max-height:60vh;overflow-y:auto}
+.pop-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pop-chip{padding:3px 9px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);font-size:11px;color:var(--soft)}
+.pop-chip strong{color:var(--text)}
+.pop-section-title{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pop-list{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.pop-list li{font-size:12px;color:var(--soft);display:flex;gap:6px;align-items:flex-start}
+.pop-list li .icon{flex-shrink:0;font-size:11px;margin-top:1px}
+.pop-list li.pro{color:#9fe8c4}
+.pop-list li.con{color:#f4a0a0}
+.pop-note{font-size:11px;color:var(--muted);font-style:italic;border-top:1px solid var(--rim);padding-top:8px;margin-top:4px}
+
+/* Edit mode in popover */
+.pop-view-mode .pop-edit-wrap{display:none}
+.pop-edit-mode .pop-view-wrap{display:none}
+.pop-edit-wrap{display:flex;flex-direction:column;gap:7px}
+.pop-edit-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-top:4px}
+.pop-edit-field{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;width:100%}
+textarea.pop-edit-field{min-height:68px;resize:vertical}
+.pop-edit-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pop-btn{padding:6px 12px;border-radius:7px;border:1px solid var(--rim);background:rgba(255,255,255,0.04);color:var(--text);font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.pop-btn-save{background:var(--gold);color:#0d1326;border-color:var(--gold);font-weight:600}
+.pop-btn-save:hover{background:var(--gold2)}
+.pop-btn:hover{background:rgba(255,255,255,0.08)}
+
+/* ══ CHART ══ */
+#chart{display:block;width:100% !important;height:460px !important}
+body.presentation #chart{height:520px !important}
+.chart-wrap{overflow:hidden}
+.legend-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.leg-item{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;border:1px solid var(--rim);background:rgba(255,255,255,0.03);font-size:12px;color:var(--soft);cursor:pointer;transition:all .15s;user-select:none}
+.leg-item .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leg-item.active{color:var(--text);border-color:var(--rim2)}
+
+/* ══ TABLES ══ */
+.table-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:rgba(255,255,255,0.025);color:var(--soft);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--rim);text-align:right;white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.035);font-family:'DM Mono',monospace;text-align:right;color:var(--text);white-space:nowrap}
+td:first-child{text-align:left;font-family:'Outfit',sans-serif;font-size:12px;color:var(--soft);font-weight:500}
+tbody tr:hover{background:rgba(255,255,255,0.02)}
+.val-pos{color:var(--green)}.val-neg{color:var(--red)}.val-gold{color:var(--gold2)}
+
+#year-table-wrap{max-height:320px;overflow-y:auto}
+#year-table th{position:sticky;top:0;z-index:1;background:#111827}
+#year-table td{padding:7px 10px;font-size:12px}
+
+.view-tabs{display:flex;gap:4px}
+.view-tab{padding:6px 14px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.view-tab.active{background:rgba(255,255,255,0.06);border-color:var(--rim);color:var(--text)}
+
+/* Select2 dark */
+.select2-container--default .select2-selection--single{background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.1) !important;border-radius:9px !important;height:40px !important}
+.select2-container--default .select2-selection--single .select2-selection__rendered{color:var(--text) !important;font-family:'Outfit',sans-serif !important;font-size:13px !important;line-height:40px !important;padding-left:12px !important}
+.select2-container--default .select2-selection--single .select2-selection__arrow b{border-color:var(--muted) transparent transparent transparent !important}
+.select2-dropdown{background:#141c2e !important;border:1px solid rgba(255,255,255,0.12) !important;border-radius:10px !important}
+.select2-results__option{font-family:'Outfit',sans-serif;font-size:13px;color:var(--text) !important;padding:8px 12px !important}
+.select2-results__option--highlighted.select2-results__option--selectable{background:rgba(201,168,76,0.15) !important;color:var(--gold2) !important}
+.select2-search--dropdown .select2-search__field{background:rgba(255,255,255,0.06) !important;border:1px solid rgba(255,255,255,0.12) !important;color:var(--text) !important;border-radius:7px !important;font-family:'Outfit',sans-serif}
+
+/* Toggle pill */
+.toggle-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:8px;border:1px solid var(--rim);background:transparent;color:var(--soft);font-size:12px;cursor:pointer;transition:all .15s;user-select:none;font-family:'Outfit',sans-serif}
+.toggle-pill input{display:none}
+.toggle-pill.on{border-color:rgba(201,168,76,.4);color:var(--gold2);background:rgba(201,168,76,.08)}
+body.allocation-mode #stress-pill{display:none}
+
+/* Footer */
+footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--rim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+
+/* ═══════════════════════════════════════════════
+   PRESENTATION MODE — Hide technical cards
+═══════════════════════════════════════════════ */
+body.presentation .hide-in-presentation{display:none !important}
+body.presentation .card{padding:22px 24px}
+body.presentation header{margin-bottom:10px}
+body.presentation .pitch-card{padding:28px 32px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
+</style>
+
 </head>
 <body>
-  <div class="shell">
-    <header>
-      <h1>Simulateur d'Épargne <span class="badge">Pro+</span></h1>
-      <div class="toolbar">
-        <button id="btn-calc">Calculer</button>
-        <button id="btn-reset" title="Réinitialiser">Réinitialiser</button>
-        <button id="btn-pdf" disabled>Télécharger le PDF</button>
-        <button id="btn-png" disabled>Exporter le graphique</button>
+<div class="shell">
+
+<!-- ══════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════ -->
+
+<header>
+  <div class="brand">
+    <h1>Simulateur <em>d'Épargne</em></h1>
+    <div class="brand-sub">Conseil patrimonial · Simulation indicative</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-present" id="btn-present">🎯 Présentation</button>
+    <button class="btn btn-primary hide-in-presentation" id="btn-calc">⟳ Calculer</button>
+    <button class="btn hide-in-presentation" id="btn-reset">Réinitialiser</button>
+    <button class="btn hide-in-presentation" id="btn-pdf" disabled>↓ PDF</button>
+    <button class="btn hide-in-presentation" id="btn-png" disabled>↓ Graphique</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     CLIENT BAR
+══════════════════════════════════════════════ -->
+
+<div class="client-bar">
+  <span class="client-bar-label">Dossier client</span>
+  <input type="text" id="client-name" placeholder="Nom du client…" maxlength="60" />
+  <button class="btn btn-sm" id="btn-save-client">💾 Sauvegarder</button>
+  <button class="btn btn-sm" id="btn-duplicate-client" title="Dupliquer le dossier actuel">⎘ Dupliquer</button>
+  <select id="client-load" style="max-width:220px">
+    <option value="">— Charger un dossier —</option>
+  </select>
+  <button class="btn btn-sm btn-ghost" id="btn-delete-client" title="Supprimer le dossier chargé">🗑</button>
+  <button class="btn btn-sm btn-ghost" id="btn-export-clients" title="Exporter tous les dossiers (.json)">↓ Export</button>
+  <button class="btn btn-sm btn-ghost" id="btn-import-clients" title="Importer un fichier .json">↑ Import</button>
+  <input type="file" id="import-file" accept=".json,application/json" style="display:none" />
+  <span id="client-status" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+</div>
+
+<div class="grid">
+
+  <!-- ══════════════════════════════════════════════
+       PITCH LINE — always visible, prominent
+  ══════════════════════════════════════════════ -->
+
+  <section class="pitch-card col-12">
+    <div class="pitch-label">Synthèse du conseil</div>
+    <div class="pitch-text" id="pitch-text">—</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       ALERTS — dynamic
+  ══════════════════════════════════════════════ -->
+
+  <section class="col-12" id="alerts-section" style="display:none">
+    <div class="alerts-box" id="alerts-box"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCENARIO STRIP — Ne rien faire / Livret A / Principal
+  ══════════════════════════════════════════════ -->
+
+  <section class="card col-12">
+    <div class="card-title">Comparatif des scénarios</div>
+    <div class="scenario-strip" id="scenario-strip">
+      <!-- Injected -->
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       PARAMS (left) + CONTRACTS (right)
+  ══════════════════════════════════════════════ -->
+
+  <section class="card col-5">
+    <div class="card-title">Paramètres</div>
+
+```
+<div class="field">
+  <label>Versement initial (€)</label>
+  <input id="initial" type="number" min="0" step="100" value="8000" />
+</div>
+
+<div class="field">
+  <label>Versement mensuel (€)</label>
+  <div class="slider-row">
+    <input id="monthly-slider" type="range" min="0" max="2000" step="25" value="0" />
+    <div class="mini-input"><input id="monthly" type="number" min="0" step="10" value="0" /></div>
+  </div>
+  <div class="hint" id="monthly-hint">Curseur 0–2 000 € par pas de 25 € (saisie libre au-delà).</div>
+</div>
+
+<div class="field">
+  <label>Durée</label>
+  <div class="slider-row">
+    <input id="years" type="range" min="1" max="40" value="10" />
+    <span class="range-val" id="yearsValue">10 ans</span>
+  </div>
+</div>
+
+<div class="field hide-in-presentation">
+  <label>Inflation annuelle (%)</label>
+  <input id="inflation" type="number" min="0" step="0.1" value="2.0" />
+</div>
+
+<div class="field hide-in-presentation">
+  <label>Fiscalité (pédagogique)</label>
+  <select id="fiscalite">
+    <option value="none" selected>Sans fiscalité (brut)</option>
+    <option value="pfu">PFU 30 % sur gains annuels (simplifié)</option>
+  </select>
+</div>
+
+<div class="field hide-in-presentation">
+  <label>Mode d'affichage</label>
+  <select id="modeAffichage">
+    <option value="nominal" selected>Montants nominaux</option>
+    <option value="reel">Montants réels (déflatés)</option>
+  </select>
+</div>
+
+<div class="field hide-in-presentation">
+  <label>Mode de calcul</label>
+  <div class="seg" id="calc-mode-seg">
+    <button class="seg-btn active" data-mode="unique">Produit unique</button>
+    <button class="seg-btn" data-mode="alloc">Répartition</button>
+  </div>
+  <div class="hint">En répartition : chaque produit reçoit une part du versement initial.</div>
+</div>
+
+<div class="kpi-strip hide-in-presentation">
+  <div class="kpi-item"><div class="k-label">Versements cumulés</div><div class="k-val" id="kpi-deposits">—</div></div>
+  <div class="kpi-item"><div class="k-label">Break-even</div><div class="k-val" id="kpi-breakeven">—</div><div class="k-sub" id="kpi-be-sub"></div></div>
+  <div class="kpi-item"><div class="k-label">Frais cumulés</div><div class="k-val" id="kpi-fees">—</div><div class="k-sub" id="kpi-fees-sub"></div></div>
+  <div class="kpi-item"><div class="k-label">CAGR net</div><div class="k-val" id="kpi-cagr">—</div><div class="k-sub">Contrat principal</div></div>
+</div>
+```
+
+  </section>
+
+  <section class="card col-7 hide-in-presentation">
+    <div class="card-title">Contrats & Hypothèses</div>
+    <div class="field">
+      <label>Contrat principal</label>
+      <div class="contract-tabs" id="contract-tabs">
+        <button class="tab active" data-contract="Érable">Érable</button>
+        <button class="tab" data-contract="Séquoia">Séquoia</button>
+        <button class="tab" data-contract="Ébène">Ébène</button>
       </div>
-    </header>
-
-    <div class="grid">
-      <section class="card inputs">
-        <h3>Paramètres</h3>
-
-        <div class="row">
-          <label for="initial">Versement initial (€)</label>
-          <input id="initial" type="number" min="0" step="100" value="8000" />
-        </div>
-
-        <div class="row">
-          <label for="monthly">Versement mensuel (€)</label>
-          <input id="monthly" type="number" min="0" step="10" value="0" />
-        </div>
-
-        <div class="row">
-          <label for="years">Durée (années)</label>
-          <input id="years" type="range" min="1" max="40" value="10" />
-          <span id="yearsValue" class="pill">10 ans</span>
-        </div>
-
-        <div class="row">
-          <label for="inflation">Inflation annuelle (%)</label>
-          <input id="inflation" type="number" min="0" step="0.1" value="2.0" />
-          <span class="muted">Permet d'afficher un capital « en euros constants ».</span>
-        </div>
-
-        <div class="row">
-          <label for="fiscalite">Fiscalité (option pédagogique)</label>
-          <select id="fiscalite">
-            <option value="none" selected>Sans fiscalité (brut de fiscalité)</option>
-            <option value="pfu">PFU 30% sur gains annuels (hypothèse simplifiée)</option>
-          </select>
-        </div>
-
-        <div class="row">
-          <label for="modeAffichage">Mode d'affichage</label>
-          <select id="modeAffichage">
-            <option value="nominal" selected>Montants nominaux</option>
-            <option value="reel">Montants réels (déflatés)</option>
-          </select>
-        </div>
-
-        <div class="kpi">
-          <div class="item">
-            <div class="label">Versements cumulés</div>
-            <div id="kpi-deposits" class="value">—</div>
-          </div>
-          <div class="item">
-            <div class="label">Année de break-even</div>
-            <div id="kpi-breakeven" class="value">—</div>
-          </div>
-          <div class="item">
-            <div class="label">Frais cumulés (Harmonie)</div>
-            <div id="kpi-fees" class="value">—</div>
-          </div>
-          <div class="item">
-            <div class="label">Écart vs Livret A</div>
-            <div id="kpi-gap" class="value">—</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card compare">
-        <h3>Produits & Hypothèses</h3>
-
-        <div class="row">
-          <label for="harm-rate">Harmonie — Rendement (%)</label>
-          <input id="harm-rate" type="number" step="0.01" min="0" value="4.5" />
-          <select id="harm-preset">
-            <option value="custom">Personnalisé</option>
-            <option value="4.5">Harmonie 30/70 (4,5%)</option>
-            <option value="5.5">Harmonie 50/50 (5,5%)</option>
-            <option value="6.5">Harmonie 70/30 (6,5%)</option>
-          </select>
-        </div>
-
-        <div class="row">
-          <label>Harmonie — Frais</label>
-          <span>Entrée: <input id="harm-entry" type="number" min="0" step="0.01" value="2.00" style="width:90px"> %</span>
-          <span>Gestion: <input id="harm-mgmt" type="number" min="0" step="0.01" value="0.60" style="width:90px"> %</span>
-        </div>
-
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1); margin: 12px 0">
-
-        <div class="row">
-          <label for="compare-select">Contrat comparatif</label>
-          <select id="compare-select" style="min-width:280px"></select>
-          <span class="muted">(+ filtre auto, taper quelques lettres)</span>
-        </div>
-        <div class="row">
-          <label>Comparatif — Hypothèses</label>
-          <span>Entrée: <input id="cmp-entry" type="number" min="0" step="0.01" value="0.00" style="width:90px"> %</span>
-          <span>Gestion: <input id="cmp-mgmt" type="number" min="0" step="0.01" value="0.00" style="width:90px"> %</span>
-          <span>Rdt: <input id="cmp-rate" type="number" min="0" step="0.01" value="2.00" style="width:110px"> %</span>
-        </div>
-
-        <div class="row">
-          <label for="livreta">Livret A — Rendement (%)</label>
-          <input id="livreta" type="number" min="0" step="0.1" value="3.0" />
-          <span class="muted">Sans frais.</span>
-        </div>
-
-        <div class="row">
-          <label>Stress test (Harmonie)</label>
-          <span class="muted">Affiche ±1 pt de rendement</span>
-          <label class="pill"><input type="checkbox" id="stress" /> Afficher</label>
-        </div>
-      </section>
-
-      <section class="card chart-card" style="grid-column: 1 / -1;">
-        <h3>Évolution du capital</h3>
-        <canvas id="chart"></canvas>
-        <div class="legend">
-          <label><input type="checkbox" class="toggle-line" data-key="harm" checked /> Harmonie</label>
-          <label><input type="checkbox" class="toggle-line" data-key="cmp" checked /> Comparatif</label>
-          <label><input type="checkbox" class="toggle-line" data-key="la" checked /> Livret A</label>
-          <label><input type="checkbox" class="toggle-line" data-key="dep" checked /> Versements cumulés</label>
-          <label><input type="checkbox" class="toggle-line" data-key="stress" /> Stress ±1 pt</label>
-        </div>
-      </section>
-
-      <section class="card" style="grid-column: 1 / -1;">
-        <h3>Tableau récapitulatif</h3>
-        <table id="results">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Harmonie</th>
-              <th id="th-cmp">Contrat comparatif</th>
-              <th>Livret A</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Capital final</td>
-              <td id="r-harm-cap">—</td>
-              <td id="r-cmp-cap">—</td>
-              <td id="r-la-cap">—</td>
-            </tr>
-            <tr>
-              <td>Intérêts cumulés</td>
-              <td id="r-harm-int">—</td>
-              <td id="r-cmp-int">—</td>
-              <td id="r-la-int">—</td>
-            </tr>
-            <tr>
-              <td>Frais d'entrée (€)</td>
-              <td id="r-harm-fe">—</td>
-              <td id="r-cmp-fe">—</td>
-              <td id="r-la-fe">—</td>
-            </tr>
-            <tr>
-              <td>Frais de gestion (€)</td>
-              <td id="r-harm-fg">—</td>
-              <td id="r-cmp-fg">—</td>
-              <td id="r-la-fg">—</td>
-            </tr>
-            <tr>
-              <td>Différence vs Harmonie</td>
-              <td>—</td>
-              <td id="r-diff-cmp">—</td>
-              <td id="r-diff-la">—</td>
-            </tr>
-            <tr>
-              <td>Année de break-even</td>
-              <td id="r-harm-be">—</td>
-              <td id="r-cmp-be">—</td>
-              <td id="r-la-be">—</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
     </div>
 
-    <div class="footer">
-      <span>💡 Astuce: vous pouvez taper « linxea », « axa », « generali », etc., pour filtrer le contrat comparatif.</span>
-      <span class="muted">Simulation indicative. Hypothèses simplifiées (fiscalité, frais, rendement). Ne constitue pas un conseil.</span>
+```
+<div class="field">
+  <label>Mode de calcul du rendement</label>
+  <div class="seg" id="rate-mode-seg">
+    <button class="seg-btn active" data-rate-mode="flat">Rendement moyen</button>
+    <button class="seg-btn" data-rate-mode="scenario">Scénario historique</button>
+  </div>
+</div>
+
+<div class="field-inline" id="flat-rate-row">
+  <div class="sub-field"><label>Rendement brut (%)</label><input id="main-rate" type="number" step="0.01" min="0" value="4.5" /></div>
+  <div class="sub-field"><label>Frais d'entrée (%)</label><input id="main-entry" type="number" min="0" step="0.01" value="2.00" /></div>
+  <div class="sub-field"><label>Frais de gestion (%)</label><input id="main-mgmt" type="number" min="0" step="0.01" value="0.60" /></div>
+</div>
+
+<div id="scenario-row" style="display:none">
+  <div class="field-inline">
+    <div class="sub-field">
+      <label>Profil d'allocation</label>
+      <input id="profile-display" type="text" readonly style="background:rgba(201,168,76,0.08);color:var(--gold2);cursor:not-allowed" />
+    </div>
+    <div class="sub-field">
+      <label>Scénario de marché</label>
+      <select id="scenario-select">
+        <option value="mauvais">Mauvais</option>
+        <option value="neutre" selected>Neutre</option>
+        <option value="favorable">Favorable</option>
+        <option value="tres_favorable">Très favorable</option>
+      </select>
     </div>
   </div>
+  <div class="scenario-desc" id="scenario-desc"></div>
+  <div class="field-inline" style="margin-top:10px">
+    <div class="sub-field"><label>Frais d'entrée (%)</label><input id="main-entry-s" type="number" min="0" step="0.01" value="2.00" /></div>
+    <div class="sub-field"><label>Frais de gestion (%)</label><input id="main-mgmt-s" type="number" min="0" step="0.01" value="0.60" /></div>
+  </div>
+</div>
+<hr>
+<div class="field">
+  <label>Contrat comparatif</label>
+  <select id="compare-select" style="width:100%"></select>
+  <div class="hint">Tapez quelques lettres pour filtrer (linxea, axa, generali…)</div>
+</div>
+<div class="field-inline">
+  <div class="sub-field"><label>Rendement (%)</label><input id="cmp-rate" type="number" min="0" step="0.01" value="4.0" /></div>
+  <div class="sub-field"><label>Frais d'entrée (%)</label><input id="cmp-entry" type="number" min="0" step="0.01" value="0.00" /></div>
+  <div class="sub-field"><label>Frais de gestion (%)</label><input id="cmp-mgmt" type="number" min="0" step="0.01" value="0.00" /></div>
+</div>
+<hr>
+<label class="toggle-pill" id="stress-pill">
+  <input type="checkbox" id="stress" />
+  Stress ±1 pt (contrat principal)
+</label>
+```
 
-  <script>
-    // ————— Utils ————————————————————————————————————————————————————————
-    const fmt = (v, sign=false) => {
-      if (isNaN(v)) return '—';
-      const f = new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' }).format(Math.abs(v));
-      return sign ? (v>=0?'+ ':'- ') + f : f;
-    };
-    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  </section>
 
-    function yearlyDeposits(initial, monthly, years){
-      const arr=[initial];
-      for(let y=1;y<=years;y++){ arr.push(initial + monthly*12*y); }
-      return arr;
-    }
+  <!-- ══════════════════════════════════════════════
+       PRODUITS RÉGLEMENTÉS
+  ══════════════════════════════════════════════ -->
 
-    function breakevenYear(yearlyValues, initial, monthly){
-      for(let y=0;y<yearlyValues.length;y++){
-        const deps = initial + monthly*12*y;
-        if (yearlyValues[y] >= deps) return y;
-      }
-      return '—';
-    }
+  <section class="card col-12 hide-in-presentation">
+    <div class="card-title">Produits réglementés — référence marché</div>
+    <div class="products-grid" id="products-grid"></div>
+    <div class="alloc-summary" id="alloc-summary" style="display:none"></div>
+  </section>
 
-    // Core calc: monthly compounding; entry fees at deposit; mgmt fees charged yearly on capital
-    function simulate({initial, monthly, grossRate, entryFee, mgmtFee, years, inflation, tax}){
-      const r = grossRate/100;
-      const fei = entryFee/100;
-      const fmg = mgmtFee/100;
-      const infl = inflation/100;
+  <!-- ══════════════════════════════════════════════
+       CHART
+  ══════════════════════════════════════════════ -->
 
-      const initFE = initial * fei;
-      const mFE = monthly * fei;
-      let totalEntry = initFE;
-      let totalMgmt = 0;
+  <section class="card col-12 chart-wrap">
+    <div class="card-title" style="margin-bottom:10px">Évolution du capital</div>
+    <canvas id="chart"></canvas>
+    <div class="legend-row" id="legend-row"></div>
+  </section>
 
-      let capital = initial*(1-fei);
-      const monthlyRate = r / 12; // mgmt fees applied annually below (avoid double charge)
+  <!-- ══════════════════════════════════════════════
+       RESULTS
+  ══════════════════════════════════════════════ -->
 
-      const yearlyNominal=[capital], yearlyEntry=[initFE], yearlyMgmt=[0];
+  <section class="card col-12 hide-in-presentation">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin-bottom:0;flex:1">Résultats</div>
+      <div class="view-tabs">
+        <button class="view-tab active" id="tab-summary">Synthèse</button>
+        <button class="view-tab" id="tab-yearly">Tableau annuel</button>
+      </div>
+    </div>
+    <div id="view-summary">
+      <div class="table-wrap"><table id="summary-table"><thead id="summary-thead"></thead><tbody id="summary-tbody"></tbody></table></div>
+    </div>
+    <div id="view-yearly" style="display:none">
+      <div id="year-table-wrap"><table id="year-table"><thead id="year-thead"></thead><tbody id="year-tbody"></tbody></table></div>
+    </div>
+  </section>
 
-      for(let y=1;y<=years;y++){
-        let yEntry = 0;
-        let interestAccrued = 0;
-        for(let m=0;m<12;m++){
-          capital += monthly*(1-fei);
-          const before = capital;
-          capital *= (1+monthlyRate);
-          interestAccrued += (capital - before);
-          yEntry += mFE;
-        }
-        // simplified tax on gains
-        if (tax==='pfu' && interestAccrued>0){
-          const due = 0.30 * interestAccrued;
-          capital -= due;
-          totalMgmt += due; // display as "fees" bucket (pedagogic)
-        }
-        const yMgmtFees = capital * fmg; // annual mgmt fees
-        totalMgmt += yMgmtFees;
-        totalEntry += yEntry;
-        capital -= yMgmtFees;
+</div>
 
-        yearlyNominal.push(capital);
-        yearlyEntry.push(totalEntry);
-        yearlyMgmt.push(totalMgmt);
-      }
+<div class="popover-overlay" id="popover-overlay"></div>
+<div id="popovers-container"></div>
 
-      const totalDeposits = initial + monthly*12*years;
-      const interests = capital - totalDeposits;
+<footer>
+  <span>💡 Tapez « linxea », « axa », « generali »… pour filtrer le contrat comparatif.</span>
+  <span>Simulation indicative. Ne constitue pas un conseil en investissement.</span>
+</footer>
+</div>
 
-      // real terms (euros constants)
-      const yearlyReal = yearlyNominal.map((v, i) => v / Math.pow(1+infl, i));
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  📝 PRODUITS RÉGLEMENTÉS — Taux au 1er février 2026
+//  Éditables en direct via le bouton ✎ dans chaque fiche
+// ═══════════════════════════════════════════════════════════════════
+const REGULATED_DEFAULTS = [
+  { id:'la',   name:'Livret A',      fullName:'Livret A',
+    rate:1.5, color:'#43c78a', enabled:true,
+    plafond:'22 950 €', plafondVal:22950,
+    fiscalite:'Exonéré d\'impôts et prélèvements sociaux',
+    taux_ref:'1,5 % (depuis le 1er fév. 2026)',
+    eligibilite:'Tous les résidents français',
+    pros:['Disponible à tout moment, sans préavis','Totalement défiscalisé','Garanti par l\'État','Accessible dès 1 €'],
+    cons:['Plafond limité à 22 950 €','Taux révisé 2 fois/an','Un seul livret par personne','Rendement réel faible face à l\'inflation'],
+    note:'Taux indexé sur l\'inflation et l\'€STR. Révisé chaque 1er février et 1er août.' },
 
-      return {
-        totalCapital: capital,
-        totalDeposits,
-        interests,
-        entryFeesTotal: totalEntry,
-        mgmtFeesTotal: totalMgmt,
-        yearlyNominal,
-        yearlyReal,
-        yearlyEntry,
-        yearlyMgmt
-      };
-    }
+  { id:'ldds', name:'LDDS', fullName:'Livret de Développement Durable et Solidaire',
+    rate:1.5, color:'#26d9c7', enabled:false,
+    plafond:'12 000 €', plafondVal:12000,
+    fiscalite:'Exonéré d\'impôts et prélèvements sociaux',
+    taux_ref:'1,5 % (aligné sur le Livret A)',
+    eligibilite:'Majeurs résidents fiscaux français',
+    pros:['Même taux que le Livret A','Totalement défiscalisé','Cumulable avec le Livret A','Disponible à tout moment'],
+    cons:['Plafond plus bas (12 000 €)','Réservé aux majeurs','Soumis aux mêmes révisions que le Livret A'],
+    note:'Fonds fléchés vers le financement de projets durables et solidaires.' },
 
-    function computeAll(){
-      const initial = Number(document.getElementById('initial').value||0);
-      const monthly = Number(document.getElementById('monthly').value||0);
-      const years = Number(document.getElementById('years').value||10);
-      const inflation = clamp(Number(document.getElementById('inflation').value||0),0,50);
-      const tax = document.getElementById('fiscalite').value;
+  { id:'lep',  name:'LEP', fullName:'Livret d\'Épargne Populaire',
+    rate:2.5, color:'#fbbf24', enabled:false,
+    plafond:'10 000 €', plafondVal:10000,
+    fiscalite:'Exonéré d\'impôts et prélèvements sociaux',
+    taux_ref:'2,5 % (depuis le 1er fév. 2026, avec coup de pouce gouv.)',
+    eligibilite:'Sous conditions de ressources (RFR ≤ 22 823 € pour une part en 2024)',
+    pros:['Meilleur taux des livrets réglementés','Totalement défiscalisé','Rendement réel positif face à l\'inflation','Disponible à tout moment'],
+    cons:['Soumis à conditions de ressources','Plafond très bas : 10 000 €','Un livret par personne, deux par foyer','Taux serait de 1,9 % sans coup de pouce'],
+    note:'Conçu pour protéger le pouvoir d\'achat des ménages modestes. Vérifier l\'éligibilité chaque année.',
+    needsEligibility:true },
 
-      const harmRate = clamp(Number(document.getElementById('harm-rate').value||0),0,100);
-      const harmEntry = clamp(Number(document.getElementById('harm-entry').value||0),0,100);
-      const harmMgmt = clamp(Number(document.getElementById('harm-mgmt').value||0),0,100);
+  { id:'pel',  name:'PEL', fullName:'Plan d\'Épargne Logement',
+    rate:2.0, color:'#a78bfa', enabled:false,
+    plafond:'61 200 €', plafondVal:61200,
+    fiscalite:'PFU 30 % sur les intérêts',
+    taux_ref:'2,0 % (ouvertures depuis le 1er janv. 2026)',
+    eligibilite:'Tous les résidents français',
+    pros:['Plafond élevé : 61 200 €','Ouvre droit à un prêt immobilier à taux préférentiel','Taux garanti à l\'ouverture'],
+    cons:['Capital bloqué 4 ans minimum','Versements annuels obligatoires (min. 540 €/an)','Fiscalisé : PFU 30 %','Plus de prime d\'État depuis 2018','Clôture automatique à 10 ans'],
+    note:'Taux à 2 % depuis le 1er janv. 2026 (+ 0,25 pt).',
+    minDuration:4 },
 
-      const cmpEntry = clamp(Number(document.getElementById('cmp-entry').value||0),0,100);
-      const cmpMgmt = clamp(Number(document.getElementById('cmp-mgmt').value||0),0,100);
-      const cmpRate = clamp(Number(document.getElementById('cmp-rate').value||0),0,100);
-      const laRate = clamp(Number(document.getElementById('livreta').value||0),0,100);
+  { id:'cel',  name:'CEL', fullName:'Compte Épargne Logement',
+    rate:1.0, color:'#1e40af', enabled:false,
+    plafond:'15 300 €', plafondVal:15300,
+    fiscalite:'PFU 30 % sur les intérêts',
+    taux_ref:'1 % (= 2/3 × Livret A, arrondi au ¼ de point)',
+    eligibilite:'Tous les résidents français',
+    pros:['Disponible à tout moment','Ouvre droit à un prêt immobilier','Cumulable avec un PEL'],
+    cons:['Taux faible','Fiscalisé : PFU 30 %','Plafond limité à 15 300 €','Versement minimum initial : 300 €'],
+    note:'Intérêt principal : combiné à un PEL, il augmente les droits à prêt immobilier.' },
 
-      const harm = simulate({initial, monthly, grossRate:harmRate, entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
-      const cmp = simulate({initial, monthly, grossRate:cmpRate, entryFee:cmpEntry, mgmtFee:cmpMgmt, years, inflation, tax});
-      const la = simulate({initial, monthly, grossRate:laRate, entryFee:0, mgmtFee:0, years, inflation, tax:'none'});
+  { id:'csl',  name:'CSL', fullName:'Compte Sur Livret (Livret bancaire ordinaire)',
+    rate:1.0, color:'#94a3b8', enabled:false,
+    plafond:'Aucun plafond', plafondVal:null,
+    fiscalite:'PFU 30 % sur les intérêts',
+    taux_ref:'Librement fixé par la banque (indicatif : 0,5 à 1,5 %)',
+    eligibilite:'Tous les résidents français',
+    pros:['Aucun plafond de dépôt','Disponible à tout moment','Souplesse totale'],
+    cons:['Taux généralement faible','Totalement fiscalisé','Aucune garantie de taux','Pas d\'avantage fiscal'],
+    note:'Utilisé comme épargne de précaution liquide pour les excédents hors plafonds réglementés.' },
 
-      const deposits = yearlyDeposits(initial, monthly, years);
-      const mode = document.getElementById('modeAffichage').value;
-      const harmSeries = (mode==='reel') ? harm.yearlyReal : harm.yearlyNominal;
-      const cmpSeries  = (mode==='reel') ? cmp.yearlyReal  : cmp.yearlyNominal;
-      const laSeries   = (mode==='reel') ? la.yearlyReal   : la.yearlyNominal;
+  { id:'lj',   name:'Livret Jeune', fullName:'Livret Jeune',
+    rate:2.0, color:'#fb7185', enabled:false,
+    plafond:'1 600 €', plafondVal:1600,
+    fiscalite:'Exonéré d\'impôts et prélèvements sociaux',
+    taux_ref:'≥ 1,5 % (plancher = Livret A, taux libre au-dessus)',
+    eligibilite:'Résidents français de 12 à 25 ans',
+    pros:['Taux souvent supérieur au Livret A','Totalement défiscalisé','Bonne initiation à l\'épargne'],
+    cons:['Plafond très bas : 1 600 €','Réservé aux 12-25 ans','Clôture obligatoire à 25 ans','Taux variable selon la banque'],
+    note:'Chaque banque fixe librement son taux, au moins égal au Livret A.' },
+];
 
-      // Stress test bands ±1 pt on Harmonie
-      const stressON = document.getElementById('stress').checked;
-      const harmLow = simulate({initial, monthly, grossRate:Math.max(0,harmRate-1), entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
-      const harmHigh= simulate({initial, monthly, grossRate:harmRate+1, entryFee:harmEntry, mgmtFee:harmMgmt, years, inflation, tax});
-      const harmLowSeries  = (mode==='reel') ? harmLow.yearlyReal  : harmLow.yearlyNominal;
-      const harmHighSeries = (mode==='reel') ? harmHigh.yearlyReal : harmHigh.yearlyNominal;
+let REGULATED = JSON.parse(JSON.stringify(REGULATED_DEFAULTS));
 
-      return {
-        inputs: {initial, monthly, years, inflation, tax, harmRate, harmEntry, harmMgmt, cmpEntry, cmpMgmt, cmpRate, laRate, mode},
-        harm, cmp, la, deposits, harmSeries, cmpSeries, laSeries, stressON, harmLowSeries, harmHighSeries
-      };
-    }
-
-    // ————— Data ————————————————————————————————————————————————————————————
-    const contractsData = {
-      "ABEILLE EPARGNE ACTIVE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "ACTIVESEED VIE": { entryFees: 0, managementFees: 1.2, defaultRate: 4.0 },
-      "AFER": { entryFees: 0.5, managementFees: 0.48, defaultRate: 4.0 },
-      "AG2R / EXCELLIE VIE": { entryFees: 1.5, managementFees: 0.96, defaultRate: 4.0 },
-      "AG2R / TERRE DE VIE 2": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
-      "AG2R / VIVEPARGNE II": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
-      "AGIPI / EPARGNE CLER": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
-      "ALTAPROFITS / DIGITAL VIE PRIME": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "ALTAPROFITS / TITRES@VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "ALTAPROFITS VIE": { entryFees: 0, managementFees: 0.84, defaultRate: 4.0 },
-      "AMETIS / CNP TRESOR PROJETS": { entryFees: 4.0, managementFees: 0.9, defaultRate: 4.0 },
-      "AREAS ASSURANCES / MULTISUPPORT 3": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "ASAC FAPES / ASAC NEO VIE": { entryFees: 0, managementFees: 2.0, defaultRate: 4.0 },
-      "ASAC FAPES / EPARGNE RETRAITE 2 PLUS": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
-      "ASAC FAPES / ERMG": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
-      "ASAC FAPES / SOLID'R VIE": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
-      "ASSURANCE VIE RAMIFY": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
-      "ASSURANCEVIE.COM / EVOLUTION VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "ASSURANCEVIE.COM / LUCYA CARDIF": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
-      "ASSURANCEVIE.COM / PUISSANCE AVENIR": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "ASSURANCEVIE.COM / PUISSANCE SELECTION": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "ATHYMIS GESTION": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
-      "AUTRE": { entryFees: 0, managementFees: 0, defaultRate: 4.0 },
-      "AXA ARPEGES": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
-      "AXA EXCELIUM": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
-      "AXA PRIVILEGE": { entryFees: 4.85, managementFees: 0.96, defaultRate: 4.0 },
-      "BANQUE POPULAIRE / HORIZEO 2": { entryFees: 3.0, managementFees: 0.75, defaultRate: 4.0 },
-      "BANQUE POPULAIRE / PLAN EPARGNE ENFANT": { entryFees: 2.0, managementFees: 0.96, defaultRate: 4.0 },
-      "BANQUE POPULAIRE / QUINTESSA 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
-      "BNP PARIBAS MULTIPLACEMENTS 2": { entryFees: 2.75, managementFees: 0.85, defaultRate: 4.0 },
-      "BNP PARIBAS MULTIPLACEMENTS AVENIR": { entryFees: 2.75, managementFees: 0.85, defaultRate: 4.0 },
-      "BOURSE DIRECT HORIZON": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "BOURSE DIRECT VIE": { entryFees: 0, managementFees: 0.65, defaultRate: 4.0 },
-      "BOURSOBANK BOURSO VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "BPE EMERAUDE": { entryFees: 2.0, managementFees: 0.95, defaultRate: 4.0 },
-      "BRED BANQUE POPULAIRE / EVOLUVIE IV": { entryFees: 2.0, managementFees: 0.8, defaultRate: 4.0 },
-      "CAISSE D'ÉPARGNE / MILLEVIE ESSENTIELLE 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 0.0 },
-      "CAISSE D'ÉPARGNE / MILLEVIE INITIALE 2": { entryFees: 3.0, managementFees: 0.8, defaultRate: 4.0 },
-      "CARAC EPARGNE GENERATION": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
-      "CARAC EPARGNE PATRIMOINE": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
-      "CASHBEE +": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "CIC / CREDIT MUTUEL / PLAN ASSURANCE JEUNE": { entryFees: 1.0, managementFees: 0.65, defaultRate: 4.0 },
-      "CIC / CREDIT MUTUEL / PLAN ASSURANCE VIE - ESSENTIEL": { entryFees: 5.0, managementFees: 0.75, defaultRate: 4.0 },
-      "CONSERVATEUR HELIOS PATRIMOINE": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
-      "CORUM LIFE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / ANAE": { entryFees: 2.5, managementFees: 0.96, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / CARISSIME PAR TRANSFERTS": { entryFees: 4.5, managementFees: 0.6, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / FLORIAGRI": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / FLORIANE 2": { entryFees: 2.5, managementFees: 0.96, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / PREDISSIME 9 SÉRIE 2": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
-      "CREDIT AGRICOLE / VERS L'AVENIR": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
-      "CRÉDIT MUTUEL ARKÉA / NAVIG'OPTIONS": { entryFees: 2.0, managementFees: 0.8, defaultRate: 4.0 },
-      "EPARGNISSIMO / CROISSANCE AVENIR": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "EPARGNISSIMO / NETLIFE 2": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
-      "FORTUNEO VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "FRANCE MUTUALISTE / ACTEPARGNE 2": { entryFees: 0, managementFees: 0.77, defaultRate: 4.0 },
-      "GAN ASSURANCES / CHROMATYS EVOLUTION": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
-      "GAN PATRIMOINE EVOLUTION": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
-      "GAN PREVOYANCE RETRAITE ACTIVE": { entryFees: 4.5, managementFees: 0.96, defaultRate: 4.0 },
-      "GARANCE / CELEBEA VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "GARANCE EPARGNE": { entryFees: 1.0, managementFees: 0.6, defaultRate: 4.0 },
-      "GENERALI VIE / ESPACE INVEST 5": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "GENERALI VIE / HIMALIA": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "GENERALI VIE / L'EPARGNE GENERALI PLATINIUM": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "GMF / MULTEO": { entryFees: 2.0, managementFees: 0.75, defaultRate: 4.0 },
-      "GREEN GOT PLANET": { entryFees: 0, managementFees: 1.6, defaultRate: 4.0 },
-      "GRESHAM BANQUE PRIVEE / CONCORDANCES 4": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
-      "GRISBEE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "HEDIOS LIFE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "HELLO BANK! / ASSURANCE VIE HELLO!": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "HARMONIE MUTUELLE 30/70": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.5 },
-      "HARMONIE MUTUELLE 50/50": { entryFees: 2.0, managementFees: 0.6, defaultRate: 5.5 },
-      "HARMONIE MUTUELLE 70/30": { entryFees: 2.0, managementFees: 0.6, defaultRate: 6.5 },
-      "HSBC ESSENTIEL 2": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
-      "HSBC EVOLUTION PATRIMOINE VIE 2": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
-      "INTENCIAL LIBERALYS VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "LA BANQUE POSTALE / CACHEMIRE 2 SERIE 2": { entryFees: 3.0, managementFees: 0.85, defaultRate: 4.0 },
-      "LCL BANQUE PRIVEE / ACUITY EVOLUTION": { entryFees: 2.5, managementFees: 0.95, defaultRate: 4.0 },
-      "LCL VIE": { entryFees: 3.5, managementFees: 0.95, defaultRate: 4.0 },
-      "LINXEA AVENIR 2": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "LINXEA SPIRIT 2": { entryFees: 0, managementFees: 2.0, defaultRate: 4.0 },
-      "LINXEA VIE": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "LINXEA ZEN": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "LOUVRE BANQUE PRIVEE / MYRIALIS VIE": { entryFees: 2.9, managementFees: 0.96, defaultRate: 4.0 },
-      "MAAF / WINALTO": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
-      "MACIF EPARGNE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "MACSF": { entryFees: 3.0, managementFees: 0.5, defaultRate: 4.0 },
-      "MAIF": { entryFees: 0.6, managementFees: 0.7, defaultRate: 4.0 },
-      "MATMUT / COMPLICE VIE": { entryFees: 1.5, managementFees: 0.85, defaultRate: 4.0 },
-      "MEILLEUR TAUX ALLOCATION VIE": { entryFees: 0, managementFees: 0.7, defaultRate: 4.0 },
-      "MEILLEUR TAUX LIBERTE VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "MEILLEUR TAUX PLACEMENT VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "MIF / COMPTE EPARGNE LIBRE AVENIR MULTISUPPORT": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
-      "MIF EPARGNE ENFANT": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
-      "MMA MULTISUPPORTS": { entryFees: 4.0, managementFees: 0.8, defaultRate: 4.0 },
-      "MON PARTENAIRE ASSURANCE VIE": { entryFees: 0, managementFees: 0.9, defaultRate: 4.0 },
-      "MON PETIT PLACEMENT": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
-      "MONABANQ.VIE PREMIUM": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "MONIWAN VIE": { entryFees: 0, managementFees: 0.85, defaultRate: 4.0 },
-      "NALO / NALO PATRIMOINE": { entryFees: 0, managementFees: 0.85, defaultRate: 4.0 },
-      "PLACEMENT DIRECT ESSENTIEL": { entryFees: 0, managementFees: 0.75, defaultRate: 4.0 },
-      "PLACEMENT DIRECT VIE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "PREFON / PREFON VIE RESPONSABLE": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 },
-      "PRIMONIAL ASSURANCES / TARGET +": { entryFees: 4.0, managementFees: 0.98, defaultRate: 4.0 },
-      "PRIMONIAL SERENIPIERRE": { entryFees: 4.0, managementFees: 0.95, defaultRate: 4.0 },
-      "PRO BTP / MULTISUPPORT CONFIANCE": { entryFees: 1.0, managementFees: 0.6, defaultRate: 4.0 },
-      "RADIANCE ASSURANCE VIE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "RAMIFY": { entryFees: 0, managementFees: 1.0, defaultRate: 4.0 },
-      "RITCHEE LIFE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "SELENCIA / MYPGA": { entryFees: 4.5, managementFees: 0.8, defaultRate: 4.0 },
-      "SELENCIA / PRIVILEGE GESTION ACTIVE": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "SMAVIE / BATI EPARGNE": { entryFees: 2.5, managementFees: 0.84, defaultRate: 4.0 },
-      "SOCIETE GENERALE / SEQUOIA": { entryFees: 3.0, managementFees: 0.96, defaultRate: 4.0 },
-      "SWISSLIFE / EXPERT PREMIUM PLUS": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
-      "SWISSLIFE EVOLUTION PLUS": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
-      "SWISSLIFE RETRAITE": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
-      "SWISSLIFE STRATEGIC PREMIUM": { entryFees: 4.75, managementFees: 0.96, defaultRate: 4.0 },
-      "UAF LIFE PATRIMOINE / VERSION ABSOLUE 2": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "UNEP MULTISELECTION PLUS": { entryFees: 5.0, managementFees: 1.0, defaultRate: 4.0 },
-      "VIE PLUS / PATRIMOINE VIE PLUS": { entryFees: 4.5, managementFees: 1.0, defaultRate: 4.0 },
-      "VIE PLUS IMPACT": { entryFees: 4.5, managementFees: 1.9, defaultRate: 4.0 },
-      "VYV (SIMPLICITE + EXPERTISE)": { entryFees: 2.0, managementFees: 0.6, defaultRate: 4.0 },
-      "WESAVE PATRIMOINE": { entryFees: 2.0, managementFees: 0.9, defaultRate: 4.0 },
-      "YOMONI VIE / KIDS": { entryFees: 0, managementFees: 0.6, defaultRate: 4.0 }
-    };
-
-    // ————— UI init ———————————————————————————————————————————————————————
-    const $cmpSelect = $('#compare-select');
-    function initSelect(){
-      $cmpSelect.empty();
-      $cmpSelect.append(`<option value="__custom__">Choisir un contrat…</option>`);
-      Object.keys(contractsData).sort().forEach(name => {
-        $cmpSelect.append(`<option value="${name}">${name}</option>`);
-      });
-      $cmpSelect.select2({
-        placeholder: "Filtrer les contrats…",
-        allowClear: true,
-        matcher: (params, data) => {
-          if (!params.term || params.term.trim()==="") return data;
-          const t = params.term.toLowerCase();
-          return data.text.toLowerCase().includes(t) ? data : null;
-        }
-      });
-      $cmpSelect.on('change', () => {
-        const k = $cmpSelect.val();
-        if (k && k !== '__custom__' && contractsData[k]){
-          const c = contractsData[k];
-          document.getElementById('cmp-entry').value = Number(c.entryFees).toFixed(2);
-          document.getElementById('cmp-mgmt').value  = Number(c.managementFees).toFixed(2);
-          document.getElementById('cmp-rate').value  = Number(c.defaultRate).toFixed(2);
-          document.getElementById('th-cmp').textContent = k;
-        } else {
-          document.getElementById('th-cmp').textContent = "Contrat comparatif";
-        }
-      });
-    }
-
-    document.getElementById('harm-preset').addEventListener('change', (e)=>{
-      const v = e.target.value;
-      if (v !== 'custom') document.getElementById('harm-rate').value = Number(v).toFixed(2);
-    });
-    document.getElementById('years').addEventListener('input', (e)=>{
-      document.getElementById('yearsValue').textContent = e.target.value + ' ans';
-    });
-
-    // ————— Chart ————————————————————————————————————————————————————————
-    let chart;
-    function buildChart(payload){
-      const {inputs, harmSeries, cmpSeries, laSeries, deposits, stressON, harmLowSeries, harmHighSeries} = payload;
-      const labels = Array.from({length: inputs.years+1}, (_,i)=> i);
-      const showStress = document.querySelector('.toggle-line[data-key="stress"]').checked && stressON;
-
-      const datasets = [
-        { label: 'Harmonie', data: harmSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#f59e0b' },   // orange
-        { label: 'Comparatif', data: cmpSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#60a5fa' },  // blue
-        { label: 'Livret A', data: laSeries, borderWidth:2, tension:.35, pointRadius:0, borderColor:'#fde047' },     // yellow
-        { label: 'Versements cumulés', data: deposits, borderWidth:1, borderDash:[5,5], tension:0, pointRadius:0, borderColor:'rgba(148,163,184,1)' }
-      ];
-      // assign colors without specifying explicit hex? We'll let Chart.js auto, but set alpha fill off
-      if (showStress){
-        datasets.push({ label: 'Harmonie -1 pt', data: harmLowSeries, borderWidth:1, borderDash:[6,4], pointRadius:0, tension:.35, borderColor:'rgba(245,158,11,0.4)' });
-        datasets.push({ label: 'Harmonie +1 pt', data: harmHighSeries, borderWidth:1, borderDash:[6,4], pointRadius:0, tension:.35, borderColor:'rgba(245,158,11,0.4)' });
-      }
-
-      // Visibility from toggles
-      const toggles = document.querySelectorAll('.toggle-line');
-      const vis = { harm:true, cmp:true, la:true, dep:true, stress: showStress };
-      toggles.forEach(t => { vis[t.dataset.key] = t.checked; });
-
-      const indexed = {
-        'Harmonie': vis.harm,
-        'Comparatif': vis.cmp,
-        'Livret A': vis.la,
-        'Versements cumulés': vis.dep,
-        'Harmonie -1 pt': vis.stress,
-        'Harmonie +1 pt': vis.stress
-      };
-
-      if (chart) chart.destroy();
-      const chartEl = document.getElementById('chart');
-      chartEl.style.height = '420px';
-      chartEl.style.width = '100%';
-      const ctx = chartEl.getContext('2d');
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode:'index', intersect:false },
-          plugins: {
-            legend: {
-              labels: { boxWidth: 12 }
-            },
-            tooltip: {
-              callbacks: {
-                title: (items)=> 'Année ' + items[0].label,
-                label: (ctx)=> `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: { grid:{ color:'rgba(255,255,255,0.08)' }, ticks:{ color:'#e8edf7' }, title:{ display:true, text:'Années', color:'#cbd5e1' } },
-            y: { grid:{ color:'rgba(255,255,255,0.08)' }, ticks:{ color:'#e8edf7', callback: (v)=> new Intl.NumberFormat('fr-FR').format(v) }, title:{ display:true, text:'Capital (€)', color:'#cbd5e1'} }
-          }
-        }
-      });
-
-      // apply visibility
-      chart.data.datasets.forEach(ds => {
-        ds.hidden = !indexed[ds.label];
-      });
-      chart.update();
-    }
-
-    // ————— Results binding —————————————————————————————————————————————
-    function updateUI(p){
-      const {inputs, harm, cmp, la, deposits} = p;
-
-      document.getElementById('kpi-deposits').textContent = fmt(deposits[deposits.length-1]);
-      document.getElementById('kpi-fees').textContent = fmt(harm.entryFeesTotal + harm.mgmtFeesTotal);
-      document.getElementById('kpi-gap').textContent = fmt(la.totalCapital - harm.totalCapital, true);
-
-      document.getElementById('r-harm-cap').textContent = fmt(harm.totalCapital);
-      document.getElementById('r-cmp-cap').textContent  = fmt(cmp.totalCapital);
-      document.getElementById('r-la-cap').textContent   = fmt(la.totalCapital);
-
-      document.getElementById('r-harm-int').textContent = fmt(harm.interests);
-      document.getElementById('r-cmp-int').textContent  = fmt(cmp.interests);
-      document.getElementById('r-la-int').textContent   = fmt(la.interests);
-
-      document.getElementById('r-harm-fe').textContent  = fmt(harm.entryFeesTotal);
-      document.getElementById('r-cmp-fe').textContent   = fmt(cmp.entryFeesTotal);
-      document.getElementById('r-la-fe').textContent    = fmt(0);
-
-      document.getElementById('r-harm-fg').textContent  = fmt(harm.mgmtFeesTotal);
-      document.getElementById('r-cmp-fg').textContent   = fmt(cmp.mgmtFeesTotal);
-      document.getElementById('r-la-fg').textContent    = fmt(0);
-
-      const beH = breakevenYear((inputs.mode==='reel'? harm.yearlyReal: harm.yearlyNominal), inputs.initial, inputs.monthly);
-      const beC = breakevenYear((inputs.mode==='reel'? cmp.yearlyReal : cmp.yearlyNominal ), inputs.initial, inputs.monthly);
-      const beL = breakevenYear((inputs.mode==='reel'? la.yearlyReal  : la.yearlyNominal  ), inputs.initial, inputs.monthly);
-      document.getElementById('kpi-breakeven').textContent = beH==='—'?'—': (beH + ' ans');
-      document.getElementById('r-harm-be').textContent = beH==='—'?'—': (beH + ' ans');
-      document.getElementById('r-cmp-be').textContent  = beC==='—'?'—': (beC + ' ans');
-      document.getElementById('r-la-be').textContent   = beL==='—'?'—': (beL + ' ans');
-
-      document.getElementById('r-diff-cmp').textContent = fmt(cmp.totalCapital - harm.totalCapital, true);
-      document.getElementById('r-diff-la').textContent  = fmt(la.totalCapital - harm.totalCapital, true);
-
-      // enable exports
-      document.getElementById('btn-pdf').disabled = false;
-      document.getElementById('btn-png').disabled = false;
-    }
-
-    // ————— PDF ————————————————————————————————————————————————————————————
-    
-
-async function exportPDF(payload){
+// ═══════════════════════════════════════════════════════════════════
+//  OVERRIDES (fiches produit éditées)
+// ═══════════════════════════════════════════════════════════════════
+const PRODOV_KEY = 'simu_prod_overrides_v2';
+function loadOverrides() {
   try {
-    const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
-    if (!jsPDF) { alert("Erreur PDF : jsPDF n'est pas chargé."); return; }
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const M = 8; // compact margins
-    let y = M;
-
-    // Helpers (sanitize spacing)
-    const money = (v) => {
-      try {
-        const s = new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' }).format(Number(v)||0);
-        return s.replace(/\u00A0|\u202F/g, ' ');
-      } catch(_) { return (Number(v)||0).toFixed(2) + ' €'; }
+    const saved = JSON.parse(localStorage.getItem(PRODOV_KEY) || '{}');
+    REGULATED.forEach(p => {
+      if (saved[p.id]) Object.assign(p, saved[p.id]);
+    });
+  } catch(_) {}
+}
+function saveOverride(id) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRODOV_KEY) || '{}');
+    const p = REGULATED.find(x=>x.id===id); if (!p) return;
+    saved[id] = {
+      taux_ref: p.taux_ref, plafond: p.plafond, plafondVal: p.plafondVal,
+      fiscalite: p.fiscalite, eligibilite: p.eligibilite, note: p.note,
+      pros: [...p.pros], cons: [...p.cons], rate: p.rate
     };
-    const signed = (v) => (v>=0?'+ ':'- ') + money(Math.abs(v));
-
-    // Header compact
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
-    doc.text('Simulateur d’Épargne — Pro+', M, y); y += 5.5;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-    doc.text('Rapport de simulation — ' + new Date().toLocaleDateString('fr-FR'), M, y); y += 4.5;
-
-    const p = payload;
-
-    // Hypothèses (compact table)
-    if (doc.autoTable) {
-      const rows = [
-        ['Versement initial', money(p.inputs.initial)],
-        ['Versement mensuel', money(p.inputs.monthly)],
-        ['Durée (années)', String(p.inputs.years)],
-        ['Inflation', p.inputs.inflation.toFixed(1) + ' %'],
-        ['Fiscalité', p.inputs.tax==='pfu' ? 'PFU 30% (simplifié)' : 'Aucune (brut)'],
-        ['Harmonie (rdt / entrée / gestion)', p.inputs.harmRate.toFixed(2)+' % / '+p.inputs.harmEntry.toFixed(2)+' % / '+p.inputs.harmMgmt.toFixed(2)+' %'],
-        ['Comparatif (rdt / entrée / gestion)', p.inputs.cmpRate.toFixed(2)+' % / '+p.inputs.cmpEntry.toFixed(2)+' % / '+p.inputs.cmpMgmt.toFixed(2)+' %'],
-        ['Livret A (rdt)', p.inputs.laRate.toFixed(2)+' %']
-      ];
-      doc.setFont('helvetica','bold'); doc.setFontSize(10);
-      doc.text('Hypothèses', M, y); y += 2.5;
-      doc.autoTable({
-        startY: y,
-        head: [['Paramètre','Valeur']],
-        body: rows,
-        theme: 'grid',
-        headStyles: { fillColor: [16,22,43], textColor: [230,235,245], fontSize: 8 },
-        styles: { font: 'helvetica', fontStyle: 'normal', fontSize: 8, lineColor: [210,210,210], cellPadding: 1.5 },
-        alternateRowStyles: { fillColor: [245,245,245] },
-        columnStyles: { 1: { halign: 'right' } },
-        margin: { left: M, right: M }
-      });
-      y = doc.lastAutoTable.finalY + 4;
-    }
-
-    // Graph (compact)
-    const canvas = document.getElementById('chart');
-    if (canvas && canvas.toDataURL) {
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const imgW = pageW - 2*M;
-      const imgH = Math.min(70, imgW * 0.45); // <= 70mm
-      if (y + imgH > pageH - 30) { doc.addPage(); y = M; } // rare, but safe
-      doc.setFont('helvetica','bold'); doc.setFontSize(10);
-      doc.text('Évolution du capital', M, y); y += 3;
-      doc.addImage(imgData, 'PNG', M, y, imgW, imgH);
-      y += imgH + 4;
-    }
-
-    // Récapitulatif (compact table)
-    if (doc.autoTable) {
-      const body = [
-        ['Capital final', money(p.harm.totalCapital), money(p.cmp.totalCapital), money(p.la.totalCapital)],
-        ['Intérêts cumulés', money(p.harm.interests), money(p.cmp.interests), money(p.la.interests)],
-        ['Frais entrée (€)', money(p.harm.entryFeesTotal), money(p.cmp.entryFeesTotal), money(0)],
-        ['Frais gestion (€)', money(p.harm.mgmtFeesTotal), money(p.cmp.mgmtFeesTotal), money(0)],
-        ['Diff. vs Harmonie', '—', signed(p.cmp.totalCapital - p.harm.totalCapital), signed(p.la.totalCapital - p.harm.totalCapital)]
-      ];
-      if (y + 55 > pageH - 20) { doc.addPage(); y = M; }
-      doc.setFont('helvetica','bold'); doc.setFontSize(10);
-      doc.text('Comparatif récapitulatif', M, y); y += 2.5;
-      doc.autoTable({
-        startY: y,
-        head: [['', 'Harmonie', 'Comparatif', 'Livret A']],
-        body,
-        theme:'grid',
-        headStyles: { fillColor: [16,22,43], textColor: [230,235,245], fontSize: 8 },
-        styles:{ font: 'helvetica', fontStyle: 'normal', fontSize: 8, lineColor: [210,210,210], cellPadding: 1.5 },
-        alternateRowStyles: { fillColor: [245,245,245] },
-        columnStyles: { 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
-        margin: { left: M, right: M }
-      });
-      y = doc.lastAutoTable.finalY + 3;
-    }
-
-    // Footer (compact)
-    doc.setFont('helvetica','normal'); doc.setFontSize(7);
-    const disclaimer = 'Simulation indicative. Hypothèses simplifiées (rendements, frais, fiscalité). Les performances passées ne préjugent pas des performances futures.';
-    const txt = doc.splitTextToSize(disclaimer, pageW - 2*M);
-    doc.text(txt, M, pageH - 8);
-
-    // Page numbers
-    const pages = doc.getNumberOfPages();
-    for (let i=1;i<=pages;i++){
-      doc.setPage(i);
-      doc.setFontSize(7);
-      doc.text(`Page ${i}/${pages}`, pageW - M - 20, pageH - 4.5);
-    }
-
-    doc.save('Simulation_Epargne_Pro+.pdf');
-  } catch(e){
-    console.error(e);
-    alert('Échec export PDF : ' + (e && e.message ? e.message : e));
-  }
+    localStorage.setItem(PRODOV_KEY, JSON.stringify(saved));
+  } catch(_) {}
+}
+function resetOverride(id) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRODOV_KEY) || '{}');
+    delete saved[id];
+    localStorage.setItem(PRODOV_KEY, JSON.stringify(saved));
+    const def = REGULATED_DEFAULTS.find(x=>x.id===id);
+    const cur = REGULATED.find(x=>x.id===id);
+    if (def && cur) Object.assign(cur, JSON.parse(JSON.stringify(def)));
+  } catch(_) {}
 }
 
-async function exportPNG(){
-      const canvas = document.getElementById('chart');
-      const link = document.createElement('a');
-      link.download = 'graphique_simulation.png';
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
-    }
+// ═══════════════════════════════════════════════════════════════════
+//  CONTRACT PRESETS
+// ═══════════════════════════════════════════════════════════════════
+const MAIN_PRESETS = {
+  'Érable':  { rate: 4.5, entry: 2.00, mgmt: 0.60 },
+  'Séquoia': { rate: 5.5, entry: 2.00, mgmt: 0.60 },
+  'Ébène':   { rate: 6.5, entry: 2.00, mgmt: 0.60 },
+};
+let currentContract = 'Érable';
 
-    // ————— Events ———————————————————————————————————————————————————————
-    function recalcAndRender(){
-      const payload = computeAll();
-      buildChart(payload);
-      updateUI(payload);
-      // persist
-      localStorage.setItem('simu_pro_plus', JSON.stringify(payload.inputs));
-      return payload;
-    }
+// ═══════════════════════════════════════════════════════════════════
+//  COMPARATIF CONTRACTS (raccourci — version complète dans v4)
+// ═══════════════════════════════════════════════════════════════════
+const contractsData = {
+  "ABEILLE EPARGNE ACTIVE":{entryFees:4.5,managementFees:1.0,defaultRate:4.0},
+  "AFER":{entryFees:0.5,managementFees:0.48,defaultRate:4.0},
+  "ALTAPROFITS VIE":{entryFees:0,managementFees:0.84,defaultRate:4.0},
+  "AXA ARPEGES":{entryFees:4.85,managementFees:0.96,defaultRate:4.0},
+  "AXA EXCELIUM":{entryFees:4.85,managementFees:0.96,defaultRate:4.0},
+  "BNP PARIBAS MULTIPLACEMENTS 2":{entryFees:2.75,managementFees:0.85,defaultRate:4.0},
+  "BOURSE DIRECT VIE":{entryFees:0,managementFees:0.65,defaultRate:4.0},
+  "BOURSOBANK BOURSO VIE":{entryFees:0,managementFees:0.75,defaultRate:4.0},
+  "CAISSE D'ÉPARGNE / MILLEVIE ESSENTIELLE 2":{entryFees:3.0,managementFees:0.8,defaultRate:4.0},
+  "CREDIT AGRICOLE / ANAE":{entryFees:2.5,managementFees:0.96,defaultRate:4.0},
+  "FORTUNEO VIE":{entryFees:0,managementFees:0.75,defaultRate:4.0},
+  "GENERALI VIE / HIMALIA":{entryFees:4.5,managementFees:1.0,defaultRate:4.0},
+  "HSBC ESSENTIEL 2":{entryFees:2.0,managementFees:0.9,defaultRate:4.0},
+  "LA BANQUE POSTALE / CACHEMIRE 2":{entryFees:3.0,managementFees:0.85,defaultRate:4.0},
+  "LCL VIE":{entryFees:3.5,managementFees:0.95,defaultRate:4.0},
+  "LINXEA AVENIR 2":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+  "LINXEA SPIRIT 2":{entryFees:0,managementFees:2.0,defaultRate:4.0},
+  "LINXEA VIE":{entryFees:0,managementFees:0.75,defaultRate:4.0},
+  "LINXEA ZEN":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+  "MAAF / WINALTO":{entryFees:2.0,managementFees:0.6,defaultRate:4.0},
+  "MACIF EPARGNE VIE":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+  "MACSF":{entryFees:3.0,managementFees:0.5,defaultRate:4.0},
+  "MAIF":{entryFees:0.6,managementFees:0.7,defaultRate:4.0},
+  "MATMUT / COMPLICE VIE":{entryFees:1.5,managementFees:0.85,defaultRate:4.0},
+  "MEILLEUR TAUX PLACEMENT VIE":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+  "NALO / NALO PATRIMOINE":{entryFees:0,managementFees:0.85,defaultRate:4.0},
+  "PLACEMENT DIRECT VIE":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+  "RAMIFY":{entryFees:0,managementFees:1.0,defaultRate:4.0},
+  "SOCIETE GENERALE / SEQUOIA":{entryFees:3.0,managementFees:0.96,defaultRate:4.0},
+  "SWISSLIFE / EXPERT PREMIUM PLUS":{entryFees:4.75,managementFees:0.96,defaultRate:4.0},
+  "YOMONI VIE / KIDS":{entryFees:0,managementFees:0.6,defaultRate:4.0},
+};
 
-    document.getElementById('btn-calc').addEventListener('click', recalcAndRender);
-    document.getElementById('btn-reset').addEventListener('click', ()=>{
-      localStorage.removeItem('simu_pro_plus'); location.reload();
+// ═══════════════════════════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════════════════════════
+let calcMode = 'unique'; // 'unique' or 'alloc'
+let allocations = {}; // { productId: €amount }
+let cmpName = 'Comparatif'; // current comparatif label
+let useScenario = false; // false = rendement moyen constant, true = scénario historique
+let currentScenario = 'neutre'; // 'mauvais' | 'neutre' | 'favorable' | 'tres_favorable'
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════════
+const fmt = (v, signed=false) => {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  const s = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Math.abs(v));
+  return signed ? (v >= 0 ? '+ ' : '− ') + s : s;
+};
+const fmtPct = v => isNaN(v) ? '—' : v.toFixed(2).replace('.',',') + '\u202f%';
+const clamp  = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const escH = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escA = s => String(s||'').replace(/"/g,'&quot;');
+
+// ═══════════════════════════════════════════════════════════════════
+//  PROFILS D'ALLOCATION & SCÉNARIOS HISTORIQUES
+//  Les séquences s'inspirent de données de marché réelles (CAC 40 + fonds €)
+//  pour illustrer le comportement d'une assurance-vie en dent de scie.
+// ═══════════════════════════════════════════════════════════════════
+const PROFILES = {
+  'tres_prudent': { label: 'Très prudent', fe: 1.00, uc: 0.00, desc: '100 % fonds euro' },
+  'prudent':      { label: 'Prudent',      fe: 0.70, uc: 0.30, desc: '70 % fonds € · 30 % UC' },
+  'equilibre':    { label: 'Équilibré',    fe: 0.50, uc: 0.50, desc: '50 % fonds € · 50 % UC' },
+  'dynamique':    { label: 'Dynamique',    fe: 0.30, uc: 0.70, desc: '30 % fonds € · 70 % UC' },
+  'offensif':     { label: 'Offensif',     fe: 0.00, uc: 1.00, desc: '100 % UC' },
+};
+
+// Mapping des onglets contrat → profils (en mode scénario)
+const CONTRACT_TO_PROFILE = {
+  'Érable':  'prudent',
+  'Séquoia': 'equilibre',
+  'Ébène':   'dynamique',
+};
+
+// Séquences de rendements annuels (%). 40 ans = couvre toute la durée max.
+const SCENARIOS = {
+  'mauvais': {
+    label: 'Mauvais',
+    desc: 'Inspiré de 2000-2024 : bulle internet, crise 2008, Covid (chocs précoces)',
+    // UC : commence par le krach dotcom (-22, -34) puis rebond, puis 2008 (-43)
+    uc: [-0.5, -22, -34, +16, +7, +23, +18, +1, -43, +22, -3, -17, +15, +18, -0.5, +9, +5, +9, -11, +26, -7, +29, -9, +16, -2, +8, +10, +6, +4, +5, +7, +3, +8, +6, +4, +7, +9, +5, +8, +6],
+    // FE : baisse progressive puis remontée récente
+    fe: [5.0, 4.8, 4.5, 4.2, 4.0, 3.8, 3.5, 3.2, 3.0, 2.8, 2.5, 2.3, 2.0, 1.8, 1.5, 1.4, 1.3, 1.3, 1.4, 1.5, 1.4, 2.5, 3.0, 2.8, 2.7, 2.6, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
+  },
+  'neutre': {
+    label: 'Neutre',
+    desc: 'Conditions de marché moyennes, volatilité modérée, quelques corrections',
+    uc: [+8, +12, -6, +15, +10, -8, +18, +5, +12, -10, +20, +8, -4, +14, +6, +11, -7, +16, +9, +13, -5, +17, +7, +10, -3, +14, +8, +11, -6, +15, +9, +12, -4, +13, +7, +10, -5, +14, +8, +11],
+    fe: [3.0, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4, 2.5, 2.6, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4],
+  },
+  'favorable': {
+    label: 'Favorable',
+    desc: 'Inspiré de 2012-2021 : marché globalement haussier, corrections courtes',
+    uc: [+15, +18, -2, +22, +10, +25, -4, +28, +8, +20, +15, -5, +30, +12, +24, +6, +18, -3, +25, +10, +22, +14, -6, +28, +8, +20, +15, -4, +26, +10, +22, +14, -5, +25, +8, +20, +15, -3, +24, +10],
+    fe: [2.5, 2.3, 2.2, 2.0, 1.8, 1.7, 1.5, 1.5, 1.8, 2.2, 2.8, 3.2, 3.5, 3.0, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2, 2.3, 2.5, 2.7, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4, 2.5, 2.6, 2.7, 2.6, 2.5, 2.4, 2.3, 2.4],
+  },
+  'tres_favorable': {
+    label: 'Très favorable',
+    desc: 'Inspiré des années 80-90 : forte croissance, faible inflation',
+    uc: [+22, +28, +15, +32, -5, +25, +30, +12, +20, -8, +35, +18, +22, +28, +10, +25, +32, -4, +28, +20, +25, +15, +30, +22, -6, +28, +20, +25, +32, +12, +22, +28, +15, +25, +30, +18, +20, +28, +22, +25],
+    fe: [5.0, 4.8, 4.5, 4.3, 4.0, 3.8, 3.5, 3.3, 3.5, 3.8, 4.0, 4.2, 4.5, 4.3, 4.0, 3.8, 3.5, 3.3, 3.0, 2.8, 3.0, 3.2, 3.5, 3.8, 4.0, 4.2, 4.0, 3.8, 3.5, 3.3, 3.0, 3.2, 3.5, 3.8, 4.0, 3.8, 3.5, 3.3, 3.0, 3.2],
+  },
+};
+
+// Construit un tableau de rendements annuels pondérés selon profil + scénario
+function buildYearlyRates(profileId, scenarioId, years) {
+  const P = PROFILES[profileId], S = SCENARIOS[scenarioId];
+  if (!P || !S) return null;
+  const rates = [];
+  for (let y = 0; y < years; y++) {
+    const fe = S.fe[y % S.fe.length];
+    const uc = S.uc[y % S.uc.length];
+    rates.push(P.fe * fe + P.uc * uc);
+  }
+  return rates;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SIMULATION — accepte un rendement scalaire OU un tableau annuel
+// ═══════════════════════════════════════════════════════════════════
+function simulate({ initial, monthly, grossRate, entryFee, mgmtFee, years, inflation, tax }) {
+  const fei = entryFee/100, fmg = mgmtFee/100, infl = inflation/100;
+  const getYearlyRate = y => {
+    // y est 1-indexé (première année = 1)
+    if (Array.isArray(grossRate)) {
+      const v = grossRate[Math.min(y - 1, grossRate.length - 1)];
+      return (typeof v === 'number' ? v : 0) / 100;
+    }
+    return (grossRate || 0) / 100;
+  };
+
+  let capital = initial * (1 - fei);
+  let totalEntry = initial * fei, totalMgmt = 0;
+  const yearlyNominal = [capital], yearlyEntry = [totalEntry], yearlyMgmt = [0], yearlyInterest = [0];
+  const yearlyRatesApplied = [0]; // rendement annuel réellement appliqué (pour affichage)
+
+  for (let y = 1; y <= years; y++) {
+    const r = getYearlyRate(y);
+    const mRate = r / 12;
+    let yEntry = 0, yInterest = 0;
+    for (let m = 0; m < 12; m++) {
+      capital += monthly * (1 - fei); yEntry += monthly * fei;
+      const prev = capital; capital *= (1 + mRate); yInterest += capital - prev;
+    }
+    if (tax === 'pfu' && yInterest > 0) { const due = 0.3 * yInterest; capital -= due; yInterest -= due; totalMgmt += due; }
+    const yMgmt = capital * fmg; totalMgmt += yMgmt; totalEntry += yEntry; capital -= yMgmt;
+    yearlyNominal.push(capital); yearlyEntry.push(totalEntry); yearlyMgmt.push(totalMgmt); yearlyInterest.push(yInterest - yMgmt);
+    yearlyRatesApplied.push(r * 100);
+  }
+
+  const totalDeposits = initial + monthly * 12 * years;
+  const yearlyReal = yearlyNominal.map((v, i) => v / Math.pow(1 + infl, i));
+  const cagr = totalDeposits > 0 && years > 0 ? (Math.pow(capital / totalDeposits, 1 / years) - 1) * 100 : 0;
+  return {
+    totalCapital: capital, totalDeposits, netGain: capital - totalDeposits,
+    entryFeesTotal: totalEntry, mgmtFeesTotal: totalMgmt, totalFees: totalEntry + totalMgmt,
+    cagr, yearlyNominal, yearlyReal, yearlyEntry, yearlyMgmt, yearlyInterest, yearlyRatesApplied
+  };
+}
+
+function seriesSum(arrs) {
+  if (!arrs.length) return [];
+  const out = new Array(arrs[0].length).fill(0);
+  arrs.forEach(a => a.forEach((v, i) => { out[i] = (out[i] || 0) + v; }));
+  return out;
+}
+
+function breakeven(arr, initial, monthly) {
+  for (let y = 0; y < arr.length; y++) if (arr[y] >= initial + monthly * 12 * y) return y;
+  return null;
+}
+
+function depositsArr(initial, monthly, years) {
+  return Array.from({ length: years + 1 }, (_, i) => initial + monthly * 12 * i);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  COMPUTE ALL
+// ═══════════════════════════════════════════════════════════════════
+function computeAll() {
+  const initial   = Number(document.getElementById('initial').value || 0);
+  const monthly   = Number(document.getElementById('monthly').value || 0);
+  const years     = Number(document.getElementById('years').value || 10);
+  const inflation = clamp(Number(document.getElementById('inflation').value||0), 0, 50);
+  const tax       = document.getElementById('fiscalite').value;
+  const mode      = document.getElementById('modeAffichage').value;
+  const mainRate  = clamp(Number(document.getElementById('main-rate').value||0), 0, 100);
+  const mainEntry = clamp(Number(document.getElementById('main-entry').value||0), 0, 100);
+  const mainMgmt  = clamp(Number(document.getElementById('main-mgmt').value||0), 0, 100);
+  const cmpEntry  = clamp(Number(document.getElementById('cmp-entry').value||0), 0, 100);
+  const cmpMgmt   = clamp(Number(document.getElementById('cmp-mgmt').value||0), 0, 100);
+  const cmpRate   = clamp(Number(document.getElementById('cmp-rate').value||0), 0, 100);
+
+  const common = { monthly: 0, years, inflation, tax };
+
+  // Enabled regulated products
+  const enabledRegs = REGULATED.filter(p => p.enabled);
+
+  // Compute allocation split
+  let mainInitial = initial;
+  const regulatedSims = [];
+  if (calcMode === 'alloc') {
+    // Each enabled product gets its own initial allocation, monthly stays on main
+    let allocSum = 0;
+    enabledRegs.forEach(p => {
+      const a = Math.max(0, Number(allocations[p.id] || 0));
+      allocSum += a;
+      regulatedSims.push({ ...p, alloc: a, sim: simulate({ ...common, initial: a, grossRate: p.rate, entryFee: 0, mgmtFee: 0, tax: 'none' }) });
     });
-    document.getElementById('btn-pdf').addEventListener('click', ()=> exportPDF(computeAll()));
-    document.getElementById('btn-png').addEventListener('click', exportPNG);
+    mainInitial = Math.max(0, initial - allocSum);
+  } else {
+    // Unique mode: each enabled product runs with full initial (reference comparison)
+    enabledRegs.forEach(p => {
+      regulatedSims.push({ ...p, alloc: initial, sim: simulate({ ...common, initial, grossRate: p.rate, entryFee: 0, mgmtFee: 0, tax: 'none' }) });
+    });
+  }
 
-    document.querySelectorAll('.toggle-line').forEach(cb => cb.addEventListener('change', ()=> buildChart(computeAll())));
-    document.getElementById('modeAffichage').addEventListener('change', recalcAndRender);
-    document.getElementById('stress').addEventListener('change', recalcAndRender);
+  // Détermine le rendement "effectif" du contrat principal
+  //  - mode rendement moyen : scalaire (mainRate)
+  //  - mode scénario : tableau annuel basé sur profil du contrat + scénario de marché
+  let effectiveMainRate = mainRate;
+  let yearlyMainRates = null;
+  if (useScenario) {
+    const profileId = CONTRACT_TO_PROFILE[currentContract] || 'equilibre';
+    yearlyMainRates = buildYearlyRates(profileId, currentScenario, years);
+    if (yearlyMainRates) effectiveMainRate = yearlyMainRates;
+  }
 
-    // Try live updates for inputs
-    ['initial','monthly','years','inflation','fiscalite','harm-rate','harm-preset','harm-entry','harm-mgmt','cmp-entry','cmp-mgmt','cmp-rate','livreta']
-      .forEach(id => document.getElementById(id).addEventListener('input', ()=>{
-        if (id==='harm-preset') return;
-        recalcAndRender();
-      }));
+  const main = simulate({ initial: mainInitial, monthly, years, inflation, tax, grossRate: effectiveMainRate, entryFee: mainEntry, mgmtFee: mainMgmt });
+  const cmp  = simulate({ initial: (calcMode === 'alloc' ? mainInitial : initial), monthly, years, inflation, tax, grossRate: cmpRate, entryFee: cmpEntry, mgmtFee: cmpMgmt });
+  // Stress test : ±1 pt ne s'applique qu'au scalaire (pas au scénario dent de scie)
+  const mainLowRate  = useScenario ? effectiveMainRate : Math.max(0, mainRate - 1);
+  const mainHighRate = useScenario ? effectiveMainRate : mainRate + 1;
+  const mainLow  = simulate({ initial: mainInitial, monthly, years, inflation, tax, grossRate: mainLowRate,  entryFee: mainEntry, mgmtFee: mainMgmt });
+  const mainHigh = simulate({ initial: mainInitial, monthly, years, inflation, tax, grossRate: mainHighRate, entryFee: mainEntry, mgmtFee: mainMgmt });
 
-    // hydrate from localStorage
-    function hydrate(){
-      initSelect();
-      const saved = localStorage.getItem('simu_pro_plus');
-      if (saved){
-        try {
-          const s = JSON.parse(saved);
-          for (const [k,v] of Object.entries(s)){
-            const el = document.getElementById({
-              initial:'initial', monthly:'monthly', years:'years', inflation:'inflation', tax:'fiscalite',
-              harmRate:'harm-rate', harmEntry:'harm-entry', harmMgmt:'harm-mgmt',
-              cmpEntry:'cmp-entry', cmpMgmt:'cmp-mgmt', cmpRate:'cmp-rate', laRate:'livreta', mode:'modeAffichage'
-            }[k] || '');
-            if (el){
-              if (el.tagName==='SELECT') el.value = v;
-              else el.value = v;
+  const dep = depositsArr(initial, monthly, years);
+
+  // "Total répartition" = main + sum of all regulated (when in alloc mode)
+  let totalAllocSeries = null;
+  if (calcMode === 'alloc' && regulatedSims.length) {
+    const arrs = [main.yearlyNominal].concat(regulatedSims.map(r => r.sim.yearlyNominal));
+    totalAllocSeries = seriesSum(arrs);
+  }
+
+  // "Ne rien faire" = totalité laissée sur compte courant, perte de pouvoir d'achat
+  // On applique l'inflation sur l'initial ET sur chaque versement mensuel
+  // (approximation : on considère qu'un € aujourd'hui = 1/(1+infl)^t €-années-N)
+  const inflRate = inflation / 100;
+  let inactionReal = initial / Math.pow(1 + inflRate, years);
+  if (monthly > 0) {
+    // Chaque mois versé à l'année t perd (1+infl)^(years-t) de pouvoir d'achat
+    for (let y = 1; y <= years; y++) {
+      // Approximation : versements en milieu d'année
+      inactionReal += monthly * 12 / Math.pow(1 + inflRate, years - y + 0.5);
+    }
+  }
+  const totalDeposited = initial + monthly * 12 * years;
+  const inactionLoss   = totalDeposited - inactionReal; // pouvoir d'achat perdu
+
+  return {
+    inputs: { initial, monthly, years, inflation, tax, mode, mainRate, mainEntry, mainMgmt, cmpEntry, cmpMgmt, cmpRate, mainInitial },
+    main, cmp, mainLow, mainHigh, regulatedSims, dep, totalAllocSeries,
+    inactionLoss, inactionReal,
+    contractName: currentContract,
+    stressOn: document.getElementById('stress').checked,
+    useScenario,
+    scenario: useScenario ? currentScenario : null,
+    profileId: useScenario ? (CONTRACT_TO_PROFILE[currentContract] || 'equilibre') : null,
+    yearlyMainRates,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PITCH LINE — logique explicite par mode
+// ═══════════════════════════════════════════════════════════════════
+function generatePitch(p) {
+  const la = p.regulatedSims.find(r => r.id === 'la');
+  const years = p.inputs.years;
+
+  // Définition claire du "capital de référence" à mettre en avant
+  let refCapital, refLabel, compareLaCapital;
+
+  if (calcMode === 'alloc' && p.totalAllocSeries && p.totalAllocSeries.length) {
+    // Mode répartition : on met en avant le portefeuille total
+    refCapital = p.totalAllocSeries[p.totalAllocSeries.length - 1];
+    refLabel   = 'votre portefeuille réparti';
+    // Comparaison : si tout l'initial avait été mis sur Livret A
+    // On recalcule un "Livret A virtuel" sur la totalité de l'initial
+    if (la) {
+      const laFull = simulate({
+        initial: p.inputs.initial, monthly: p.inputs.monthly,
+        years, inflation: p.inputs.inflation, tax: 'none',
+        grossRate: la.rate, entryFee: 0, mgmtFee: 0
+      });
+      compareLaCapital = laFull.totalCapital;
+    }
+  } else {
+    // Mode unique : on met en avant le contrat principal
+    refCapital = p.main.totalCapital;
+    refLabel   = p.contractName;
+    compareLaCapital = la ? la.sim.totalCapital : null;
+  }
+
+  if (compareLaCapital !== null && compareLaCapital !== undefined) {
+    const diff = refCapital - compareLaCapital;
+    const pct  = compareLaCapital > 0 ? (diff / compareLaCapital) * 100 : 0;
+    if (diff > 0) {
+      return `En <span class="big">${years} ans</span>, <span class="highlight">${escH(refLabel)}</span> rapporte <span class="big">${fmt(diff)}</span> de plus qu'un Livret A, soit <span class="big">+${pct.toFixed(0)} %</span> de gain supplémentaire.`;
+    } else if (diff < 0) {
+      return `En ${years} ans, ${escH(refLabel)} rapporte ${fmt(Math.abs(diff))} de <span class="big">moins</span> qu'un Livret A (${pct.toFixed(0)} %).`;
+    } else {
+      return `En ${years} ans, ${escH(refLabel)} et le Livret A donnent un résultat identique.`;
+    }
+  }
+  return `En <span class="big">${years} ans</span>, <span class="highlight">${escH(refLabel)}</span> génère un capital de <span class="big">${fmt(refCapital)}</span>.`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SCENARIO STRIP — cohérent avec le mode actif
+// ═══════════════════════════════════════════════════════════════════
+function renderScenarios(p) {
+  const container = document.getElementById('scenario-strip');
+  const la = p.regulatedSims.find(r => r.id === 'la');
+
+  // "Ne rien faire" : perte de pouvoir d'achat (toujours en €constants d'aujourd'hui)
+  const inactionGain = -p.inactionLoss;
+
+  // Gain du scénario principal (mode actif)
+  const isAlloc = calcMode === 'alloc' && p.totalAllocSeries && p.totalAllocSeries.length;
+  const totalDeposits = p.inputs.initial + p.inputs.monthly * 12 * p.inputs.years;
+  const mainGain = isAlloc
+    ? p.totalAllocSeries[p.totalAllocSeries.length - 1] - totalDeposits
+    : p.main.netGain;
+
+  // Livret A virtuel : "et si vous mettiez TOUT sur Livret A ?"
+  // Pour être comparable au scénario principal (portefeuille entier en alloc, contrat unique en unique)
+  let laGain = null;
+  if (la) {
+    const laFull = simulate({
+      initial: p.inputs.initial,
+      monthly: p.inputs.monthly,
+      years:   p.inputs.years,
+      inflation: p.inputs.inflation,
+      tax: 'none',
+      grossRate: la.rate,
+      entryFee: 0, mgmtFee: 0
+    });
+    laGain = laFull.netGain;
+  }
+
+  const tiles = [
+    { cls: 'danger', icon: '🏦', title: 'Ne rien faire', amount: fmt(inactionGain, true),
+      sub: 'pouvoir d\'achat perdu (inflation)' },
+  ];
+  if (la) {
+    tiles.push({ cls: 'neutral', icon: '💚', title: 'Tout sur Livret A', amount: fmt(laGain, true),
+      sub: 'placement sans risque, sans frais' });
+  }
+  tiles.push({ cls: 'winner', icon: '✦',
+    title: isAlloc ? 'Portefeuille réparti' : p.contractName,
+    amount: fmt(mainGain, true),
+    sub: isAlloc ? 'allocation combinée (livrets + ' + escH(p.contractName) + ')' : 'gain net client' });
+
+  container.innerHTML = tiles.map(t => `
+    <div class="scenario-tile ${t.cls}">
+      <div class="scenario-head"><span class="scenario-icon">${t.icon}</span><span class="scenario-title">${escH(t.title)}</span></div>
+      <div class="scenario-amount">${t.amount}</div>
+      <div class="scenario-sub">${t.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ALERTS
+// ═══════════════════════════════════════════════════════════════════
+function computeAlerts(p) {
+  const alerts = [];
+  const initial = p.inputs.initial;
+  const years   = p.inputs.years;
+
+  // Plafond alerts
+  p.regulatedSims.forEach(r => {
+    if (r.plafondVal && r.sim.totalCapital > r.plafondVal) {
+      const over = r.sim.totalCapital - r.plafondVal;
+      // En mode unique, on simule chaque produit sur la totalité du versement : préciser
+      const ctx = calcMode === 'alloc' ? '' :
+        ' (simulation pédagogique : toute l\'épargne sur ce produit)';
+      alerts.push({ type: 'warn', text: `<strong>${escH(r.name)}</strong> : plafond (${escH(r.plafond)}) dépassé de ${fmt(over)} à terme${ctx}. En pratique, le surplus ne génère plus d'intérêts.` });
+    }
+  });
+
+  // Allocation mode warnings
+  if (calcMode === 'alloc') {
+    const sumAlloc = p.regulatedSims.reduce((s,r) => s + (r.alloc || 0), 0);
+    if (sumAlloc > initial) {
+      alerts.push({ type:'error', text:`Répartition : la somme des allocations (${fmt(sumAlloc)}) dépasse le versement initial (${fmt(initial)}).` });
+    }
+    // Allocation exceeds product plafond
+    p.regulatedSims.forEach(r => {
+      if (r.plafondVal && r.alloc > r.plafondVal) {
+        alerts.push({ type:'warn', text:`<strong>${r.name}</strong> : allocation de ${fmt(r.alloc)} supérieure au plafond (${r.plafond}).` });
+      }
+    });
+  }
+
+  // Product-specific alerts
+  p.regulatedSims.forEach(r => {
+    if (r.id === 'lep' && r.enabled) {
+      alerts.push({ type:'info', text:`<strong>LEP activé</strong> : vérifier l'éligibilité du client (revenu fiscal de référence plafonné).` });
+    }
+    if (r.id === 'pel' && r.enabled && years < (r.minDuration || 4)) {
+      alerts.push({ type:'warn', text:`<strong>PEL</strong> : durée de ${years} ans < 4 ans minimum. Une clôture anticipée entraîne la perte des avantages (prêt + rendement).` });
+    }
+  });
+
+  return alerts;
+}
+
+function renderAlerts(alerts) {
+  const box = document.getElementById('alerts-box');
+  const section = document.getElementById('alerts-section');
+  if (!alerts.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  box.innerHTML = alerts.map(a => {
+    const icon = a.type === 'error' ? '⛔' : a.type === 'warn' ? '⚠️' : 'ℹ️';
+    return `<div class="alert ${a.type}"><span class="alert-icon">${icon}</span><span>${a.text}</span></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CHART — line mode (unique) OR stacked area (alloc)
+// ═══════════════════════════════════════════════════════════════════
+let chartInst;
+
+function hexToRgba(hex, a) {
+  const h = String(hex).replace('#','');
+  if (h.length !== 6) return `rgba(200,200,200,${a})`;
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function buildChart(p) {
+  const mode = p.inputs.mode;
+  const years = p.inputs.years;
+  const currentYear = new Date().getFullYear(); // e.g. 2026
+  // Labels : année calendaire (2026, 2027, ...). Stockée aussi en meta pour tooltip.
+  const labels = Array.from({ length: years + 1 }, (_, i) => String(currentYear + i));
+  const yearOffsets = Array.from({ length: years + 1 }, (_, i) => i); // 0, 1, 2...
+  const pick = sim => mode === 'reel' ? sim.yearlyReal : sim.yearlyNominal;
+
+  const legendContainer = document.getElementById('legend-row');
+  legendContainer.innerHTML = '';
+
+  const datasets = [];
+  const legendItems = [];
+  const yStacked = (calcMode === 'alloc');
+  const TENSION = 0.2; // courbes plus "financières" (moins arrondies)
+
+  if (calcMode === 'alloc') {
+    // ═══ STACKED AREA MODE ═══
+    const layers = [];
+    p.regulatedSims.forEach(r => {
+      layers.push({
+        key: 'reg_' + r.id,
+        label: `${r.name} — ${fmt(r.alloc)}`,
+        data: pick(r.sim),
+        color: r.color,
+      });
+    });
+    layers.push({
+      key: 'main',
+      label: `${p.contractName} — ${fmt(p.inputs.mainInitial)}`,
+      data: pick(p.main),
+      color: '#c9a84c',
+    });
+
+    layers.forEach((L, idx) => {
+      datasets.push({
+        key: L.key,
+        label: L.label,
+        data: L.data,
+        borderColor: L.color,
+        backgroundColor: hexToRgba(L.color, idx === layers.length - 1 ? 0.55 : 0.45),
+        borderWidth: idx === layers.length - 1 ? 2 : 1.3,
+        fill: idx === 0 ? 'origin' : '-1',
+        stack: 'portfolio',
+        tension: TENSION,
+        pointRadius: 0,
+        hidden: false,
+      });
+      legendItems.push({ key: L.key, label: L.label, color: L.color });
+    });
+
+    // Versements cumulés : discret, en arrière-plan, référence pédagogique
+    datasets.push({
+      key: 'dep',
+      label: 'Versements cumulés',
+      data: p.dep,
+      borderColor: 'rgba(255,255,255,0.35)',
+      backgroundColor: 'transparent',
+      borderWidth: 0.9,
+      borderDash: [4, 4],
+      fill: false,
+      stack: 'deposits',
+      tension: 0,
+      pointRadius: 0,
+      hidden: false,
+      order: 99, // dessiné en dernier (donc en arrière visuel avec area plots)
+    });
+    legendItems.push({ key: 'dep', label: 'Versements cumulés', color: 'rgba(255,255,255,0.5)' });
+
+  } else {
+    // ═══ LINE MODE (unique) ═══
+    const addDs = (label, data, color, width, dash, key, hideFromLegend) => {
+      datasets.push({ key, label, data, borderColor: color, borderWidth: width, borderDash: dash || [], fill: false, tension: TENSION, pointRadius: 0, hidden: false });
+      if (!hideFromLegend) legendItems.push({ key, label, color });
+    };
+    addDs(p.contractName, pick(p.main), '#c9a84c', 2.5, null, 'main');
+    addDs(cmpName,        pick(p.cmp),  '#4d8cf5', 2,   null, 'cmp');
+    p.regulatedSims.forEach(r => addDs(r.name, pick(r.sim), r.color, 1.8, null, 'reg_' + r.id));
+    addDs('Versements cumulés', p.dep, 'rgba(120,145,175,0.6)', 1.2, [6, 4], 'dep');
+    if (p.stressOn) {
+      addDs(p.contractName + ' −1pt', pick(p.mainLow),  'rgba(201,168,76,0.28)', 1, [4, 4], 'stress', true);
+      addDs(p.contractName + ' +1pt', pick(p.mainHigh), 'rgba(201,168,76,0.28)', 1, [4, 4], 'stress', true);
+    }
+  }
+
+  // Légende interactive
+  legendItems.forEach(li => {
+    const el = document.createElement('label');
+    el.className = 'leg-item active';
+    el.innerHTML = `<input type="checkbox" class="toggle-line" checked><span class="leg-dot" style="background:${li.color}"></span><span>${escH(li.label)}</span>`;
+    legendContainer.appendChild(el);
+    el.addEventListener('click', () => {
+      const cb = el.querySelector('input'); cb.checked = !cb.checked;
+      el.classList.toggle('active', cb.checked);
+      if (chartInst) {
+        chartInst.data.datasets.forEach(ds => { if (ds.key === li.key) ds.hidden = !cb.checked; });
+        chartInst.update();
+      }
+    });
+  });
+
+  // Plugin : trait vertical "aujourd'hui" à l'année 0
+  const todayMarkerPlugin = {
+    id: 'todayMarker',
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!scales.x || !chartArea) return;
+      const x = scales.x.getPixelForValue(0);
+      if (x < chartArea.left - 1 || x > chartArea.right + 1) return;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(201,168,76,0.35)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.stroke();
+      // Petit label "aujourd'hui"
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(201,168,76,0.7)';
+      ctx.font = '10px Outfit, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Aujourd\'hui', x + 4, chartArea.top + 12);
+      ctx.restore();
+    }
+  };
+
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('chart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    plugins: [todayMarkerPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(13,19,38,0.96)',
+          borderColor: 'rgba(255,255,255,0.09)', borderWidth: 1, padding: 12,
+          titleFont: { family: 'Outfit', size: 12, weight: '600' },
+          bodyFont:  { family: 'DM Mono', size: 12 },
+          titleColor: '#e8c96a',
+          callbacks: {
+            title: items => {
+              const idx = items[0].dataIndex;
+              const yr = currentYear + idx;
+              return `Année ${idx}  ·  ${yr}`;
+            },
+            label: ctx => `  ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
+            afterBody: items => {
+              const extras = [];
+              // En mode scénario : afficher le rendement appliqué cette année au contrat principal
+              if (p.useScenario && p.main.yearlyRatesApplied && items[0]) {
+                const idx = items[0].dataIndex;
+                if (idx > 0 && p.main.yearlyRatesApplied[idx] !== undefined) {
+                  const r = p.main.yearlyRatesApplied[idx];
+                  const sign = r >= 0 ? '+' : '';
+                  const color = r >= 0 ? '' : ''; // couleur gérée par CSS bodyColor
+                  extras.push(`  ↳ Rdt ${p.contractName} cette année : ${sign}${r.toFixed(1).replace('.', ',')} %`);
+                }
+              }
+              // En mode alloc : total patrimoine
+              if (calcMode === 'alloc') {
+                const portfolio = items.filter(i => i.dataset.stack === 'portfolio' && !i.dataset.hidden);
+                if (portfolio.length) {
+                  const total = portfolio.reduce((s, i) => s + (i.parsed.y || 0), 0);
+                  if (extras.length) extras.push('');
+                  extras.push('─────────────', 'Total patrimoine : ' + fmt(total));
+                }
+              }
+              return extras;
             }
           }
-          document.getElementById('yearsValue').textContent = (document.getElementById('years').value || '10') + ' ans';
-        } catch(e){ /* ignore */ }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: '#3d4f66',
+            font: { family: 'Outfit', size: 11 },
+            maxRotation: 0,
+            autoSkipPadding: 18,
+          },
+          title: { display: false }
+        },
+        y: {
+          stacked: yStacked,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: '#3d4f66',
+            font: { family: 'DM Mono', size: 11 },
+            padding: 6,
+            // Format : 15 000 €  /  150 k€  /  1,2 M€
+            callback: v => {
+              const abs = Math.abs(v);
+              if (abs >= 1_000_000) return (v / 1_000_000).toFixed(1).replace('.0', '').replace('.', ',') + ' M€';
+              if (abs >= 10_000)    return Math.round(v / 1000) + ' k€';
+              if (abs >= 1000)      return (v / 1000).toFixed(1).replace('.0', '').replace('.', ',') + ' k€';
+              return Math.round(v) + ' €';
+            }
+          },
+          title: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  UPDATE UI (KPIs + tables)
+// ═══════════════════════════════════════════════════════════════════
+function updateUI(p) {
+  const { main, cmp, regulatedSims, dep, inputs, contractName } = p;
+  const mode = inputs.mode;
+  const pick = sim => mode === 'reel' ? sim.yearlyReal : sim.yearlyNominal;
+
+  document.getElementById('kpi-deposits').textContent  = fmt(dep[dep.length-1]);
+  const beMain = breakeven(pick(main), inputs.mainInitial, inputs.monthly);
+  document.getElementById('kpi-breakeven').textContent = beMain !== null ? beMain + ' ans' : '> durée';
+  document.getElementById('kpi-be-sub').textContent    = contractName;
+  document.getElementById('kpi-fees').textContent      = fmt(main.totalFees);
+  document.getElementById('kpi-fees-sub').textContent  = `entrée ${fmt(main.entryFeesTotal)} · gestion ${fmt(main.mgmtFeesTotal)}`;
+  document.getElementById('kpi-cagr').textContent      = fmtPct(main.cagr);
+
+  // ══ Summary table ══
+  //   Mode unique      : contrat principal + comparatif + produits (comparaison côte-à-côte)
+  //   Mode répartition : portefeuille total (GOLD) + chaque composant, pas de comparatif
+  //                      (car le "comparatif" tournerait sur mainInitial réduit, trompeur)
+  const thead = document.getElementById('summary-thead');
+  const tbody = document.getElementById('summary-tbody');
+
+  let cols;
+  if (calcMode === 'alloc' && p.totalAllocSeries && p.totalAllocSeries.length) {
+    // Build virtual "portfolio total" sim object
+    const totalArr = p.totalAllocSeries;
+    const totalDepositsAll = p.inputs.initial + p.inputs.monthly * 12 * inputs.years;
+    const totalFees        = main.totalFees; // only main has fees
+    const totalCagr        = totalDepositsAll > 0 && inputs.years > 0
+      ? (Math.pow(totalArr[totalArr.length-1] / totalDepositsAll, 1/inputs.years) - 1) * 100 : 0;
+    const portfolioSim = {
+      totalCapital: totalArr[totalArr.length-1],
+      totalDeposits: totalDepositsAll,
+      netGain: totalArr[totalArr.length-1] - totalDepositsAll,
+      entryFeesTotal: main.entryFeesTotal,
+      mgmtFeesTotal:  main.mgmtFeesTotal,
+      totalFees,
+      cagr: totalCagr,
+      yearlyNominal: totalArr,
+      yearlyReal:    totalArr.map((v,i) => v / Math.pow(1 + inputs.inflation/100, i)),
+    };
+    cols = [
+      { label: 'Portefeuille total', sim: portfolioSim, color: '#ffffff', isPortfolio: true },
+      { label: contractName + ' (part)', sim: main, color: '#c9a84c', isMain: true },
+      ...regulatedSims.map(r => ({ label: r.name + ' (' + fmt(r.alloc) + ')', sim: r.sim, color: r.color, isReg: true }))
+    ];
+  } else {
+    cols = [
+      { label: contractName, sim: main, color: '#c9a84c', isMain: true },
+      { label: cmpName, sim: cmp, color: '#4d8cf5' },
+      ...regulatedSims.map(r => ({ label: r.name, sim: r.sim, color: r.color, isReg: true }))
+    ];
+  }
+
+  const refCapital = cols[0].sim.totalCapital; // head-of-row reference for "Diff. vs"
+  thead.innerHTML = '<tr><th></th>' + cols.map(c =>
+    `<th style="color:${c.color}">${escH(c.label)}</th>`
+  ).join('') + '</tr>';
+
+  const rows = [
+    { label: 'Capital final',       fn: c => fmt(c.sim.totalCapital),        cls: (c,i) => i===0 ? 'val-gold' : '' },
+    { label: 'Gain net client',     fn: c => fmt(c.sim.netGain),             cls: c => c.sim.netGain >= 0 ? 'val-pos' : 'val-neg' },
+    { label: 'Frais d\'entrée',     fn: c => c.isReg ? fmt(0) : fmt(c.sim.entryFeesTotal) },
+    { label: 'Frais de gestion',    fn: c => c.isReg ? fmt(0) : fmt(c.sim.mgmtFeesTotal) },
+    { label: 'CAGR net',            fn: c => fmtPct(c.sim.cagr) },
+    { label: 'Diff. vs ' + (cols[0].isPortfolio ? 'portefeuille' : 'principal'),
+      fn: (c,i) => i===0 ? '—' : fmt(c.sim.totalCapital - refCapital, true),
+      cls: (c,i) => i===0 ? '' : (c.sim.totalCapital - refCapital >= 0 ? 'val-pos' : 'val-neg') },
+  ];
+  tbody.innerHTML = rows.map(r =>
+    '<tr><td>' + r.label + '</td>' +
+    cols.map((c,i) => `<td class="${r.cls ? r.cls(c,i) : ''}">${r.fn(c,i)}</td>`).join('') +
+    '</tr>'
+  ).join('');
+
+  // ══ Year table ══ (uses array + join, no innerHTML +=)
+  const yThead = document.getElementById('year-thead');
+  const yTbody = document.getElementById('year-tbody');
+
+  const yHeadCells = ['<th style="text-align:left">Année</th>'];
+  if (calcMode === 'alloc' && p.totalAllocSeries) {
+    yHeadCells.push('<th style="color:#fff">Portefeuille total</th>');
+  }
+  yHeadCells.push(`<th style="color:var(--gold2)">${escH(contractName)}${calcMode==='alloc'?' (part)':''}</th>`);
+  if (calcMode !== 'alloc') yHeadCells.push(`<th style="color:#4d8cf5">${escH(cmpName)}</th>`);
+  regulatedSims.forEach(r => yHeadCells.push(`<th style="color:${r.color}">${escH(r.name)}</th>`));
+  yHeadCells.push('<th>Versements</th>');
+  yThead.innerHTML = '<tr>' + yHeadCells.join('') + '</tr>';
+
+  const yearRowsHTML = [];
+  const totalRealArr = calcMode === 'alloc' && p.totalAllocSeries
+    ? (mode === 'reel' ? p.totalAllocSeries.map((v,i) => v/Math.pow(1+inputs.inflation/100,i)) : p.totalAllocSeries)
+    : null;
+  for (let y = 0; y <= inputs.years; y++) {
+    const cells = [`<td style="text-align:left;color:var(--soft)">${y}</td>`];
+    if (totalRealArr) cells.push(`<td style="color:#fff">${fmt(totalRealArr[y])}</td>`);
+    cells.push(`<td class="val-gold">${fmt(pick(main)[y])}</td>`);
+    if (calcMode !== 'alloc') cells.push(`<td>${fmt(pick(cmp)[y])}</td>`);
+    regulatedSims.forEach(r => {
+      const arr = mode === 'reel' ? r.sim.yearlyReal : r.sim.yearlyNominal;
+      cells.push(`<td style="color:${r.color}">${fmt(arr[y])}</td>`);
+    });
+    cells.push(`<td>${fmt(dep[y])}</td>`);
+    yearRowsHTML.push('<tr>' + cells.join('') + '</tr>');
+  }
+  yTbody.innerHTML = yearRowsHTML.join('');
+
+  // ══ Allocation summary (only in alloc mode) ══
+  renderAllocationSummary(p);
+
+  document.getElementById('btn-pdf').disabled = false;
+  document.getElementById('btn-png').disabled = false;
+}
+
+// Allocation summary bar (shown under products grid in alloc mode)
+function renderAllocationSummary(p) {
+  const bar = document.getElementById('alloc-summary');
+  if (!bar) return;
+  if (calcMode !== 'alloc') { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const initial  = p.inputs.initial;
+  const sumAlloc = p.regulatedSims.reduce((s, r) => s + (r.alloc || 0), 0);
+  const remain   = initial - sumAlloc;
+  let status, statusClass;
+  if (sumAlloc > initial) {
+    status = 'Dépassement : ' + fmt(sumAlloc - initial);
+    statusClass = 'alloc-danger';
+  } else if (sumAlloc === initial) {
+    status = 'Répartition complète';
+    statusClass = 'alloc-ok';
+  } else {
+    status = 'Reste à affecter : ' + fmt(remain) + ' (vers ' + escH(p.contractName) + ')';
+    statusClass = 'alloc-neutral';
+  }
+  bar.innerHTML = `
+    <div class="alloc-chip"><span class="alloc-lbl">Versement initial</span><span class="alloc-val">${fmt(initial)}</span></div>
+    <div class="alloc-chip"><span class="alloc-lbl">Alloué aux livrets</span><span class="alloc-val">${fmt(sumAlloc)}</span></div>
+    <div class="alloc-chip"><span class="alloc-lbl">Sur ${escH(p.contractName)}</span><span class="alloc-val">${fmt(Math.max(0, remain))}</span></div>
+    <div class="alloc-status ${statusClass}">${status}</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PRODUCTS GRID
+// ═══════════════════════════════════════════════════════════════════
+function renderProductsGrid() {
+  closePopovers(); // avoid orphan popover after DOM wipe
+  const grid     = document.getElementById('products-grid');
+  const popovers = document.getElementById('popovers-container');
+  grid.innerHTML = ''; popovers.innerHTML = '';
+
+  REGULATED.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'product-row' + (p.enabled ? ' active' : '');
+    row.dataset.id = p.id;
+    row.innerHTML = `
+      <label class="toggle-switch">
+        <input type="checkbox" class="prod-toggle" data-id="${p.id}" ${p.enabled?'checked':''}>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </label>
+      <span class="product-color-dot" style="background:${p.color}"></span>
+      <span class="product-name">${p.name}</span>
+      <button class="info-btn" data-pop="${p.id}" title="Infos ${p.name}">i</button>
+      <div class="product-rate-wrap">
+        <input type="number" class="prod-rate" data-id="${p.id}" value="${p.rate.toFixed(2)}" min="0" step="0.01" />
+        <span class="pct-label">%</span>
+      </div>
+      <div class="alloc-wrap">
+        <label>Alloc. :</label>
+        <input type="number" class="prod-alloc" data-id="${p.id}" value="${allocations[p.id] || 0}" min="0" step="100" />
+        <span class="pct-label">€</span>
+      </div>
+    `;
+    grid.appendChild(row);
+
+    const pop = document.createElement('div');
+    pop.className = 'info-popover pop-view-mode';
+    pop.id = 'pop-' + p.id;
+    pop.innerHTML = buildPopoverHTML(p);
+    popovers.appendChild(pop);
+  });
+
+  // Listeners LOCAUX (sur les éléments fraîchement créés uniquement)
+  document.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const pid = btn.dataset.pop;
+      const pop = document.getElementById('pop-' + pid);
+      const isOpen = pop.classList.contains('open');
+      closePopovers();
+      if (!isOpen) {
+        // On rend d'abord le popover visible hors écran pour mesurer sa hauteur réelle
+        pop.style.visibility = 'hidden';
+        pop.style.left = '-9999px';
+        pop.style.top  = '0px';
+        pop.classList.add('open');
+        const ph = pop.offsetHeight || 460;
+        const pw = pop.offsetWidth  || 310;
+        const r = btn.getBoundingClientRect();
+        let left = r.left;
+        let top  = r.bottom + 8;
+        if (left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+        if (left < 10) left = 10;
+        if (top + ph > window.innerHeight - 10) top = Math.max(10, r.top - ph - 8);
+        pop.style.left = left + 'px';
+        pop.style.top  = top  + 'px';
+        pop.style.visibility = '';
+        document.getElementById('popover-overlay').classList.add('open');
+      }
+    });
+  });
+
+  document.querySelectorAll('.prod-toggle').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.id; const prod = REGULATED.find(p => p.id === id);
+      if (prod) { prod.enabled = cb.checked; cb.closest('.product-row').classList.toggle('active', cb.checked); }
+      recalcAndRender();
+    });
+  });
+
+  document.querySelectorAll('.prod-rate').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const id = inp.dataset.id; const prod = REGULATED.find(p => p.id === id);
+      if (prod) { prod.rate = clamp(parseFloat(inp.value) || 0, 0, 100); saveOverride(id); }
+      recalcAndRender();
+    });
+  });
+
+  document.querySelectorAll('.prod-alloc').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const id = inp.dataset.id;
+      allocations[id] = Math.max(0, parseFloat(inp.value) || 0);
+      recalcAndRender();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  GLOBAL DELEGATION — attaché UNE SEULE FOIS au boot
+// ═══════════════════════════════════════════════════════════════════
+let globalListenersBound = false;
+function bindGlobalListeners() {
+  if (globalListenersBound) return;
+  globalListenersBound = true;
+
+  document.getElementById('popover-overlay').addEventListener('click', closePopovers);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopovers(); });
+
+  // Edit mode delegation (popover buttons are recreated on each render,
+  // so we delegate at document level but bind only once)
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('pop-edit-toggle')) {
+      const pid = e.target.dataset.pid;
+      const pop = document.getElementById('pop-' + pid);
+      if (!pop) return;
+      pop.classList.toggle('pop-view-mode'); pop.classList.toggle('pop-edit-mode');
+      e.target.textContent = pop.classList.contains('pop-edit-mode') ? '✕ Annuler' : '✎ Modifier';
+      return;
+    }
+    if (e.target.classList.contains('pop-btn-save')) {
+      const pid = e.target.dataset.pid;
+      const pop = document.getElementById('pop-' + pid);
+      const prod = REGULATED.find(x => x.id === pid);
+      if (pop && prod) {
+        prod.taux_ref    = pop.querySelector('.ef-taux_ref').value.trim();
+        prod.plafond     = pop.querySelector('.ef-plafond').value.trim();
+        prod.fiscalite   = pop.querySelector('.ef-fiscalite').value.trim();
+        prod.eligibilite = pop.querySelector('.ef-eligibilite').value.trim();
+        prod.note        = pop.querySelector('.ef-note').value.trim();
+        prod.pros        = pop.querySelector('.ef-pros').value.split('\n').map(s => s.trim()).filter(Boolean);
+        prod.cons        = pop.querySelector('.ef-cons').value.split('\n').map(s => s.trim()).filter(Boolean);
+        // Extraire le plafond numérique depuis le texte (ex : "22 950 €" → 22950)
+        // Si le texte ne contient pas de nombre ou dit "aucun", plafondVal = null (pas d'alerte)
+        const plafondNum = prod.plafond.replace(/[^\d]/g, '');
+        if (/aucun|illimit|sans/i.test(prod.plafond)) {
+          prod.plafondVal = null;
+        } else if (plafondNum) {
+          prod.plafondVal = parseInt(plafondNum, 10);
+        }
+        saveOverride(pid);
+        pop.innerHTML = buildPopoverHTML(prod);
+        pop.classList.remove('pop-edit-mode'); pop.classList.add('pop-view-mode');
+        recalcAndRender(); // relancer car plafondVal peut affecter les alertes
+      }
+      return;
+    }
+    if (e.target.classList.contains('pop-btn-reset')) {
+      const pid = e.target.dataset.pid;
+      if (!confirm('Remettre les informations par défaut pour ce produit ?')) return;
+      resetOverride(pid);
+      const prod = REGULATED.find(x => x.id === pid);
+      const rateInp = document.querySelector(`.prod-rate[data-id="${pid}"]`);
+      if (rateInp && prod) rateInp.value = prod.rate.toFixed(2);
+      const pop = document.getElementById('pop-' + pid);
+      if (pop && prod) {
+        pop.innerHTML = buildPopoverHTML(prod);
+        pop.classList.remove('pop-edit-mode'); pop.classList.add('pop-view-mode');
       }
       recalcAndRender();
     }
+  });
+}
 
-    // kick
-    document.addEventListener('DOMContentLoaded', hydrate);
-  </script>
+function buildPopoverHTML(p) {
+  return `
+    <div class="pop-header">
+      <div class="pop-name">${escH(p.name)}</div>
+      <div class="pop-full">${escH(p.fullName)}</div>
+      <button class="pop-edit-btn pop-edit-toggle" data-pid="${p.id}">✎ Modifier</button>
+    </div>
+    <div class="pop-body">
+      <div class="pop-view-wrap">
+        <div class="pop-meta">
+          <span class="pop-chip">Taux : <strong>${escH(p.taux_ref)}</strong></span>
+          <span class="pop-chip">Plafond : <strong>${escH(p.plafond)}</strong></span>
+        </div>
+        <div class="pop-chip" style="display:inline-block;margin-bottom:10px">Fiscalité : <strong>${escH(p.fiscalite)}</strong></div>
+        <div class="pop-section-title" style="margin-top:6px">Éligibilité</div>
+        <p style="font-size:12px;color:var(--soft);margin-bottom:10px">${escH(p.eligibilite)}</p>
+        <div class="pop-section-title">Avantages</div>
+        <ul class="pop-list">${p.pros.map(t=>`<li class="pro"><span class="icon">✓</span><span>${escH(t)}</span></li>`).join('')}</ul>
+        <div class="pop-section-title">Inconvénients</div>
+        <ul class="pop-list">${p.cons.map(t=>`<li class="con"><span class="icon">✕</span><span>${escH(t)}</span></li>`).join('')}</ul>
+        <div class="pop-note">${escH(p.note)}</div>
+      </div>
+      <div class="pop-edit-wrap">
+        <span class="pop-edit-lbl">Taux (description)</span>
+        <input class="pop-edit-field ef-taux_ref" type="text" value="${escA(p.taux_ref)}" />
+        <span class="pop-edit-lbl">Plafond</span>
+        <input class="pop-edit-field ef-plafond" type="text" value="${escA(p.plafond)}" />
+        <span class="pop-edit-lbl">Fiscalité</span>
+        <input class="pop-edit-field ef-fiscalite" type="text" value="${escA(p.fiscalite)}" />
+        <span class="pop-edit-lbl">Éligibilité</span>
+        <input class="pop-edit-field ef-eligibilite" type="text" value="${escA(p.eligibilite)}" />
+        <span class="pop-edit-lbl">Avantages (un par ligne)</span>
+        <textarea class="pop-edit-field ef-pros">${escH(p.pros.join('\n'))}</textarea>
+
+```
+    <span class="pop-edit-lbl">Inconvénients (un par ligne)</span>
+    <textarea class="pop-edit-field ef-cons">${escH(p.cons.join('\n'))}</textarea>
+    <span class="pop-edit-lbl">Note</span>
+    <textarea class="pop-edit-field ef-note" style="min-height:48px">${escH(p.note)}</textarea>
+    <div class="pop-edit-actions">
+      <button class="pop-btn pop-btn-save" data-pid="${p.id}">✓ Enregistrer</button>
+      <button class="pop-btn pop-edit-toggle" data-pid="${p.id}">Annuler</button>
+      <button class="pop-btn pop-btn-reset" data-pid="${p.id}" title="Remettre les valeurs par défaut">↺ Réinit.</button>
+    </div>
+  </div>
+</div>
+```
+
+`;
+}
+
+function closePopovers() {
+document.querySelectorAll(’.info-popover’).forEach(p => p.classList.remove(‘open’));
+document.getElementById(‘popover-overlay’).classList.remove(‘open’);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CLIENT FOLDERS (localStorage)
+// ═══════════════════════════════════════════════════════════════════
+const CLIENTS_KEY = ‘simu_clients_v1’;
+
+function loadClientsList() {
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+const sel = document.getElementById(‘client-load’);
+const names = Object.keys(clients).sort();
+sel.innerHTML = ‘<option value="">— Charger un dossier —</option>’ + names.map(n => `<option value="${escA(n)}">${escH(n)}</option>`).join(’’);
+} catch(_) {}
+}
+
+function saveClient() {
+const name = document.getElementById(‘client-name’).value.trim();
+if (!name) { alert(‘Saisissez un nom de client.’); return; }
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+if (clients[name]) {
+const prev = clients[name].savedAt ? new Date(clients[name].savedAt).toLocaleDateString(‘fr-FR’) : ‘’;
+if (!confirm(`Le dossier « ${name} » existe déjà${prev ? ' (dernière sauvegarde : ' + prev + ')' : ''}.\n\nÉcraser avec les paramètres actuels ?`)) return;
+}
+clients[name] = buildClientSnapshot();
+localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+loadClientsList();
+document.getElementById(‘client-load’).value = name;
+setStatus(`Dossier « ${name} » sauvegardé ✓`);
+} catch(e) { alert(’Erreur sauvegarde : ’ + e.message); }
+}
+
+function buildClientSnapshot() {
+return {
+initial: Number(document.getElementById(‘initial’).value || 0),
+monthly: Number(document.getElementById(‘monthly’).value || 0),
+years: Number(document.getElementById(‘years’).value || 10),
+inflation: Number(document.getElementById(‘inflation’).value || 2),
+tax: document.getElementById(‘fiscalite’).value,
+mode: document.getElementById(‘modeAffichage’).value,
+calcMode,
+contract: currentContract,
+mainRate: Number(document.getElementById(‘main-rate’).value),
+mainEntry: Number(document.getElementById(‘main-entry’).value),
+mainMgmt: Number(document.getElementById(‘main-mgmt’).value),
+cmpRate: Number(document.getElementById(‘cmp-rate’).value),
+cmpEntry: Number(document.getElementById(‘cmp-entry’).value),
+cmpMgmt: Number(document.getElementById(‘cmp-mgmt’).value),
+cmpName: cmpName,
+useScenario,
+scenario: currentScenario,
+regulated: REGULATED.map(p => ({ id: p.id, enabled: p.enabled, rate: p.rate })),
+allocations: { …allocations },
+savedAt: new Date().toISOString(),
+};
+}
+
+function duplicateClient() {
+const currentName = document.getElementById(‘client-name’).value.trim();
+if (!currentName) { alert(‘Saisissez un nom de base avant de dupliquer.’); return; }
+const newName = prompt(‘Nom du dossier dupliqué :’, currentName + ’ (copie)’);
+if (!newName || !newName.trim()) return;
+const n = newName.trim();
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+if (clients[n]) {
+if (!confirm(`Un dossier « ${n} » existe déjà. Écraser ?`)) return;
+}
+clients[n] = buildClientSnapshot();
+localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+loadClientsList();
+document.getElementById(‘client-name’).value = n;
+document.getElementById(‘client-load’).value = n;
+setStatus(`Dossier dupliqué en « ${n} » ✓`);
+} catch(e) { alert(’Erreur duplication : ’ + e.message); }
+}
+
+function exportClients() {
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+const count = Object.keys(clients).length;
+if (count === 0) { alert(‘Aucun dossier à exporter.’); return; }
+const payload = {
+_format: ‘simulateur-epargne-dossiers’,
+_version: 1,
+_exportedAt: new Date().toISOString(),
+clients,
+};
+const blob = new Blob([JSON.stringify(payload, null, 2)], { type: ‘application/json’ });
+const url  = URL.createObjectURL(blob);
+const link = document.createElement(‘a’);
+link.href = url;
+link.download = `dossiers_simulateur_${new Date().toISOString().slice(0,10)}.json`;
+link.click();
+URL.revokeObjectURL(url);
+setStatus(`${count} dossier(s) exporté(s) ✓`);
+} catch(e) { alert(’Erreur export : ’ + e.message); }
+}
+
+function importClients(file) {
+if (!file) return;
+const reader = new FileReader();
+reader.onload = (ev) => {
+try {
+const data = JSON.parse(ev.target.result);
+if (!data.clients || typeof data.clients !== ‘object’) {
+alert(‘Fichier invalide : pas de dossiers trouvés.’); return;
+}
+const existing = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+const incoming = data.clients;
+const conflicts = Object.keys(incoming).filter(n => existing[n]);
+let merge = ‘merge’;
+if (conflicts.length > 0) {
+const ans = confirm(
+`${Object.keys(incoming).length} dossier(s) à importer.\n` +
+`${conflicts.length} conflit(s) avec des dossiers existants : ${conflicts.slice(0,3).join(', ')}${conflicts.length>3?'…':''}\n\n` +
+`OK = écraser les dossiers en conflit\nAnnuler = ignorer les conflits (garder l'existant)`
+);
+merge = ans ? ‘overwrite’ : ‘keep’;
+}
+const result = { …existing };
+let added = 0, overwritten = 0, skipped = 0;
+Object.entries(incoming).forEach(([n, snap]) => {
+if (result[n]) {
+if (merge === ‘overwrite’) { result[n] = snap; overwritten++; }
+else skipped++;
+} else { result[n] = snap; added++; }
+});
+localStorage.setItem(CLIENTS_KEY, JSON.stringify(result));
+loadClientsList();
+setStatus(`Import : +${added} ajouté(s), ${overwritten} écrasé(s), ${skipped} ignoré(s)`);
+} catch(e) { alert(’Erreur import : ’ + e.message); }
+};
+reader.readAsText(file);
+}
+
+function loadClient(name) {
+if (!name) return;
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+const c = clients[name];
+if (!c) return;
+document.getElementById(‘client-name’).value = name;
+document.getElementById(‘initial’).value   = c.initial;
+document.getElementById(‘monthly’).value   = c.monthly;
+document.getElementById(‘monthly-slider’).value = Math.min(2000, c.monthly);
+document.getElementById(‘years’).value     = c.years;
+document.getElementById(‘yearsValue’).textContent = c.years + ’ ans’;
+document.getElementById(‘inflation’).value = c.inflation;
+document.getElementById(‘fiscalite’).value = c.tax;
+document.getElementById(‘modeAffichage’).value = c.mode;
+document.getElementById(‘main-rate’).value = c.mainRate;
+document.getElementById(‘main-entry’).value = c.mainEntry;
+document.getElementById(‘main-mgmt’).value = c.mainMgmt;
+document.getElementById(‘cmp-rate’).value = c.cmpRate;
+document.getElementById(‘cmp-entry’).value = c.cmpEntry;
+document.getElementById(‘cmp-mgmt’).value = c.cmpMgmt;
+// Contract
+currentContract = c.contract || ‘Érable’;
+document.querySelectorAll(’.tab’).forEach(t => t.classList.toggle(‘active’, t.dataset.contract === currentContract));
+// Scenario mode
+useScenario = Boolean(c.useScenario);
+currentScenario = c.scenario || ‘neutre’;
+document.querySelectorAll(’#rate-mode-seg .seg-btn’).forEach(b => b.classList.toggle(‘active’, b.dataset.rateMode === (useScenario ? ‘scenario’ : ‘flat’)));
+const scenSel = document.getElementById(‘scenario-select’);
+if (scenSel) scenSel.value = currentScenario;
+applyRateMode();
+// Comparatif name
+cmpName = c.cmpName || ‘Comparatif’;
+if (cmpName && cmpName !== ‘Comparatif’) {
+$(’#compare-select’).val(cmpName).trigger(‘change.select2’);
+}
+// Calc mode
+calcMode = c.calcMode || ‘unique’;
+document.body.classList.toggle(‘allocation-mode’, calcMode === ‘alloc’);
+document.querySelectorAll(’#calc-mode-seg .seg-btn’).forEach(b => b.classList.toggle(‘active’, b.dataset.mode === calcMode));
+// Regulated state
+if (c.regulated) {
+c.regulated.forEach(rs => {
+const prod = REGULATED.find(x => x.id === rs.id);
+if (prod) { prod.enabled = rs.enabled; prod.rate = rs.rate; }
+});
+}
+allocations = c.allocations || {};
+renderProductsGrid();
+setStatus(`Dossier « ${name} » chargé`);
+recalcAndRender();
+} catch(e) { alert(’Erreur chargement : ’ + e.message); }
+}
+
+function deleteClient() {
+const name = document.getElementById(‘client-load’).value;
+if (!name) { alert(‘Sélectionnez d'abord un dossier à supprimer.’); return; }
+if (!confirm(`Supprimer définitivement le dossier « ${name} » ?`)) return;
+try {
+const clients = JSON.parse(localStorage.getItem(CLIENTS_KEY) || ‘{}’);
+delete clients[name];
+localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+loadClientsList();
+setStatus(`Dossier « ${name} » supprimé`);
+} catch(e) {}
+}
+
+let statusTimer;
+function setStatus(msg) {
+const el = document.getElementById(‘client-status’);
+el.textContent = msg;
+el.style.color = ‘var(–gold2)’;
+clearTimeout(statusTimer);
+statusTimer = setTimeout(() => { el.textContent = ‘’; }, 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PDF EXPORT (compact)
+// ═══════════════════════════════════════════════════════════════════
+async function exportPDF(p) {
+try {
+const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+if (!jsPDF) { alert(‘jsPDF non chargé.’); return; }
+const doc = new jsPDF({ orientation: ‘portrait’, unit: ‘mm’, format: ‘a4’ });
+const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 10;
+let y = M;
+const money = v => new Intl.NumberFormat(‘fr-FR’, { style:‘currency’, currency:‘EUR’, maximumFractionDigits:0 }).format(v||0).replace(/\u00A0|\u202F/g, ’ ’);
+
+```
+// Header with client name (sanitized)
+const rawClient = document.getElementById('client-name').value.trim();
+const clientName = rawClient.replace(/[\x00-\x1F\x7F]/g, '').slice(0, 80);
+doc.setFont('helvetica','bold'); doc.setFontSize(15);
+doc.text('Simulateur d\'Épargne — Conseil Patrimonial', M, y); y += 6;
+if (clientName) {
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(201,168,76);
+  doc.text('Dossier : ' + clientName, M, y); y += 5; doc.setTextColor(0);
+}
+doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120);
+doc.text('Rapport généré le ' + new Date().toLocaleDateString('fr-FR'), M, y); y += 6;
+doc.setTextColor(0);
+
+// Pitch
+const pitchText = document.getElementById('pitch-text').textContent.trim();
+doc.setFont('helvetica','italic'); doc.setFontSize(11);
+const pitchLines = doc.splitTextToSize('« ' + pitchText + ' »', W - 2*M);
+doc.text(pitchLines, M, y); y += pitchLines.length * 5 + 4;
+
+// Params table
+const params = [
+  ['Versement initial', money(p.inputs.initial)],
+  ['Versement mensuel', money(p.inputs.monthly)],
+  ['Durée', p.inputs.years + ' ans'],
+  ['Inflation', p.inputs.inflation.toFixed(1) + ' %'],
+  ['Contrat principal', p.contractName + ` (rdt ${p.inputs.mainRate.toFixed(2)}% / entrée ${p.inputs.mainEntry.toFixed(2)}% / gestion ${p.inputs.mainMgmt.toFixed(2)}%)`],
+  ['Mode calcul', calcMode === 'alloc' ? 'Répartition multi-produits' : 'Produit unique'],
+  ...p.regulatedSims.map(r => [`${r.name}${calcMode==='alloc'?` (${money(r.alloc)})`:''}`, `${r.rate.toFixed(2)} %`]),
+];
+doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Hypothèses', M, y); y += 2;
+doc.autoTable({ startY: y, head:[['Paramètre','Valeur']], body: params, theme:'grid',
+  headStyles:{fillColor:[13,19,38], textColor:[220,225,240], fontSize:8},
+  styles:{fontSize:8, cellPadding:1.8}, columnStyles:{1:{halign:'right'}}, margin:{left:M,right:M}});
+y = doc.lastAutoTable.finalY + 5;
+
+// Chart
+const canvas = document.getElementById('chart');
+if (canvas) {
+  const img = canvas.toDataURL('image/png', 1.0);
+  const iW = W - 2*M, iH = Math.min(70, iW*0.43);
+  if (y + iH > H - 30) { doc.addPage(); y = M; }
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Évolution du capital', M, y); y += 3;
+  doc.addImage(img, 'PNG', M, y, iW, iH); y += iH + 5;
+}
+
+// Summary — colonnes adaptées au mode
+let cols, rows;
+if (calcMode === 'alloc' && p.totalAllocSeries && p.totalAllocSeries.length) {
+  const totalFinal = p.totalAllocSeries[p.totalAllocSeries.length - 1];
+  const totalDeps  = p.inputs.initial + p.inputs.monthly * 12 * p.inputs.years;
+  const totalGain  = totalFinal - totalDeps;
+  const totalCagr  = totalDeps > 0 && p.inputs.years > 0
+    ? (Math.pow(totalFinal / totalDeps, 1 / p.inputs.years) - 1) * 100 : 0;
+  cols = ['', 'Portefeuille total', p.contractName + ' (part)', ...p.regulatedSims.map(r => r.name + ' (' + money(r.alloc) + ')')];
+  rows = [
+    ['Capital final', money(totalFinal), money(p.main.totalCapital), ...p.regulatedSims.map(r => money(r.sim.totalCapital))],
+    ['Gain net client', money(totalGain), money(p.main.netGain), ...p.regulatedSims.map(r => money(r.sim.netGain))],
+    ['CAGR net', totalCagr.toFixed(2) + '%', p.main.cagr.toFixed(2) + '%', ...p.regulatedSims.map(r => r.sim.cagr.toFixed(2) + '%')],
+  ];
+} else {
+  cols = ['', p.contractName, cmpName, ...p.regulatedSims.map(r => r.name)];
+  rows = [
+    ['Capital final', money(p.main.totalCapital), money(p.cmp.totalCapital), ...p.regulatedSims.map(r => money(r.sim.totalCapital))],
+    ['Gain net client', money(p.main.netGain), money(p.cmp.netGain), ...p.regulatedSims.map(r => money(r.sim.netGain))],
+    ['Frais totaux', money(p.main.totalFees), money(p.cmp.totalFees), ...p.regulatedSims.map(_ => money(0))],
+    ['CAGR net', p.main.cagr.toFixed(2) + '%', p.cmp.cagr.toFixed(2) + '%', ...p.regulatedSims.map(r => r.sim.cagr.toFixed(2) + '%')],
+  ];
+}
+if (y + 40 > H - 20) { doc.addPage(); y = M; }
+doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Résultats', M, y); y += 2;
+doc.autoTable({ startY: y, head: [cols], body: rows, theme: 'grid',
+  headStyles: { fillColor: [13,19,38], textColor: [220,225,240], fontSize: 8 },
+  styles: { fontSize: 8, cellPadding: 1.8, halign: 'right' }, columnStyles: { 0: { halign: 'left' } }, margin: { left: M, right: M } });
+y = doc.lastAutoTable.finalY + 4;
+
+doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120);
+doc.text(doc.splitTextToSize('Simulation indicative. Hypothèses simplifiées. Les performances passées ne préjugent pas des performances futures. Ne constitue pas un conseil en investissement.', W - 2*M), M, H - 9);
+const pages = doc.getNumberOfPages();
+for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFontSize(7); doc.setTextColor(120); doc.text(`${i}/${pages}`, W - M - 6, H - 5); }
+const safeName = (clientName || p.contractName).replace(/[^\w\s.-]/g, '_').slice(0, 60) || 'simulation';
+doc.save(`Simulation_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`);
+```
+
+} catch(e) { console.error(e); alert(’Échec PDF : ’ + (e?.message || e)); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SELECT2 INIT
+// ═══════════════════════════════════════════════════════════════════
+function initSelect() {
+const $sel = $(’#compare-select’);
+$sel.empty().append(’<option value="__custom__">Choisir un contrat…</option>’);
+Object.keys(contractsData).sort().forEach(n => $sel.append(`<option value="${n}">${n}</option>`));
+$sel.select2({ placeholder:‘Filtrer…’, allowClear:true,
+matcher: (params, data) => { if (!params.term?.trim()) return data; return data.text.toLowerCase().includes(params.term.toLowerCase()) ? data : null; }
+});
+$sel.on(‘change’, () => {
+const k = $sel.val();
+if (k && k !== ‘**custom**’ && contractsData[k]) {
+const c = contractsData[k];
+document.getElementById(‘cmp-entry’).value = c.entryFees.toFixed(2);
+document.getElementById(‘cmp-mgmt’).value  = c.managementFees.toFixed(2);
+document.getElementById(‘cmp-rate’).value  = c.defaultRate.toFixed(2);
+cmpName = k;
+} else {
+cmpName = ‘Comparatif’;
+}
+recalcAndRender();
+});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN RECALC
+// ═══════════════════════════════════════════════════════════════════
+function recalcAndRender() {
+const p = computeAll();
+buildChart(p);
+updateUI(p);
+renderScenarios(p);
+renderAlerts(computeAlerts(p));
+document.getElementById(‘pitch-text’).innerHTML = generatePitch(p);
+try { localStorage.setItem(‘simu_last_inputs’, JSON.stringify(p.inputs)); } catch(_) {}
+return p;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EVENT WIRING
+// ═══════════════════════════════════════════════════════════════════
+// Contract tabs
+document.querySelectorAll(’.tab’).forEach(tab => {
+tab.addEventListener(‘click’, () => {
+document.querySelectorAll(’.tab’).forEach(t => t.classList.remove(‘active’));
+tab.classList.add(‘active’);
+currentContract = tab.dataset.contract;
+// En mode rendement moyen : appliquer le preset numérique
+// En mode scénario : simplement mettre à jour l’affichage du profil (le preset n’est pas utilisé)
+if (!useScenario) {
+const pr = MAIN_PRESETS[currentContract];
+document.getElementById(‘main-rate’).value  = pr.rate.toFixed(2);
+document.getElementById(‘main-entry’).value = pr.entry.toFixed(2);
+document.getElementById(‘main-mgmt’).value  = pr.mgmt.toFixed(2);
+syncFees(‘flat’);
+}
+updateProfileDisplay();
+recalcAndRender();
+});
+});
+
+// Rate mode segmented (rendement moyen / scénario historique)
+function applyRateMode() {
+const flatRow = document.getElementById(‘flat-rate-row’);
+const scenRow = document.getElementById(‘scenario-row’);
+if (useScenario) {
+flatRow.style.display = ‘none’;
+scenRow.style.display = ‘’;
+} else {
+flatRow.style.display = ‘’;
+scenRow.style.display = ‘none’;
+}
+updateProfileDisplay();
+updateScenarioDesc();
+}
+
+function updateProfileDisplay() {
+const el = document.getElementById(‘profile-display’);
+if (!el) return;
+const pid = CONTRACT_TO_PROFILE[currentContract] || ‘equilibre’;
+const p = PROFILES[pid];
+el.value = `${p.label} · ${p.desc}`;
+}
+
+function updateScenarioDesc() {
+const el = document.getElementById(‘scenario-desc’);
+if (!el) return;
+const s = SCENARIOS[currentScenario];
+if (s) el.textContent = s.desc;
+}
+
+document.querySelectorAll(’#rate-mode-seg .seg-btn’).forEach(b => {
+b.addEventListener(‘click’, () => {
+document.querySelectorAll(’#rate-mode-seg .seg-btn’).forEach(x => x.classList.remove(‘active’));
+b.classList.add(‘active’);
+useScenario = b.dataset.rateMode === ‘scenario’;
+applyRateMode();
+recalcAndRender();
+});
+});
+
+document.getElementById(‘scenario-select’).addEventListener(‘change’, e => {
+currentScenario = e.target.value;
+updateScenarioDesc();
+recalcAndRender();
+});
+
+// Sync entry/mgmt fees between flat and scenario rows
+function syncFees(source) {
+const flat = { entry: document.getElementById(‘main-entry’), mgmt: document.getElementById(‘main-mgmt’) };
+const scen = { entry: document.getElementById(‘main-entry-s’), mgmt: document.getElementById(‘main-mgmt-s’) };
+if (source === ‘flat’) { scen.entry.value = flat.entry.value; scen.mgmt.value = flat.mgmt.value; }
+else { flat.entry.value = scen.entry.value; flat.mgmt.value = scen.mgmt.value; }
+}
+document.getElementById(‘main-entry’).addEventListener(‘input’, () => { syncFees(‘flat’); recalcAndRender(); });
+document.getElementById(‘main-mgmt’).addEventListener(‘input’, () => { syncFees(‘flat’); recalcAndRender(); });
+document.getElementById(‘main-entry-s’).addEventListener(‘input’, () => { syncFees(‘scen’); recalcAndRender(); });
+document.getElementById(‘main-mgmt-s’).addEventListener(‘input’, () => { syncFees(‘scen’); recalcAndRender(); });
+
+// Calc mode segmented
+document.querySelectorAll(’#calc-mode-seg .seg-btn’).forEach(b => {
+b.addEventListener(‘click’, () => {
+document.querySelectorAll(’#calc-mode-seg .seg-btn’).forEach(x => x.classList.remove(‘active’));
+b.classList.add(‘active’);
+calcMode = b.dataset.mode;
+document.body.classList.toggle(‘allocation-mode’, calcMode === ‘alloc’);
+recalcAndRender();
+});
+});
+
+// Stress pill
+document.getElementById(‘stress-pill’).addEventListener(‘click’, () => {
+const cb = document.getElementById(‘stress’); cb.checked = !cb.checked;
+document.getElementById(‘stress-pill’).classList.toggle(‘on’, cb.checked);
+recalcAndRender();
+});
+
+// View tabs
+document.getElementById(‘tab-summary’).addEventListener(‘click’, () => {
+document.getElementById(‘view-summary’).style.display = ‘’;
+document.getElementById(‘view-yearly’).style.display = ‘none’;
+document.getElementById(‘tab-summary’).classList.add(‘active’);
+document.getElementById(‘tab-yearly’).classList.remove(‘active’);
+});
+document.getElementById(‘tab-yearly’).addEventListener(‘click’, () => {
+document.getElementById(‘view-summary’).style.display = ‘none’;
+document.getElementById(‘view-yearly’).style.display = ‘’;
+document.getElementById(‘tab-yearly’).classList.add(‘active’);
+document.getElementById(‘tab-summary’).classList.remove(‘active’);
+});
+
+// Years slider
+document.getElementById(‘years’).addEventListener(‘input’, e => {
+document.getElementById(‘yearsValue’).textContent = e.target.value + ’ ans’;
+});
+
+// Monthly slider ↔ number input sync (slider max = 2000, input unbounded)
+const monthlySlider = document.getElementById(‘monthly-slider’);
+const monthlyInput  = document.getElementById(‘monthly’);
+const monthlyHint   = document.getElementById(‘monthly-hint’);
+const SLIDER_MAX = 2000;
+function updateMonthlyHint() {
+const v = Number(monthlyInput.value || 0);
+if (v > SLIDER_MAX) {
+monthlyHint.innerHTML = `<span style="color:var(--gold2)">✦ Valeur hors plage du curseur (${fmt(v)})</span> — le curseur reste positionné au maximum.`;
+} else {
+monthlyHint.textContent = ‘Curseur 0–2 000 € par pas de 25 € (saisie libre au-delà).’;
+}
+}
+monthlySlider.addEventListener(‘input’, () => { monthlyInput.value = monthlySlider.value; updateMonthlyHint(); recalcAndRender(); });
+monthlyInput.addEventListener(‘input’, () => {
+const v = Number(monthlyInput.value || 0);
+monthlySlider.value = Math.min(SLIDER_MAX, Math.max(0, v));
+updateMonthlyHint();
+recalcAndRender();
+});
+
+// Presentation mode
+document.getElementById(‘btn-present’).addEventListener(‘click’, () => {
+const on = document.body.classList.toggle(‘presentation’);
+document.getElementById(‘btn-present’).textContent = on ? ‘← Mode conseiller’ : ‘🎯 Présentation’;
+// Ensure chart re-renders to new size
+setTimeout(() => { if (chartInst) chartInst.resize(); }, 100);
+});
+
+// Live recalc on params (main-entry/mgmt sont gérés via syncFees ci-dessus)
+[‘initial’,‘monthly’,‘years’,‘inflation’,‘fiscalite’,‘modeAffichage’,‘main-rate’,‘cmp-entry’,‘cmp-mgmt’,‘cmp-rate’]
+.forEach(id => document.getElementById(id)?.addEventListener(‘input’, recalcAndRender));
+
+// Toolbar
+document.getElementById(‘btn-calc’).addEventListener(‘click’, recalcAndRender);
+document.getElementById(‘btn-reset’).addEventListener(‘click’, () => {
+if (confirm(‘Réinitialiser tous les paramètres ? (les dossiers clients sont conservés)’)) {
+localStorage.removeItem(‘simu_last_inputs’);
+location.reload();
+}
+});
+document.getElementById(‘btn-pdf’).addEventListener(‘click’, () => exportPDF(computeAll()));
+document.getElementById(‘btn-png’).addEventListener(‘click’, () => {
+const link = document.createElement(‘a’);
+link.download = ‘graphique_simulation.png’;
+link.href = document.getElementById(‘chart’).toDataURL(‘image/png’, 1.0);
+link.click();
+});
+
+// Clients
+document.getElementById(‘btn-save-client’).addEventListener(‘click’, saveClient);
+document.getElementById(‘btn-duplicate-client’).addEventListener(‘click’, duplicateClient);
+document.getElementById(‘client-load’).addEventListener(‘change’, e => loadClient(e.target.value));
+document.getElementById(‘btn-delete-client’).addEventListener(‘click’, deleteClient);
+document.getElementById(‘btn-export-clients’).addEventListener(‘click’, exportClients);
+document.getElementById(‘btn-import-clients’).addEventListener(‘click’, () => document.getElementById(‘import-file’).click());
+document.getElementById(‘import-file’).addEventListener(‘change’, e => {
+const file = e.target.files[0];
+importClients(file);
+e.target.value = ‘’; // permet de réimporter le même fichier
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener(‘DOMContentLoaded’, () => {
+loadOverrides();
+renderProductsGrid();
+bindGlobalListeners();
+initSelect();
+loadClientsList();
+applyRateMode(); // init display of scenario fields
+// Restore last inputs (non-client)
+try {
+const saved = JSON.parse(localStorage.getItem(‘simu_last_inputs’) || ‘null’);
+if (saved) {
+const map = { initial:‘initial’, monthly:‘monthly’, years:‘years’, inflation:‘inflation’, tax:‘fiscalite’, mode:‘modeAffichage’, mainRate:‘main-rate’, mainEntry:‘main-entry’, mainMgmt:‘main-mgmt’, cmpEntry:‘cmp-entry’, cmpMgmt:‘cmp-mgmt’, cmpRate:‘cmp-rate’ };
+Object.entries(map).forEach(([k,id]) => { if (saved[k] !== undefined) { const el = document.getElementById(id); if (el) el.value = saved[k]; } });
+document.getElementById(‘monthly-slider’).value = Math.min(2000, Number(saved.monthly || 0));
+document.getElementById(‘yearsValue’).textContent = (document.getElementById(‘years’).value || 10) + ’ ans’;
+}
+} catch(_) {}
+recalcAndRender();
+});
+</script>
+
 </body>
 </html>
